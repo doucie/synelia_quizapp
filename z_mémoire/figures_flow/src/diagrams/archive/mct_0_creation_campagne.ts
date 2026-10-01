@@ -1,9 +1,9 @@
-import type { DiagramDefinition } from '../../../types'
+import type { DiagramDefinition } from '../../types'
 
 export const mct0CreationCampagne: DiagramDefinition = {
   id: 'mct-v2-0-creation-campagne',
   title: 'MCT v2 — Créer la campagne',
-  category: 'traitements',
+  category: 'archive',
   domain: 'MCT v2 — T0 · Créer la campagne',
   nodes: [
     {
@@ -13,19 +13,19 @@ export const mct0CreationCampagne: DiagramDefinition = {
     {
       id: 'mct0-op', type: 'process', position: { x: 220, y: 200 },
       data: {
-        variant: 'mct-syncop', label: 'T0 — Initialiser la campagne',
+        variant: 'mct-syncop', label: 'T0 — Initialiser et ouvrir la campagne',
         syncLabel: '',
         items: [
           'Vérifier la cohérence des dates de campagne',
           'Valider l\'adéquation avec les modèles de pipeline disponibles',
-          'Attribuer les droits d\'accès par défaut (profil créateur)',
+          'Attribuer les droits d\'accès par défaut',
         ],
         emissionRules: ['Toujours'],
       },
     },
     {
       id: 'mct0-r1', type: 'process', position: { x: 220, y: 420 },
-      data: { variant: 'mct-result', label: 'Campagne initialisée', rule: 'Toujours' },
+      data: { variant: 'mct-result', label: 'Campagne ouverte', rule: 'Toujours' },
     },
   ],
   edges: [

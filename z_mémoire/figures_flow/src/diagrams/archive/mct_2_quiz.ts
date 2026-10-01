@@ -1,9 +1,9 @@
-import type { DiagramDefinition } from '../../../types'
+import type { DiagramDefinition } from '../../types'
 
 export const mct2Quiz: DiagramDefinition = {
   id: 'mct-v2-2-quiz',
   title: 'MCT v2 — Quiz',
-  category: 'traitements',
+  category: 'archive',
   domain: 'MCT v2 — T2 · Quiz',
   nodes: [
     {

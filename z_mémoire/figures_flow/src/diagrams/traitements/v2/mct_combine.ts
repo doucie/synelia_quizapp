@@ -1,35 +1,48 @@
 import type { DiagramDefinition, DiagramSection, EntityNode, RelationshipEdge } from '../../../types'
-import { mct0CreationCampagne } from './mct_0_creation_campagne'
-import { mct1Candidature } from './mct_1_candidature'
-import { mct2Quiz } from './mct_2_quiz'
-import { mct3Entretien } from './mct_3_entretien'
-import { mct4Decision } from './mct_4_decision'
-import { mct5Annulation } from './mct_5_annulation'
+import { mct0CreationCampagne } from '../../archive/mct_0_creation_campagne'
+import { mct1Candidature } from '../../archive/mct_1_candidature'
+import { mct2Quiz } from '../../archive/mct_2_quiz'
+import { mct3Planification } from '../../archive/mct_3_planification'
+import { mct4ConduiteEntretien } from '../../archive/mct_4_conduite_entretien'
+import { mct5Evaluation } from '../../archive/mct_5_evaluation'
+import { mct6Decision } from '../../archive/mct_6_decision'
+import { mct7Annulation } from '../../archive/mct_7_annulation'
+import { mct8Audit } from '../../archive/mct_8_audit'
 
 /**
- * Les figures de parcours du MCT v2 : T0 → T2 d'un côté, T3 → T5 de l'autre.
+ * Les figures de parcours du MCT v2 : les 9 traitements T0 → T8 de
+ * `plans/mct/nouveaux_mct.md`, répartis en quatre figures.
  *
  * Le cycle de vie était initialement assemblé sur une seule figure
  * (`mct-v2-combine`, 7 traitements sur ~4480 px de haut). À ce zoom — ≈ 0.16 en
- * `fitView` — la figure devenait illisible. Elle est donc coupée en deux lots
- * fonctionnels, chacun sur 3 rangs (~1920 px, zoom ≈ 0.3) :
+ * `fitView` — la figure devenait illisible. Elle est donc coupée en quatre lots
+ * fonctionnels :
  *
  * - `mctParcours1` : T0 Créer la campagne, T1 Candidature, T2 Quiz — l'amont, du
  *   besoin de recrutement au résultat du quiz.
- * - `mctParcours2` : T3 Entretien, T4 Décision, T5 Annulation — l'aval, de
- *   l'évaluation de l'entretien à la décision d'annulation.
+ * - `mctParcours2` : T3 Planification, T4 Conduire l'entretien, T5 Évaluation —
+ *   tout le cycle d'entretien, du créneau réservé au verdict.
+ * - `mctParcours3` : T6 Décision, T7 Annulation — la décision et sa mise en
+ *   æuvre, avec les trois résultats de T6 qui alimentent la synchronisation de T7.
+ * - `mctParcours4` : T8 Audit, seul sur sa figure. Ce n'est pas un oubli :
+ *   l'audit est transverse, il n'a aucun lien entrant ni sortant, donc il n'a
+ *   jamais fait partie de la chaîne. Il est isolé pour que les trois figures
+ *   précédentes forment une lecture continue T0 → T7.
  *
- * **T6 n'est dans aucune des deux**, et ce n'est pas un oubli : l'audit n'a aucun
- * lien entrant ni sortant, il n'a jamais fait partie de la chaîne. Il reste
- * uniquement sur sa figure individuelle `mct-v2-6-audit`. L'ancien titre
- * « Parcours complet (T0 → T6) » était donc inexact — le découpage le corrige.
+ * **Les sources sont les figures individuelles, dans `archive/`.** Elles portent
+ * `category: 'archive'` (elles ne sont plus lues isolément) mais restent la seule
+ * definition du modèle : c'est le même arrangement que le MOT v2, qui importe
+ * ses MCT depuis `archive/`.
  *
- * **La couture T2 → T3 n'est pas représentée.** `x-t2-r1-t3-op` ne peut pas
- * traverser deux figures, donc « Quiz validé » reste sans arête sortante et
- * « Entretien planifié » sans arête entrante. Choix assumé : rien n'est ajouté
- * (ni nœud de sortie, ni libellé modifié) pour ne pas introduire d'élément absent
- * du modèle Merise — la continuité est portée par les titres « 1/2 » et « 2/2 »
- * et par le texte du mémoire.
+ * **Deux coutures ne sont pas représentées.** Une arête ne peut pas relier deux
+ * figures : `x-t2-r1-t3-op` et `x-t5-r1-t6-op` citent une extrémité absente du
+ * lot, `buildCombine` les retire donc et signale l'erreur. Conséquence : « Quiz
+ * validé » et « Entretien validé » restent sans arête sortante. « Candidat accepté
+ * pour l'évaluation » apparaît comme le déclencheur propre de T3, et T6 n'a
+ * aucun événement : son unique déclencheur est le résultat de T5. Choix assumé :
+ * rien n'est ajouté (ni nœud de sortie, ni libellé modifié) pour ne pas
+ * introduire d'élément absent du modèle Merise — la continuité est portée par les
+ * titres « 1/4 » … « 4/4 » et par le texte du mémoire.
  */
 
 /** Hauteur d'une rangée de traitement. Le nœud le plus bas d'un MCT est à y ≈ 500. */
@@ -84,7 +97,7 @@ function buildCombine(opts: {
   // Les rangées sont réindexées à partir de 0 : chaque figure repart de y = 0.
   const nodes = entries.flatMap(({ prefix, source }, i) => prefixNodes(source.nodes, prefix, i * ROW_HEIGHT))
 
-  // Un lien ne peut pas relie deux figures. Si un `CrossLink` cite une extrémité
+  // Un lien ne peut pas relier deux figures. Si un `CrossLink` cite une extrémité
   // absente du lot (traitement déplacé d'une figure à l'autre), il est retiré
   // plutôt que dessiné dans le vide, et l'erreur est signalée.
   const nodeIds = new Set(nodes.map((n) => n.id))
@@ -119,7 +132,7 @@ function buildCombine(opts: {
 
 export const mctParcours1: DiagramDefinition = buildCombine({
   id: 'mct-v2-parcours-1',
-  title: 'MCT v2 — Parcours 1/2 (T0 → T2)',
+  title: 'MCT v2 — Parcours 1/4 (T0 → T2)',
   domain: 'MCT v2 — Amont : de la campagne au quiz',
   entries: [
     { prefix: 't0-', source: mct0CreationCampagne },
@@ -134,17 +147,40 @@ export const mctParcours1: DiagramDefinition = buildCombine({
 
 export const mctParcours2: DiagramDefinition = buildCombine({
   id: 'mct-v2-parcours-2',
-  title: 'MCT v2 — Parcours 2/2 (T3 → T5)',
-  domain: 'MCT v2 — Aval : de l’entretien à la décision',
+  title: 'MCT v2 — Parcours 2/4 (T3 → T5)',
+  domain: 'MCT v2 — Cycle d\'entretien : planification, conduite, évaluation',
   entries: [
-    { prefix: 't3-', source: mct3Entretien },
-    { prefix: 't4-', source: mct4Decision },
-    { prefix: 't5-', source: mct5Annulation },
+    { prefix: 't3-', source: mct3Planification },
+    { prefix: 't4-', source: mct4ConduiteEntretien },
+    { prefix: 't5-', source: mct5Evaluation },
   ],
   crossLinks: [
     { id: 'x-t3-r1-t4-op', source: 't3-mct3-r1', target: 't4-mct4-op', sourceHandle: 'bottom', targetHandle: 'top' },
     { id: 'x-t4-r1-t5-op', source: 't4-mct4-r1', target: 't5-mct5-op', sourceHandle: 'bottom', targetHandle: 'top' },
-    { id: 'x-t4-r2-t5-op', source: 't4-mct4-r2', target: 't5-mct5-op', sourceHandle: 'bottom', targetHandle: 'top' },
-    { id: 'x-t4-r3-t5-op', source: 't4-mct4-r3', target: 't5-mct5-op', sourceHandle: 'bottom', targetHandle: 'top' },
   ],
+})
+
+export const mctParcours3: DiagramDefinition = buildCombine({
+  id: 'mct-v2-parcours-3',
+  title: 'MCT v2 — Parcours 3/4 (T6 → T7)',
+  domain: 'MCT v2 — Décision et annulation',
+  entries: [
+    { prefix: 't6-', source: mct6Decision },
+    { prefix: 't7-', source: mct7Annulation },
+  ],
+  crossLinks: [
+    { id: 'x-t6-r1-t7-op', source: 't6-mct6-r1', target: 't7-mct7-op', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'x-t6-r2-t7-op', source: 't6-mct6-r2', target: 't7-mct7-op', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'x-t6-r3-t7-op', source: 't6-mct6-r3', target: 't7-mct7-op', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+})
+
+export const mctParcours4: DiagramDefinition = buildCombine({
+  id: 'mct-v2-parcours-4',
+  title: 'MCT v2 — Parcours 4/4 (T8)',
+  domain: 'MCT v2 — Audit',
+  entries: [
+    { prefix: 't8-', source: mct8Audit },
+  ],
+  crossLinks: [],
 })

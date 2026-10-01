@@ -22,15 +22,8 @@ import { entretiensUtilisateurs as mpdEntretUtil } from './nouveau/mpd/entretien
 import { scriptCampagnes as mpdSqlCamp } from './nouveau/mpd_sql/script_campagnes'
 import { scriptEntretiens as mpdSqlEntret } from './nouveau/mpd_sql/script_entretiens'
 
-// === Traitements v2 ===
-import { mct0CreationCampagne } from './traitements/v2/mct_0_creation_campagne'
-import { mct1Candidature } from './traitements/v2/mct_1_candidature'
-import { mct2Quiz } from './traitements/v2/mct_2_quiz'
-import { mct3Entretien } from './traitements/v2/mct_3_entretien'
-import { mct4Decision } from './traitements/v2/mct_4_decision'
-import { mct5Annulation } from './traitements/v2/mct_5_annulation'
-import { mct6Audit } from './traitements/v2/mct_6_audit'
-import { mctParcours1, mctParcours2 } from './traitements/v2/mct_combine'
+// === Traitements v2 (figures de parcours) ===
+import { mctParcours1, mctParcours2, mctParcours3, mctParcours4 } from './traitements/v2/mct_combine'
 
 // === MOT ===
 import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
@@ -72,6 +65,18 @@ import { mct3DecisionAudit as archMct3 } from './archive/mct_3_decision_audit'
 import { mct3aDecision as archMct3a } from './archive/mct_3a_decision'
 import { mct3bRollback as archMct3b } from './archive/mct_3b_rollback'
 import { mct3cAudit as archMct3c } from './archive/mct_3c_audit'
+
+// MCT v2 individuels : plus lus isolément, mais ils restent la définition du
+// modèle que les quatre figures de parcours assemblent (cf. `mct_combine.ts`).
+import { mct0CreationCampagne as archV2T0 } from './archive/mct_0_creation_campagne'
+import { mct1Candidature as archV2T1 } from './archive/mct_1_candidature'
+import { mct2Quiz as archV2T2 } from './archive/mct_2_quiz'
+import { mct3Planification as archV2T3 } from './archive/mct_3_planification'
+import { mct4ConduiteEntretien as archV2T4 } from './archive/mct_4_conduite_entretien'
+import { mct5Evaluation as archV2T5 } from './archive/mct_5_evaluation'
+import { mct6Decision as archV2T6 } from './archive/mct_6_decision'
+import { mct7Annulation as archV2T7 } from './archive/mct_7_annulation'
+import { mct8Audit as archV2T8 } from './archive/mct_8_audit'
 import { sat1SetupPreselection as archSat1 } from './archive/sat_1_setup_preselection'
 import { sat2EntretienAudit as archSat2 } from './archive/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz as archMpt1 } from './archive/mpt_1_candidature_quiz'
@@ -100,16 +105,11 @@ export const diagrams: DiagramDefinition[] = [
   mpdSqlCamp,
   mpdSqlEntret,
 
-  // --- Traitements v2 (9 : 7 MCT + 2 figures de parcours) ---
-  mct0CreationCampagne,
-  mct1Candidature,
-  mct2Quiz,
-  mct3Entretien,
-  mct4Decision,
-  mct5Annulation,
-  mct6Audit,
+  // --- Traitements v2 — figures de parcours (4) ---
   mctParcours1,
   mctParcours2,
+  mctParcours3,
+  mctParcours4,
 
   // --- MOT (1) ---
   motOrganisationnelV2,
@@ -117,7 +117,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Palette (1) ---
   colorPalette,
 
-  // --- Archive (34) ---
+  // --- Archive (43) ---
   archMcdIdentite,
   archMcdCamp,
   archMcdCand,
@@ -148,6 +148,15 @@ export const diagrams: DiagramDefinition[] = [
   archMct3a,
   archMct3b,
   archMct3c,
+  archV2T0,
+  archV2T1,
+  archV2T2,
+  archV2T3,
+  archV2T4,
+  archV2T5,
+  archV2T6,
+  archV2T7,
+  archV2T8,
   archSat1,
   archSat2,
   archMpt1,

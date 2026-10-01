@@ -13,21 +13,25 @@ corrigées + parcours en **9 traitements (T0–T8)**.
 | Version | Fichiers | État |
 |---------|----------|------|
 | **MCT v1** | `src/diagrams/traitements/mct_*.ts` | Conservés tels quels à titre de référence |
-| **MCT v2** | `src/diagrams/traitements/v2/mct_*.ts` | **7 fichiers (T0–T6)** — version condensée (entretien regroupé), **pas encore alignée** sur le découpage T0–T8 décrit ici |
+| **MCT v2** | `src/diagrams/archive/mct_[0-8]_*.ts` | **9 fichiers (T0–T8)** — aligné sur ce plan (2026-10-01), `category: 'archive'` |
 
-### Écart plan ↔ code
+### Écart plan ↔ code — résolu le 2026-10-01
 
-Le plan détaille 9 traitements : T0 création, T1 candidature, T2 quiz,
-T3 **planification**, T4 **conduite**, T5 **évaluation** (séparés), T6 décision,
-T7 annulation, T8 audit. Les fichiers v2 actuels n'en comptent que 7
-(T0–T6, l'entretien étant regroupé en un seul traitement) — l'alignement
-sur T0–T8 est **un travail à faire** (pas encore appliqué).
+Le plan détaillait 9 traitements alors que les fichiers v2 n'en comptaient que 7
+(l'entretien regroupé). **L'écart est clos** : les 9 traitements existent, la
+planification (T3) et la conduite de l'entretien (T4) — absentes du code — ont été
+créées, et les 4 restantes renumérotées. Détails, y compris les libellés corrigés
+selon ce plan : `plans/implementations/20261001_mct_t0_t8_alignment.md`.
+
+Les figures lues ne sont pas les 9 fichiers individuels, mais les **4 figures de
+parcours** qui les assemblent : `mct-v2-parcours-1` (T0–T2), `-2` (T3–T5),
+`-3` (T6–T7), `-4` (T8).
 
 ### MOT
 
 - **MOT v1** (`src/diagrams/mot/mot_organisationnel.ts`) : ne sert à rien → **à supprimer**
 - **MOT v2** (`src/diagrams/mot/mot_organisationnel_v2.ts`) : **à garder** (matrice basée sur les MCT v1)
-- **MOT v3** : **à créer** — les MCT v2 seront intégrés dans ce **nouveau MOT v3**, pas dans le MOT v2
+- **MOT v3** : **à créer** — les MCT v2 seront intégrés dans ce **nouveau MOT v3**, pas dans le MOT v2. **Non fait** : le MOT v2 continue d'importer les MCT d'archive v1 (reporté)
 
 ---
 
@@ -60,11 +64,22 @@ En deçà de 2 événements, le pentagone est affiché **vide** (sans label) —
 ### Notation `event-result-T*`
 Liaison entre traitements : un résultat de T*n* est aussi un événement déclencheur pour T*n+1*. Utilisée uniquement quand les deux traitements sont dans la **même figure** (MOT, diagramme combiné). Si les MCT sont isolés, cette notation est ignorée.
 
+**Rendu réel** : l'arête arrive sur la **synchronisation** de T*n+1*, pas sur un nœud d'événement. Le résultat n'est donc pas redessiné comme événement du traitement suivant, qui ne porte que ses propres événements (`event:`). Conséquence : une seule ligne `event:` par traitement, et **toutes les synchronisations sont vides**.
+
 ### Règles d'émission (`rules`)
 Séparées par ` / `, chaque valeur correspond à une branche de sortie de l'opération. `Toujours` pour une branche unique inconditionnelle.
 
 ### Items d'opération
 Actions **métier** uniquement (règles de gestion), pas d'actions IHM ou techniques.
+
+---
+
+### Raccourcissement des libellés
+
+Quand un libellé de ce plan est trop long pour la carte, il est **raccourci seulement s'il garde
+le même sens**, et les parenthèses techniques (`(profil créateur)`, `(quota non atteint)`,
+`(RET)`…) sont retirées. Le plan reste la référence du **sens**, pas forcément de la chaîne
+exacte.
 
 ---
 
@@ -185,7 +200,7 @@ results: Entretien en cours / Entretien annulé / Entretien reporté
 event-result-T4: Entretien en cours
 event: Fiches d'évaluation renseignées
 sync: ET
-operation: Synthétiser et arbitrer le bilan de l'entretien
+operation: Synthétiser le bilan de l'entretien
 items:
   1. Consolider les évaluations
   2. Appliquer les critères de validation
@@ -194,6 +209,9 @@ results: Entretien validé / Entretien refusé
 ```
 
 ### T6 — Décision
+
+Seul traitement **sans ligne `event:`** : son unique déclencheur est le résultat
+de T5. Aucune arête entrante n'est dessinée dans sa figure isolée.
 
 ```markdown
 event-result-T5: Entretien validé
@@ -220,10 +238,13 @@ rules: Autorisée / Refusée
 results: Décision annulée / Décision maintenue
 ```
 
+Les 3 `event-result-T6` arrivent sur la synchronisation de T7 ; les parenthèses
+`(RET)`, `(ATT)`, `(REF)` ne sont pas écrites dans les résultats ni les événements.
+
 ### T8 — Audit
 
 ```markdown
-event: Toute opération métier réalisée
+event: Opération métier réalisée
 sync: (pentagone vide)
 operation: Journaliser l'audit
 items:
@@ -232,32 +253,32 @@ rules: Toujours
 results: Trace enregistrée
 ```
 
+L'audit est transverse : il n'a **aucun lien entrant ni sortant** dans le plan, et
+reste donc seul sur `mct-v2-parcours-4`, hors de la chaîne T0–T7.
+
 ---
 
-## Fichiers
+## Fichiers — état réel au 2026-10-01
 
-### Créer
+### Existants (`src/diagrams/archive/`, `category: 'archive'`)
 
-- `src/diagrams/traitements/v2/mct_0_creation_campagne.ts`
-- `src/diagrams/traitements/v2/mct_1_candidature.ts`
-- `src/diagrams/traitements/v2/mct_2_quiz.ts`
-- `src/diagrams/traitements/v2/mct_3_planification.ts`
-- `src/diagrams/traitements/v2/mct_4_conduite_entretien.ts`
-- `src/diagrams/traitements/v2/mct_5_evaluation.ts`
-- `src/diagrams/traitements/v2/mct_6_decision.ts`
-- `src/diagrams/traitements/v2/mct_7_annulation.ts`
-- `src/diagrams/traitements/v2/mct_8_audit.ts`
+- `mct_0_creation_campagne.ts` · `mct_1_candidature.ts` · `mct_2_quiz.ts`
+- `mct_3_planification.ts` · `mct_4_conduite_entretien.ts` · `mct_5_evaluation.ts`
+- `mct_6_decision.ts` · `mct_7_annulation.ts` · `mct_8_audit.ts`
 
-### Modifier
+Les noms correspondent au plan. Le dossier n'est plus `traitements/v2/` : les 9
+figures ne sont plus lues isolément mais restent la source unique du modèle
+assemblé par `src/diagrams/traitements/v2/mct_combine.ts`.
 
-- `src/components/Nodes/ProcessNode.tsx` — corriger clip-path sync (pentagone)
+### Correction appliquée
+
+- `src/components/Nodes/ProcessNode.tsx` — clip-path sync (pentagone) ✓
 
 ---
 
 ## Ordre d'implémentation
 
-1. Correction du clip-path sync dans `ProcessNode.tsx` (pentagone)
-2. Création du dossier `traitements/v2/`
-3. Nouveaux MCTs (T0 à T8) — un fichier par MCT
-4. Mise à jour du registre `src/diagrams/index.ts`
-5. Nouveau MOT v3 basé sur les MCTs v2 (pas dans le MOT v2 existant)
+1. Correction du clip-path sync dans `ProcessNode.tsx` (pentagone) ✓
+2. Nouveaux MCTs (T0 à T8) — un fichier par MCT ✓
+3. Mise à jour du registre `src/diagrams/index.ts` ✓
+4. Nouveau MOT v3 basé sur les MCTs v2 — **reporté**
