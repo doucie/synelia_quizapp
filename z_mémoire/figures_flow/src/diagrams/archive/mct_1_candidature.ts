@@ -14,7 +14,7 @@ export const mct1Candidature: DiagramDefinition = {
       id: 'mct1-op', type: 'process', position: { x: 220, y: 200 },
       data: {
         variant: 'mct-syncop', label: 'T1 — Vérifier la recevabilité de la candidature',
-        syncLabel: '',
+        syncLabel: 'ET',
         items: [
           'Vérifier l\'éligibilité du candidat',
           'Valider la disponibilité des places',

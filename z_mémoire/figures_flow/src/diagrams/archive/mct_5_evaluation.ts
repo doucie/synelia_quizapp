@@ -14,7 +14,7 @@ export const mct5Evaluation: DiagramDefinition = {
       id: 'mct5-op', type: 'process', position: { x: 220, y: 200 },
       data: {
         variant: 'mct-syncop', label: 'T5 — Synthétiser et arbitrer le bilan',
-        syncLabel: '',
+        syncLabel: 'ET',
         items: [
           'Consolider les évaluations',
           'Appliquer les critères de validation',

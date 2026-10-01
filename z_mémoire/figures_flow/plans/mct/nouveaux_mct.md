@@ -57,14 +57,14 @@ La synchronisation combine les événements avant de déclencher une opération.
 
 - **ET** : tous les événements sont requis (cas standard)
 - **OU** : au moins un des événements suffit
-- **Fonction logique** : combinaison comme `(A ou B) et C` — le pentagone affiche toujours `ET`/`OU` mais la règle combinée est documentée dans le diagramme
+- **Fonction logique** : combinaison comme `(A ou B) et C` — la formule est écrite en entier sur le pentagone (voir T7)
 
-En deçà de 2 événements, le pentagone est affiché **vide** (sans label) — l'événement unique déclenche directement l'opération.
+En deçà de 2 événements, le pentagone est affiché **vide** (sans label) — l'événement unique déclenche directement l'opération. Un `event-result` **compte** comme un événement : il n'est pas redessiné comme nœud, mais il arrive bien sur la synchronisation. Le libellé décrit donc les flèches **réellement dessinées**, pas la logique abstraite.
 
 ### Notation `event-result-T*`
 Liaison entre traitements : un résultat de T*n* est aussi un événement déclencheur pour T*n+1*. Utilisée uniquement quand les deux traitements sont dans la **même figure** (MOT, diagramme combiné). Si les MCT sont isolés, cette notation est ignorée.
 
-**Rendu réel** : l'arête arrive sur la **synchronisation** de T*n+1*, pas sur un nœud d'événement. Le résultat n'est donc pas redessiné comme événement du traitement suivant, qui ne porte que ses propres événements (`event:`). Conséquence : une seule ligne `event:` par traitement, et **toutes les synchronisations sont vides**.
+**Rendu réel** : l'arête arrive sur la **synchronisation** de T*n+1*, pas sur un nœud d'événement. Le résultat n'est donc pas redessiné comme événement du traitement suivant, qui ne porte que ses propres événements (`event:`) — une seule ligne `event:` par traitement. En revanche la synchronisation **reçoit** cette flèche, donc son `sync:` est écrit : voir T1–T5 (`ET`) et T7 (formule complète).
 
 ### Règles d'émission (`rules`)
 Séparées par ` / `, chaque valeur correspond à une branche de sortie de l'opération. `Toujours` pour une branche unique inconditionnelle.
@@ -170,7 +170,7 @@ results: Quiz validé / Quiz échoué
 
 ```markdown
 event-result-T2: Quiz validé
-event: Candidat accepté pour l'évaluation
+event: Candidat accepté pour l'entretien
 sync: ET
 operation: Planifier l'entretien
 items:

@@ -14,7 +14,7 @@ export const mct4ConduiteEntretien: DiagramDefinition = {
       id: 'mct4-op', type: 'process', position: { x: 220, y: 200 },
       data: {
         variant: 'mct-syncop', label: 'T4 — Conduire l\'entretien',
-        syncLabel: '',
+        syncLabel: 'ET',
         items: [
           'Vérifier la présence du candidat',
           'Notifier les participants',

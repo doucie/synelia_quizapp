@@ -76,9 +76,10 @@ La convention du code, **conservée telle quelle**, est que l'arête entre trait
 **synchronisation** (`targetHandle: 'top'` du `mct-syncop`), pas sur un nœud d'événement : le
 résultat du traitement précédent n'est pas redessiné comme événement du suivant.
 
-Conséquence : une seule ligne `event:` par traitement est dessinée, et **toutes les
-synchronisations sont vides** (`syncLabel: ''`). C'est cohérent avec « en deçà de 2 événements, le
-pentagone est affiché vide ».
+Conséquence : une seule ligne `event:` par traitement est dessinée. **Les synchronisations ne sont
+pas vides pour autant** : la flèche du `event-result` arrive bien sur le pentagone, donc il combine
+2 événements et affiche `ET`. Corrigé le 2026-10-01 — voir « Opérateurs logiques des
+synchronisations » plus bas.
 
 Deux figures perdent donc un nœud d'événement, dont celle qui suivait le plan :
 
@@ -88,9 +89,41 @@ Deux figures perdent donc un nœud d'événement, dont celle qui suivait le plan
   résultat de T5. Dans `parcours-3` la flèche de T5 rend la lecture complète ; dans sa figure
   isolée, l'opération apparaît sans entrée visible.
 
-Ce qu'il ne faut **pas** réintroduire : les nœuds `…-e2`/`…-e3` représentant un `event-result`, et les
-`syncLabel` composés. Ni `ProcessNode.tsx` ni `edgeAnchors.ts` n'ont été touchés — `mct-event` rend
+Ce qu'il ne faut **pas** réintroduire : les nœuds `…-e2`/`…-e3` représentant un `event-result`.
+Ni `ProcessNode.tsx` ni `edgeAnchors.ts` n'ont été touchés — `mct-event` rend
 déjà un handle cible `top`, donc l'arête n'a pas besoin d'ancre nouvelle.
+
+### Opérateurs logiques des synchronisations (corrigé le 2026-10-01)
+
+Une première version de ce travail avait mis **tous** les `syncLabel` à `''`, en appliquant « en deçà
+de 2 événements, le pentagone est vide » au seul nombre de lignes `event:`. C'était faux : un
+`event-result` **est** un événement qui arrive sur la synchronisation, il n'est simplement pas
+redessiné comme nœud. Un `mct-syncop` de T1 à T5 reçoit donc 2 flèches sur `top` — le lien croisé et
+son événement propre — et `ET` est précisément l'opérateur qui les combine.
+
+La règle appliquée, sans exception : **`syncLabel` est l'opérateur qui combine les flèches entrantes
+réellement dessinées.**
+
+| Traitement | Flèches entrantes | `syncLabel` |
+|---|---|---|
+| T0 | 1 (son événement) | `''` |
+| T1 | 2 (événement + `x-t0-r1-t1-op`) | `ET` |
+| T2 | 2 (événement + `x-t1-r1-t2-op`) | `ET` |
+| T3 | 1 (son événement) | `''` — voir ci-dessous |
+| T4 | 2 (événement + `x-t3-r1-t4-op`) | `ET` |
+| T5 | 2 (événement + `x-t4-r1-t5-op`) | `ET` |
+| T6 | 0 (couture T5→T6 filtrée) | `''` |
+| T7 | 4 (3 résultats de T6 + son événement) | `(RET OU ATT OU REF) ET DA` |
+| T8 | 1 (son événement) | `''` |
+
+T0, T6 et T8 retombent d'eux-mêmes sur le vide, ce que le plan confirme. **T3 est l'écart assumé** :
+le plan lui donne `sync: ET` parce que « Quiz validé » (T2) et « Candidat accepté pour l'évaluation »
+sont deux événements, mais la couture T2→T3 n'est pas représentée dans `parcours-2` — une seule
+flèche est visible, donc le pentagone reste vide, conformément à la règle ci-dessus.
+
+Les sigles `RET`/`ATT`/`REF`/`DA` ne sont écrits que sur le pentagone de T7, où ils composent la
+formule combinée exigée par le plan. Ils n'apparaissent ni dans les résultats de T6 ni dans ses
+événements, conformément à la décision de ne pas parenthéser les libellés courts.
 
 ### Quatre figures de parcours
 

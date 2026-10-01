@@ -14,7 +14,7 @@ export const mct7Annulation: DiagramDefinition = {
       id: 'mct7-op', type: 'process', position: { x: 220, y: 200 },
       data: {
         variant: 'mct-syncop', label: 'T7 — Traiter l\'annulation',
-        syncLabel: '',
+        syncLabel: '(RET OU ATT OU REF) ET DA',
         items: [
           'Vérifier l\'éligibilité à l\'annulation',
         ],

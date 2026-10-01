@@ -14,7 +14,7 @@ export const mct2Quiz: DiagramDefinition = {
       id: 'mct2-op', type: 'process', position: { x: 220, y: 200 },
       data: {
         variant: 'mct-syncop', label: 'T2 — Corriger le quiz',
-        syncLabel: '',
+        syncLabel: 'ET',
         items: [
           'Calculer le score',
           'Appliquer les règles de sélection',
