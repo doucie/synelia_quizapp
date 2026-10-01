@@ -280,6 +280,166 @@ body {
 }
 
 /* ==========================================================================
+   Traitements — encadrement, déplacement par bloc, verrou
+   --------------------------------------------------------------------------
+   Le trait reprend la teinte du champ `variant` porté par la section, donc la
+   même couleur que les cartes du traitement : `hsl(var(--treatment-hue), …)`
+   posé en style inline par `DiagramCanvas`. Aucune couleur en dur ici.
+
+   L'encadrement est une aide à l'édition : il vit dans un overlay hors
+   `.react-flow__node`, donc `exportSvg` ne le capture pas — la figure exportée
+   ne contient que les nœuds et les arêtes.
+
+   Le corps du cadre capte le pointeur (survol des gouttières entre deux cartes
+   d'un même traitement) : c'est possible parce que le cadre est dans une couche
+   SOUS les nœuds. Le badge et les deux icônes, eux, sont dans une couche au-dessus.
+
+   Les deux couches n'ont ni la même unité ni la même formule, et c'est volontaire :
+
+   - Couche 1, les cadres : coordonnées *monde*. Toute la couche porte
+     `translate(v.x, v.y) scale(v.zoom)`, écrit par `applyFramesTransform`. Seule
+     l'épaisseur du trait est compensée par `--treatment-inv-zoom` (1 / zoom,
+     publiée par la même fonction) pour rester à 1 px écran quelle que soit la vue.
+   - Couche 2, le badge et les icônes : coordonnées *écran*. La couche n'est pas
+     transformée ; chaque rangée est positionnée en JS (`applyControlsLayout` avec
+     `v.x + x * v.zoom`, la formule dont React Flow se sert pour placer les nœuds)
+     et sa largeur vaut celle du cadre à l'écran. Rien n'y est mis à l'échelle :
+      badge et boutons font 24 px écran à n'importe quel zoom. Au zoom par défaut des
+      figures de parcours du MCT (≈ 0.3, 3 rangées de 640 px), des icônes en px monde
+      tomberaient à ~7 px — trop petites et imprécises à cliquer.
+
+   Règle à retenir pour la couche 1 : dans un sous-arbre contre-échellé en
+   `scale(1 / zoom)`, une longueur CSS est DÉJÀ une longueur écran. Seul un décalage
+   (`top`, `left`) est exprimé en px monde. C'est pourquoi le trait est multiplié par
+   l'inverse du zoom, mais pas la taille du cadre — et pourquoi l'UI d'édition vit
+   dans la couche 2 : dans la couche 1, une taille compensée deux fois dérive dans
+   la boîte dès qu'on change le zoom.
+   ========================================================================== */
+
+.treatment-frame {
+  position: absolute;
+  border-style: dashed;
+  /* Épaisseur écran constante : la boîte, elle, reste en coordonnées monde. */
+  border-width: calc(1px * var(--treatment-inv-zoom, 1));
+  border-color: transparent;
+  border-radius: calc(10px * var(--treatment-inv-zoom, 1));
+  pointer-events: auto;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.treatment-frame[data-hovered] {
+  border-style: solid;
+  border-color: hsl(var(--treatment-hue) / 0.7);
+  background-color: hsl(var(--treatment-hue) / 0.05);
+}
+
+/* Traitement focalisé : c'est celui sur lequel on a cliqué ou déplacé un
+   élément, l'encadrement reste même quand le pointeur est parti ailleurs. */
+.treatment-frame[data-focused] {
+  border-style: solid;
+  border-width: calc(2px * var(--treatment-inv-zoom, 1));
+  border-color: hsl(var(--treatment-hue));
+  background-color: hsl(var(--treatment-hue) / 0.07);
+}
+
+/* Au repos, aucun traitement n'a de trait : la figure reste celle du diagramme tant
+   qu'on n'interagit pas. Le verrou ne change rien à l'état au repos — il ne joue que
+   sur le glissement, et le mode se découvre en survolant le traitement ou en le
+   déplaçant. Le cadre est donc piloté par `[data-hovered]` et `[data-focused]` uniquement,
+   et au plus un des deux est présent à la fois. */
+
+/* Rangée d'un encadrement : badge `T0` à gauche, les deux icônes à droite.
+   `width` et `transform` sont écrits en JS par `applyControlsLayout`, qui y pose un
+   `translate(-100%, -100%)` : le coin bas-droit de la rangée arrive donc exactement
+   sur le coin haut-droit du cadre, sans rien calculer de plus. */
+.treatment-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* Repère du traitement dans l'encadrement. L'id suffit : au zoom d'ensemble d'une
+   figure combinée, le cadre le plus étroit ne fait que ~39 px de large, il n'y a
+   pas la place d'écrire le nom du traitement. */
+.treatment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--treatment-hue));
+  color: hsl(var(--treatment-hue));
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Les icônes sont **entièrement au-dessus** de la ligne haute du cadre : le coin
+   bas-droit de la rangée est posé `CTRL_GAP = 6` px plus haut. Les caler à cheval
+   dessus ne tenait pas — leur décalage est en px écran (constant) alors que la
+   marge du cadre est en px monde, donc elle fond au dézoom et les icônes mordaient
+   sur les cartes. */
+.treatment-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.treatment-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.treatment-btn:hover {
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--accent));
+}
+
+.treatment-btn[data-variant='locked'] {
+  color: hsl(var(--treatment-hue));
+  border-color: hsl(var(--treatment-hue));
+  background-color: hsl(var(--treatment-hue) / 0.12);
+}
+
+.treatment-btn[data-variant='locked']:hover {
+  background-color: hsl(var(--treatment-hue) / 0.22);
+}
+
+.treatment-btn[data-variant='unlocked']:hover {
+  color: hsl(var(--treatment-hue));
+}
+
+/* Curseur de saisie sur l'icône de déplacement. */
+.treatment-btn--move {
+  cursor: grab;
+}
+
+.treatment-btn--move:active {
+  cursor: grabbing;
+}
+
+/* ==========================================================================
    MPD — vue « script SQL »
    --------------------------------------------------------------------------
    Le bloc de script a sa propre surface, comme un éditeur de code : le

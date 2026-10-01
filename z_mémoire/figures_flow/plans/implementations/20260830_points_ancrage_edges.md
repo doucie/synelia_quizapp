@@ -91,7 +91,8 @@ L'analyse statique ne suffit pas : les ancrages réels dépendent de l'état run
 ### Étape 3 — Bugs B+C : groupage par ancrage résolu
 - [x] Nouveau helper partagé `src/components/Edges/edgeAnchors.ts` :
   - [x] `firstHandleId(node, 'source' | 'target')` reproduisant l'ordre DOM réel
-    (entity/process standard → `right` / `left` ; `mct-operation`/`mct-syncop` → première `emissionRule` / `top`).
+    (entités / SAT / MPT → `right` / `left` ; MCT → `bottom` / `top` ;
+    `mct-operation`/`mct-syncop` à règles → première `emissionRule` / `top`).
   - [x] `resolvedHandle = declared ?? firstHandleId(node, kind)` — fidèle à `getHandle$1` de React Flow v12.
 - [x] `edgePathOffset` (les deux composants réécrits avec le helper) : chaque nœud obtenu via `useNodes()`,
   groupé par **ancrage résolu** (élimine la clé fourre-tout `'source'` de l'ancienne version).
@@ -121,11 +122,56 @@ L'analyse statique ne suffit pas : les ancrages réels dépendent de l'état run
 - [ ] **Option A — Sanification des `edge_sides` périmées** : purge conservative au chargement des entrées impossibles
   (edgeId absent du diagramme, ou côté/handle absent des handles valides du nœud). À activer seulement si l'overlay
   révèle de telles données.
-- [ ] **Option B — Harmoniser + factoriser `getValidHandles`** : `DiagramCanvas.tsx:30-39` ne gère pas `mct-syncop` ;
-  factoriser les 3 copies (DiagramCanvas, RelationshipEdge, TraitementEdge) en un helper partagé.
+- [x] **Option B — Harmoniser + factoriser `getValidHandles`** : **fait** (voir « Option B » ci-dessous).
+  Le reliquat est levé : les 3 copies ont été supprimées au profit de `validHandles` dans `edgeAnchors.ts`.
+  L'Option A reste ouverte.
   ⚠️ B **doit** être associé à A : harmoniser sans sanifier peut « ressusciter » un côté sauvé pointant vers une règle
   d'émission renommée/supprimée → handle introuvable → erreur React Flow `008` → arête invisible.
-  À activer seulement si l'overlay montre un côté syncop chargé incorrectement.
+
+### Option B — réalisée le 2026-10-01 (déclenchée par le MCT combiné)
+
+Déclencheur : le reciblage des liens croisés du MCT combiné sur les triangles `mct-syncop` a rendu le
+reliquat **bloquant**. `DiagramCanvas` valide au chargement les côtés persistés dans
+`figures_flow:edge_sides:<diagramId>` via sa copie obsolète, qui acceptait les 4 côtés pour un `mct-syncop` →
+un `to: 'left'` réinjecté visait un handle inexistant.
+
+- `src/components/Edges/edgeAnchors.ts` : nouveau `validHandles(node, kind): Set<string>`, reprenant la
+  logique déjà correcte de `TraitementEdge` (`mct-operation`/`mct-syncop` à règles ; `mct-sync`/`mct-syncop`
+  en cible → `top`). `handleIdsOf` n'est **pas** touché : c'est l'ancrage par défaut, qui doit continuer à
+  renvoyer 4 côtés même pour un `mct-sync`, sinon les figures existantes se décalent.
+- Copies supprimées : `DiagramCanvas` (→ adaptateur mince `handlesOf`), `RelationshipEdge`, `TraitementEdge`.
+- Effet de bord : `RelationshipEdge` devient cohérent sur `mct-sync`/`mct-syncop` (elle n'était utilisée que sur
+  les arêtes `relationship`, donc aucun rendu existant n'est modifié).
+- `mct_combine.ts` : les 7 liens croisés déclarent désormais `targetHandle: 'top'` explicitement, ce qui
+  court-circuite le `??` sur `cardToSide` dans `DiagramCanvas` — les côtés périmés éventuels sont ignorés
+  par construction. L'Option A (sanification) reste utile pour le nettoyage des données, pas pour la sécurité ici.
+
+## Ancrages par défaut verticaux du MCT — fait le 2026-10-01
+
+Demande : le MCT se lit de haut en bas, donc sortie par le bas et entrée par le haut.
+Avant, tous les nœuds de processus partageaient l'ordre `right`/`left` de `Handles()`, y compris les MCT.
+
+- [x] `src/components/Edges/edgeAnchors.ts` : `MCT_SOURCE_HANDLES = ['bottom','right','left','top']`,
+      `MCT_TARGET_HANDLES = ['top','left','right','bottom']`, appliqués dans `handleIdsOf` pour les variants
+      `mct-event`, `mct-sync`, `mct-syncop`, `mct-operation`, `mct-result` (ensemble `MCT_VERTICAL_VARIANTS`).
+      La branche `emissionRules` reste prioritaire : les sources de règles sont déjà en `Position.Bottom`.
+- [x] `src/components/Nodes/ProcessNode.tsx` : `Handles({ order })` paramétré ('horizontal' | 'vertical'),
+      rendu par mapping `side → Position` au lieu de 8 balises en dur. Le handle visible (`bg-gray-400`)
+      reste celui d'index 0, donc c'est bien l'ancrage par défaut qui est affiché.
+      Appelé en `vertical` sur `MctEvent`, `MctSync`, `MctResult` et les fallbacks `: <Handles />`
+      de `MctSyncop`/`MctOperation`. `SatHead`/`SatPhase`/`SatTask`/`SatLane`/`MptLayer` restent `horizontal`,
+      `EntityNode.tsx` (MCD/MLD/MPD) n'est pas touché.
+- [x] Incohérence corrigée au passage : `mct-sync` avait un défaut cible `left` alors que `validHandles`
+      n'autorisait que `top`.
+- [x] `validHandles` inchangé : les 4 côtés restent sélectionnables à la main sur les nœuds MCT.
+- [x] Périmètre : MCT v2 + archive + MOT (MOT réutilise les MCT d'archive) **+ cibles `mct-event`** —
+      décision utilisateur. Un default par variant s'applique donc partout, sans liste d'exclusion.
+- [x] `mct_combine.ts` : les 7 liens croisés gardent `sourceHandle: 'bottom'` / `targetHandle: 'top'`
+      en dur — rendu identique, mais indépendant du default.
+- ⚠️ Rappel : `figures_flow:edge_sides:<id>` ne mémorise que les côtés choisis **à la main** et surcharge
+  le default. Vider ces clés pour voir le nouveau comportement ; c'est l'Option A qui les nettoierait.
+- [x] Vérifs : `npm run lint` → 68 erreurs TS, baseline inchangée, aucune nouvelle dans les fichiers touchés ;
+  `npx vite build` OK.
 
 ## Décisions utilisateur
 - Diagramme d'observation : « Plusieurs / je ne sais plus » → l'overlay devra couvrir n'importe quel diagramme.

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+﻿import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   BaseEdge,
   getSmoothStepPath,
@@ -9,12 +9,13 @@ import {
   type EdgeProps,
   type Node,
 } from '@xyflow/react'
-import type { RelationshipEdgeData, EntityNodeData } from '../../types'
+import type { RelationshipEdgeData } from '../../types'
 import { setCardinalitySide } from '../../hooks/useDiagramState'
 import {
   resolveHandleId,
   edgeAnchorGroup,
   edgePathOffset,
+  validHandles,
 } from './edgeAnchors'
 import { useEdgeDebugEnabled } from '../../utils/edgeDebug'
 
@@ -34,19 +35,6 @@ const SIDE_LABELS: Record<string, string> = {
   right: '➡',
   top: '⬆',
   bottom: '⬇',
-}
-
-function getValidHandles(node: Node | undefined, handleType: 'source' | 'target'): Set<string> {
-  if (!node) return new Set(['left', 'right', 'top', 'bottom'])
-  const data = node.data as unknown as EntityNodeData
-  if ((data.variant === 'mct-operation' || data.variant === 'mct-syncop') && data.emissionRules?.length) {
-    if (handleType === 'source') return new Set(data.emissionRules)
-    return new Set(['top'])
-  }
-  if ((data.variant === 'mct-sync' || data.variant === 'mct-syncop') && handleType === 'target') {
-    return new Set(['top'])
-  }
-  return new Set(['left', 'right', 'top', 'bottom'])
 }
 
 export default function TraitementEdge({
@@ -151,8 +139,8 @@ export default function TraitementEdge({
     const handle = HANDLE_ID[side]
     const nodeId = which === 'from' ? source : target
     const node = getNode(nodeId)
-    const validHandles = getValidHandles(node, which === 'from' ? 'source' : 'target')
-    if (handle && !validHandles.has(handle)) return
+    const valid = validHandles(node, which === 'from' ? 'source' : 'target')
+    if (handle && !valid.has(handle)) return
 
     const dataKey = which === 'from' ? 'cardFromSide' : 'cardToSide'
     const handleKey = which === 'from' ? 'sourceHandle' : 'targetHandle'
@@ -178,8 +166,8 @@ export default function TraitementEdge({
   const activeFrom = data?.cardFromSide ?? 'source'
   const activeTo = data?.cardToSide ?? 'source'
 
-  const validFrom = useMemo(() => getValidHandles(sourceNode, 'source'), [sourceNode])
-  const validTo = useMemo(() => getValidHandles(targetNode, 'target'), [targetNode])
+  const validFrom = useMemo(() => validHandles(sourceNode, 'source'), [sourceNode])
+  const validTo = useMemo(() => validHandles(targetNode, 'target'), [targetNode])
 
   return (
     <>

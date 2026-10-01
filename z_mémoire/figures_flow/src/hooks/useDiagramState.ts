@@ -8,6 +8,13 @@ const EDGE_SIDES_KEY = 'figures_flow:edge_sides'
 export interface DiagramState {
   positions: Record<string, { x: number; y: number }>
   viewport: { x: number; y: number; zoom: number }
+  /**
+   * Identifiants des sections verrouillées (déplacement par bloc).
+   *
+   * Optionnel : les états enregistrés avant l'introduction du verrou se chargent
+   * sans ce champ, et sont interprétés comme « rien de verrouillé ».
+   */
+  lockedSections?: string[]
 }
 
 export function loadDiagramState(diagramId: string): DiagramState | null {

@@ -2,7 +2,7 @@
 import type { DiagramDefinition } from '../../types'
 
 export const campagnesPipeline: DiagramDefinition = {
-  id: 'mcd-campagnes-pipeline',
+  id: 'mcd-campagnes-pipeline-archive',
   title: 'Campagnes & Pipeline',
   category: 'archive',
   domain: 'Campagnes & Pipeline',

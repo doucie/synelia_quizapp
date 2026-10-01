@@ -80,6 +80,10 @@ export default function App() {
             />
           )}
           <DiagramCanvas
+            /* La clé force le remontage au changement de figure : sans elle, l'effet
+               de réinitialisation dépendant de `diagram?.id` ne se rejoue pas quand
+               deux figures partagent le même id, et l'état précédent reste affiché. */
+            key={activeDiagram?.id ?? 'none'}
             diagram={activeDiagram}
             showBackground={showBackground}
             fullscreen={fullscreen}

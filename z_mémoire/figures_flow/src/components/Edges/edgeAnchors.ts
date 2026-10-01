@@ -16,6 +16,24 @@ export interface EdgeAnchorItem {
 const SOURCE_HANDLES = ['right', 'left', 'top', 'bottom']
 const TARGET_HANDLES = ['left', 'right', 'top', 'bottom']
 
+/** Un MCT se lit de haut en bas : le côté par défaut est le bas en source, le haut en cible. */
+const MCT_SOURCE_HANDLES = ['bottom', 'right', 'left', 'top']
+const MCT_TARGET_HANDLES = ['top', 'left', 'right', 'bottom']
+
+const MCT_VERTICAL_VARIANTS = new Set([
+  'mct-event',
+  'mct-sync',
+  'mct-syncop',
+  'mct-operation',
+  'mct-result',
+])
+
+/**
+ * Ordre des handles pour un nœud et un côté donné. Le premier élément est l'ancrage
+ * par défaut : cet ordre doit donc rester identique à l'ordre des `<Handle>` rendus
+ * par `ProcessNode`, sans quoi React Flow (qui retient le premier handle du même type
+ * dans le DOM) et le calcul d'offset divergeraient.
+ */
 export function handleIdsOf(node: Node | undefined, kind: HandleKind): string[] {
   if (!node) return kind === 'source' ? SOURCE_HANDLES : TARGET_HANDLES
   const data = node.data as unknown as EntityNodeData
@@ -24,11 +42,42 @@ export function handleIdsOf(node: Node | undefined, kind: HandleKind): string[] 
     if (kind === 'source') return [...data.emissionRules]
     return ['top']
   }
+  if (MCT_VERTICAL_VARIANTS.has(data.variant)) {
+    return kind === 'source' ? MCT_SOURCE_HANDLES : MCT_TARGET_HANDLES
+  }
   return kind === 'source' ? SOURCE_HANDLES : TARGET_HANDLES
 }
 
 export function firstHandleId(node: Node | undefined, kind: HandleKind): string | undefined {
   return handleIdsOf(node, kind)[0]
+}
+
+/** Une synchronisation (ou une opération à règles) n'est atteinte que par le haut. */
+const SYNC_TARGET_HANDLES = ['top']
+
+/**
+ * Handles réellement rendus sur un nœud pour un côté donné — source de vérité unique,
+ * utilisée par les arêtes (choix manuel d'un ancrage) et par `DiagramCanvas` (validation
+ * des côtés persistés dans `edge_sides`).
+ *
+ * À ne pas confondre avec `handleIdsOf` : celui-ci ne donne que l'**ordre** des handles
+ * et sert d'ancrage par défaut quand aucun handle n'est déclaré, il doit donc continuer
+ * à renvoyer les 4 côtés même pour un `mct-sync`. Les membership sets ci-dessous ne sont
+ * lus que via `has()` (l'ordre n'a donc pas d'importance).
+ */
+export function validHandles(node: Node | undefined, kind: HandleKind): Set<string> {
+  const all = () => new Set(kind === 'source' ? SOURCE_HANDLES : TARGET_HANDLES)
+  if (!node) return all()
+  const data = node.data as unknown as EntityNodeData
+  const variant = data.variant
+  if ((variant === 'mct-operation' || variant === 'mct-syncop') && data.emissionRules?.length) {
+    if (kind === 'source') return new Set(data.emissionRules)
+    return new Set(SYNC_TARGET_HANDLES)
+  }
+  if ((variant === 'mct-sync' || variant === 'mct-syncop') && kind === 'target') {
+    return new Set(SYNC_TARGET_HANDLES)
+  }
+  return all()
 }
 
 export function resolveHandleId(

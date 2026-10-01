@@ -21,17 +21,39 @@ const META_LABEL: Record<string, string> = {
 
 /* ── Shared handles ────────────────────────────────────────── */
 
-function Handles() {
+type Side = 'left' | 'right' | 'top' | 'bottom'
+
+const SIDE_POSITION: Record<Side, Position> = {
+  right: Position.Right,
+  left: Position.Left,
+  top: Position.Top,
+  bottom: Position.Bottom,
+}
+
+/**
+ * L'ordre des handles détermine l'ancrage par défaut de React Flow : le premier handle
+ * d'un côté donné est retenu quand aucune arête ne déclare de handle. Il doit rester
+ * aligné sur `handleIdsOf` dans `components/Edges/edgeAnchors.ts`.
+ * - `horizontal` : entrée/sortie par la gauche et la droite (entités, SAT, MPT).
+ * - `vertical`   : entrée par le haut, sortie par le bas (MCT).
+ */
+const HANDLE_ORDER: Record<'horizontal' | 'vertical', { source: Side[]; target: Side[] }> = {
+  horizontal: { source: ['right', 'left', 'top', 'bottom'], target: ['left', 'right', 'top', 'bottom'] },
+  vertical: { source: ['bottom', 'right', 'left', 'top'], target: ['top', 'left', 'right', 'bottom'] },
+}
+
+function Handles({ order = 'horizontal' }: { order?: 'horizontal' | 'vertical' }) {
+  const { source, target } = HANDLE_ORDER[order]
+  const sideClass = (isDefault: boolean) =>
+    clsx('nodrag nopan h-[10px] w-[10px] border-none', isDefault ? 'bg-gray-400' : 'opacity-0')
   return (
     <>
-      <Handle id="right" type="source" position={Position.Right} className="nodrag nopan h-[10px] w-[10px] border-none bg-gray-400" />
-      <Handle id="left" type="source" position={Position.Left} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
-      <Handle id="top" type="source" position={Position.Top} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
-      <Handle id="bottom" type="source" position={Position.Bottom} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
-      <Handle id="left" type="target" position={Position.Left} className="nodrag nopan h-[10px] w-[10px] border-none bg-gray-400" />
-      <Handle id="right" type="target" position={Position.Right} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
-      <Handle id="top" type="target" position={Position.Top} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
-      <Handle id="bottom" type="target" position={Position.Bottom} className="nodrag nopan h-[10px] w-[10px] border-none opacity-0" />
+      {source.map((side, i) => (
+        <Handle key={`source-${side}`} id={side} type="source" position={SIDE_POSITION[side]} className={sideClass(i === 0)} />
+      ))}
+      {target.map((side, i) => (
+        <Handle key={`target-${side}`} id={side} type="target" position={SIDE_POSITION[side]} className={sideClass(i === 0)} />
+      ))}
     </>
   )
 }
@@ -43,7 +65,7 @@ function MctEvent({ data }: { data: EntityNodeData }) {
   return (
     <div className={clsx('flex flex-col items-center justify-center rounded-2xl border border-solid shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'border-border bg-background/70 min-w-[180px] px-4 py-3')} style={color ? { borderColor: color } : undefined}>
       <span className="font-semibold text-foreground text-center leading-snug" style={{ fontSize: 'calc(var(--mct-event-scale, 1) * 12px)', ...(color ? { color } : {}) }}>{label}</span>
-      <Handles />
+      <Handles order="vertical" />
     </div>
   )
 }
@@ -63,7 +85,7 @@ function MctSync({ data }: { data: EntityNodeData }) {
       }}
     >
       <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'calc(var(--mct-sync-scale, 1) * 12px)' }}>{label}</span>
-      <Handles />
+      <Handles order="vertical" />
     </div>
   )
 }
@@ -139,7 +161,7 @@ function MctSyncop({ data }: { data: EntityNodeData }) {
               style={{ left: `${((i + 0.5) / rules.length) * 100}%` }}
             />
           ))
-          : <Handles />
+          : <Handles order="vertical" />
         }
       </div>
     </div>
@@ -187,7 +209,7 @@ function MctOperation({ data }: { data: EntityNodeData }) {
             style={{ left: `${((i + 0.5) / rules.length) * 100}%` }}
           />
         ))
-        : <Handles />
+        : <Handles order="vertical" />
       }
     </div>
   )
@@ -203,7 +225,7 @@ function MctResult({ data }: { data: EntityNodeData }) {
       style={color ? { borderColor: color, background: hsla(color, 0.094), color } : undefined}
     >
       <span className="font-semibold uppercase tracking-wider text-center" style={{ fontSize: 'calc(var(--mct-result-scale, 1) * 10.5px)' }}>{label}</span>
-      <Handles />
+      <Handles order="vertical" />
     </div>
   )
 }

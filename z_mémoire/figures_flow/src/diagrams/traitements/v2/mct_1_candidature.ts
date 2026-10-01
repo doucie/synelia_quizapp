@@ -24,11 +24,11 @@ export const mct1Candidature: DiagramDefinition = {
     },
     {
       id: 'mct1-r1', type: 'process', position: { x: 80, y: 420 },
-      data: { variant: 'mct-result', label: 'Candidat accepté pour l\'étape suivante (T1.CAES)', rule: 'Éligible ET Quota OK' },
+      data: { variant: 'mct-result', label: 'Candidat accepté pour l\'étape suivante', rule: 'Éligible ET Quota OK' },
     },
     {
       id: 'mct1-r2', type: 'process', position: { x: 400, y: 420 },
-      data: { variant: 'mct-result', label: 'Candidature rejetée (T1.KO)', rule: 'Non éligible OU Quota atteint', fail: true },
+      data: { variant: 'mct-result', label: 'Candidature rejetée', rule: 'Non éligible OU Quota atteint', fail: true },
     },
   ],
   edges: [

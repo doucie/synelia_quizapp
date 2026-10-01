@@ -30,6 +30,7 @@ import { mct3Entretien } from './traitements/v2/mct_3_entretien'
 import { mct4Decision } from './traitements/v2/mct_4_decision'
 import { mct5Annulation } from './traitements/v2/mct_5_annulation'
 import { mct6Audit } from './traitements/v2/mct_6_audit'
+import { mctParcours1, mctParcours2 } from './traitements/v2/mct_combine'
 
 // === MOT ===
 import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
@@ -99,7 +100,7 @@ export const diagrams: DiagramDefinition[] = [
   mpdSqlCamp,
   mpdSqlEntret,
 
-  // --- Traitements v2 (7) ---
+  // --- Traitements v2 (9 : 7 MCT + 2 figures de parcours) ---
   mct0CreationCampagne,
   mct1Candidature,
   mct2Quiz,
@@ -107,6 +108,8 @@ export const diagrams: DiagramDefinition[] = [
   mct4Decision,
   mct5Annulation,
   mct6Audit,
+  mctParcours1,
+  mctParcours2,
 
   // --- MOT (1) ---
   motOrganisationnelV2,

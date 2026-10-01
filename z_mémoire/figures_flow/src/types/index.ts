@@ -118,4 +118,22 @@ export interface DiagramDefinition {
   domain: string
   nodes: EntityNode[]
   edges: RelationshipEdge[]
+  /**
+   * Groupes d'éléments déplaçables d'un bloc (un « traitement »).
+   *
+   * `prefix` doit correspondre au préfixe d'identifiant porté par les nœuds du
+   * groupe : c'est lui qui sert de critère d'appartenance. Présent uniquement sur
+   * les figures qui contiennent plusieurs traitements (MCT combinée) ; son
+   * absence désactive complètement l'encadrement et le verrou.
+   */
+  sections?: DiagramSection[]
+}
+
+export interface DiagramSection {
+  /** Identifiant court affiché sur l'encadrement — `t0`, `t1`, … */
+  id: string
+  /** Préfixe d'identifiant des nœuds du groupe — `t0-`, `t1-`, … */
+  prefix: string
+  /** Libellé complet, à usage informative. */
+  label: string
 }

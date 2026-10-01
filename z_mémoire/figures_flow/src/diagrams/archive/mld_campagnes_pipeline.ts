@@ -2,7 +2,7 @@
 import type { DiagramDefinition } from '../../types'
 
 export const campagnesPipeline: DiagramDefinition = {
-  id: 'mld-campagnes-pipeline',
+  id: 'mld-campagnes-pipeline-archive',
   title: 'Campagnes & Pipeline',
   category: 'archive',
   domain: 'Campagnes & Pipeline',
