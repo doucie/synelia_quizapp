@@ -2,6 +2,7 @@
 import {
   BaseEdge,
   getSmoothStepPath,
+  getStraightPath,
   EdgeLabelRenderer,
   useReactFlow,
   useEdges,
@@ -121,15 +122,30 @@ export default function TraitementEdge({
   const tx = tgtOnHorizontalSide ? targetX : targetX + toEdgeOff
   const ty = tgtOnHorizontalSide ? targetY + toEdgeOff : targetY
 
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX: sx,
-    sourceY: sy,
-    sourcePosition,
-    targetX: tx,
-    targetY: ty,
-    targetPosition,
-    borderRadius: 8,
-  })
+  // Sur les figures MCT, un segment droit : l'éventail des règles d'émission est
+  // déjà réparti le long du bord inférieur du nœud d'opération, donc les diagonales
+  // partent de points distincts et n'ont plus besoin du coude orthogonal pour se
+  // distinguer. `sx`/`sy`/`tx`/`ty` portent déjà l'offset d'ancrage : il produit
+  // des diagonales parallèles là où il produisait des marches parallèles, sans
+  // qu'aucun réglage de `edgeAnchors.ts` ne change.
+  // Les deux fonctions renvoient `[path, labelX, labelY, …]` : label et overlay
+  // de debug restent donc alignés sur le milieu de l'arête dans les deux cas.
+  const [edgePath, labelX, labelY] = data.straight
+    ? getStraightPath({
+        sourceX: sx,
+        sourceY: sy,
+        targetX: tx,
+        targetY: ty,
+      })
+    : getSmoothStepPath({
+        sourceX: sx,
+        sourceY: sy,
+        sourcePosition,
+        targetX: tx,
+        targetY: ty,
+        targetPosition,
+        borderRadius: 8,
+      })
 
   const isDashed = data?.isDashed ?? false
   const isStrong = data?.isStrong ?? false

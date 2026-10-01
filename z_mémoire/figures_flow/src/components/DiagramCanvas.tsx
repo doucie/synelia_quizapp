@@ -129,6 +129,11 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         data: {
           ...e.data,
           diagramId: diagram.id,
+          // Les figures MCT (v2 comme archive) sont tracées en segments droits ;
+          // SAT, MPT et le reste gardent le tracé en escalier. Le critère est
+          // l'id — `mct-*` / `mct-v2-*` d'un côté, `sat-*` / `mpt-*` de l'autre —
+          // ce qui évite de faire sniffler l'id par le composant d'arête.
+          straight: diagram.id.startsWith('mct'),
           ...(cardFromSide && validSourceHandles.has(cardFromSide) ? { cardFromSide } : {}),
           ...(cardToSide && validTargetHandles.has(cardToSide) ? { cardToSide } : {}),
           ...(saved?.reflexOffset != null ? { reflexOffset: saved.reflexOffset } : {}),

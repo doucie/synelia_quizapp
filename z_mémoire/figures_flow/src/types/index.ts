@@ -81,6 +81,14 @@ export interface RelationshipEdgeData {
   cardToSide?: 'source' | 'left' | 'right' | 'top' | 'bottom'
   isStrong?: boolean
   isDashed?: boolean
+  /**
+   * Tracer l'arête en segment droit au lieu du tracé en escalier.
+   *
+   * Posé par `DiagramCanvas` d'après l'id de la figure (`data.straight`), jamais
+   * par le composant d'arête lui-même : la règle « quelles figures sont droites »
+   * est ainsi écrite à un seul endroit. À ce jour, seules les figures MCT le sont.
+   */
+  straight?: boolean
   diagramId?: string
   attributes?: string[]
   reflexOffset?: number
