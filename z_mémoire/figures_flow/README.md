@@ -149,28 +149,67 @@ Les entités du MCD mappent vers les tables MySQL du MPD. Les noms sont **anglic
 > DELETE`, unicités, index, colonnes techniques et moteur/charset (règles 2, 3, 4, 5, 6, 7, 8 et
 > 10 de `plans/rules/regles_mpd.md`). Les deux vues ne peuvent pas diverger.
 
-### Diagrammes archivés (34)
+### Diagrammes de traitements — figures de parcours (4)
 
-Les anciens diagrammes (MCD/MLD/MPD v1, traitements v1, MOT v1) sont conservés dans `src/diagrams/archive/` avec `// @ts-nocheck` et `category: 'archive'`.
+Le cycle de vie du MCT est rendu par **4 figures de parcours**, et non par une figure unique :
+assemblées côte à côte, elles tombaient à un zoom `fitView` d'environ 0.16, illisible. Le
+découpage est fonctionnel, pas décoratif.
 
-### Diagrammes de traitements v2 (7)
+Disponibles dans `src/diagrams/traitements/v2/mct_combine.ts` :
 
-Disponibles dans `src/diagrams/traitements/v2/` :
+| # | Figure | Traitements | Contenu |
+|---|--------|-------------|---------|
+| 1 | `mct-v2-parcours-1` | T0, T1, T2 | Amont : de la campagne au quiz |
+| 2 | `mct-v2-parcours-2` | T3, T4, T5 | Cycle d'entretien : planification, conduite, évaluation |
+| 3 | `mct-v2-parcours-3` | T6, T7 | Décision et annulation |
+| 4 | `mct-v2-parcours-4` | T8 | Audit seul — transverse, sans lien entrant ni sortant |
 
-| # | Type | Traitement | Description |
-|---|------|-----------|-------------|
-| 1 | MCT | T0 | Création de campagne |
-| 2 | MCT | T1 | Soumission candidature |
-| 3 | MCT | T2 | Passage du quiz |
-| 4 | MCT | T3 | Entretien & évaluation |
-| 5 | MCT | T4 | Décision |
-| 6 | MCT | T5 | Rollback |
-| 7 | MCT | T6 | Audit |
+`mct_combine.ts` est une fabrique `buildCombine({ id, title, domain, entries, crossLinks })` : elle
+préfixe les nœuds par traitement (`t0-`, `t1-`…), réindexe les rangées à partir de 0, et pose les
+arêtes croisées entre traitements. Chaque figure expose `sections`, qui active l'encadrement et le
+verrou de glissement groupé.
 
-> **Note** : `plans/mct/nouveaux_mct.md` est la **source de vérité** pour les MCT :
-> conventions Merise corrigées + parcours en 9 traitements (T0–T8). Les MCT v2
-> actuels couvrent T0–T6. La version cible détaille T0–T8 (planification /
-> conduite / évaluation séparés). **Le code n'est pas encore aligné sur le plan.**
+Un **résultat de T*n* déclenche la synchronisation de T*n+1***, pas son événement : la couture entre
+traitements arrive en `targetHandle: 'top'` sur le nœud `mct-syncop`. Un lien ne peut pas traverser
+deux figures, donc **deux coutures ne sont pas représentées** (T2→T3 et T5→T6) : `buildCombine` les
+retire et les signale via `console.error`. La continuité entre figures est portée par les titres
+« 1/4 » … « 4/4 ».
+
+### Les 9 traitements individuels
+
+Les MCT ne sont plus des figures lisibles isolément : les 9 traitements vivent dans
+`src/diagrams/archive/mct_[0-8]_*.ts` avec `category: 'archive'` et leurs ids `mct-v2-N-*` conservés.
+Ils restent **la seule définition du modèle** que les figures de parcours assemblent — même
+arrangement que le MOT v2, qui importe ses MCT depuis `archive/`.
+
+| T | Fichier | Traitement | Événement propre |
+|---|---------|-----------|------------------|
+| T0 | `mct_0_creation_campagne.ts` | Créer la campagne | Besoin d'un nouveau recrutement |
+| T1 | `mct_1_candidature.ts` | Candidature | Formulaire envoyé |
+| T2 | `mct_2_quiz.ts` | Quiz | Quiz soumis par le candidat |
+| T3 | `mct_3_planification.ts` | Planification de l'entretien | Candidat accepté pour l'évaluation |
+| T4 | `mct_4_conduite_entretien.ts` | Conduire l'entretien | Date et heure de l'entretien atteintes |
+| T5 | `mct_5_evaluation.ts` | Évaluation | Fiches d'évaluation renseignées |
+| T6 | `mct_6_decision.ts` | Décision | *(aucun)* |
+| T7 | `mct_7_annulation.ts` | Annulation | Demande d'annulation |
+| T8 | `mct_8_audit.ts` | Audit | Toute opération métier réalisée |
+
+> **Note** : `plans/mct/nouveaux_mct.md` est la **source de vérité** pour les MCT — conventions
+> Merise corrigées + parcours en 9 traitements (T0–T8). **Le code est aligné sur le plan depuis le
+> 2026-10-01** : T3 Planification et T4 Conduire l'entretien, absents du code, ont été créés, et les
+> 4 autres renumérotés. Détail dans `plans/implementations/20261001_mct_t0_t8_alignment.md`.
+
+### Diagrammes archivés (43)
+
+| Famille | Nb | Remarque |
+|---------|-----|----------|
+| MCD / MLD / MPD v1 | 21 | anciens diagrammes relationnels (7 par niveau) |
+| MCT v1 | 9 | anciens MCT, importés par le MOT v2 |
+| MCT v2 (T0–T8) | 9 | définition du modèle, voir ci-dessus |
+| SAT v1 | 2 | sous-traitance |
+| MPT v1 | 2 | vue en couches techniques |
+
+Tous dans `src/diagrams/archive/`, avec `// @ts-nocheck` et `category: 'archive'`.
 
 ### Diagrammes supplémentaires
 
@@ -212,9 +251,9 @@ Certaines tables présentes en BD ne figurent pas dans le MCD. Voir `plans/audit
 ```typescript
 Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot'
 
-ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-operation' | 'mct-result'
+ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result'
                | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane'
-               | 'mpt-layer'
+               | 'mpt-layer' | 'mot-matrix'
 
 Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | ProcessVariant
 
@@ -222,13 +261,15 @@ Attribute = { name, type?, isPK?, isFK?, nullable?, description? }
 
 EntityNodeData = { label, variant, attributes?, color?, badge?, items?, meta?,
                    detail?, expression?, fail?, layer?, dimensions?
+                   /* MCT */ syncLabel?, emissionRules?, rule?
+                   /* MOT */ motMatrix?
                    /* vue script MPD */ sql?, lineCount?, mcd?, auditNote?,
                    sqlLegend? }
 
 RelationshipEdgeData = { label?, cardFrom?, cardTo?, isStrong?, isDashed?,
-                         diagramId? }
+                         straight?, diagramId? }
 
-DiagramDefinition = { id, title, category, domain, nodes[], edges[] }
+DiagramDefinition = { id, title, category, domain, nodes[], edges[], sections? }
 ```
 
 > `Attribute.nullable` existe déjà pour le MLD. Il est aussi utilisé au MPD, où il pilote la
@@ -238,6 +279,10 @@ DiagramDefinition = { id, title, category, domain, nodes[], edges[] }
 > La variante `mpd-sql` est **déléguée** par `EntityNode` à `SqlScriptBlock` (aucun nouveau type
 > de nœud React Flow) : `EntityNodeData` reste le type de données commun, et `loadPositions` /
 > `applyEntityColors` / `autoLayout` n'ont pas à connaître la vue script.
+>
+> `sections?` n'existe que sur les figures qui contiennent **plusieurs traitements** — c'est-à-dire
+> les 4 figures de parcours du MCT, construites par `mct_combine.ts`. Son absence désactive
+> complètement l'encadrement et le verrou de glissement groupé.
 
 ## Stack
 
@@ -271,9 +316,9 @@ figures_flow/
 │   │   │   ├── mld/          # 5 fichiers MLD
 │   │   │   ├── mpd/          # Source unique (schema.ts) + 2 figures en tables
 │   │   │   └── mpd_sql/      # Vue « script » — 2 figures CREATE TABLE (layout + figures)
-│   │   ├── archive/          # Anciens diagrammes (30 fichiers, @ts-nocheck)
-│   │   ├── traitements/      # MCT/SAT/MPT v1 (archivés) et v2 (actifs)
-│   │   │   └── v2/           # 7 fichiers MCT (T0–T6)
+│   │   ├── archive/          # 43 fichiers (@ts-nocheck) — dont les 9 MCT v2 (T0–T8)
+│   │   ├── traitements/
+│   │   │   └── v2/           # mct_combine.ts — fabrique des 4 figures de parcours
 │   │   ├── mot/              # MOT v2 (matrice acteurs × traitements)
 │   │   └── palette/          # Diagramme de couleurs
 │   ├── components/
@@ -361,7 +406,8 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
   clair/sombre pour un export mémoire reproductible
 - Labels de relation (verb) au centre des liens en MCD
 - Palette sobre : pas de classifications "nouvelle entité" ou "pivot" — uniquement des couleurs par entité pour la lisibilité
-- **Nœuds de traitements** : variantes `mct-event` (losange), `mct-sync` (parallelogramme), `mct-operation` (rectangle), `mct-result` (rectangle vert/rouge), `sat-*`, `mpt-layer` — chaque variante a un style distinct
+- **Nœuds de traitements** : variantes `mct-event` (losange), `mct-sync` (**pentagone**), `mct-syncop` (pentagone + rectangle d'opération fusionnés), `mct-operation` (rectangle), `mct-result` (rectangle vert/rouge), `sat-*`, `mpt-layer` — chaque variante a un style distinct. Le pentagone est un `clip-path` `polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)`, posé dans `MctSync`, `MctSyncop` et `MotSync`
+- **Arêtes MCT en segment droit** : les 22 figures MCT sont tracées en diagonale plutôt qu'en escalier. Le drapeau `data.straight` est posé **uniquement** par `DiagramCanvas.tsx` d'après `diagram.id.startsWith('mct')`, puis consommé par `TraitementEdge.tsx` (qui bascule entre `getStraightPath` et `getSmoothStepPath`) — la règle « quelles figures sont droites » est ainsi écrite à un seul endroit. SAT, MPT, MOT, MCD, MLD et MPD gardent l'escalier et passent par `RelationshipEdge.tsx`
 
 ## Principe Merise
 
@@ -383,7 +429,8 @@ Les trois niveaux de modélisation respectés :
 
 Diagrammes de traitements :
 
-- **MCT** (Modèle Conceptuel de Traitement) : événements (losange), synchronisations (parallelogramme), opérations (rectangle), résultats (rectangle vert/rouge). Décrivent les flux métier par traitement (T1=Soumettre candidature, T2=Passer quiz, T3=Entretien/évaluation, T4=Décision/audit)
+- **MCT** (Modèle Conceptuel de Traitement) : événements (losange), synchronisations (**pentagone**), opérations (rectangle), résultats (rectangle vert/rouge). Décrivent les flux métier par traitement. La numérotation fait foi dans `plans/mct/nouveaux_mct.md`, source de vérité : T0 Créer la campagne, T1 Candidature, T2 Quiz, T3 Planification de l'entretien, T4 Conduire l'entretien, T5 Évaluation, T6 Décision, T7 Annulation, T8 Audit
+- **`syncLabel` = l'opérateur qui combine les flèches entrantes réellement dessinées** sur la synchronisation. Un `event-result` en compte une, puisqu'il arrive directement sur le pentagone : T1, T2, T4 et T5 reçoivent 2 flèches → `ET` ; T7 en reçoit 4 (les 3 résultats de T6 + son propre événement) → la formule complète `(RET OU ATT OU REF) ET DA`. T0, T3, T6 et T8 n'en reçoivent qu'une, donc restent vides
 - **SAT** (Sous-traitance) : décomposition des sous-traites en phases/tâches
 - **MPT** (Modèle Physique de Traitement) : vue en couches montrant l'empilement technique (front, API, BDD)
 
