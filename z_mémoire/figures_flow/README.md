@@ -406,7 +406,7 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
   clair/sombre pour un export mémoire reproductible
 - Labels de relation (verb) au centre des liens en MCD
 - Palette sobre : pas de classifications "nouvelle entité" ou "pivot" — uniquement des couleurs par entité pour la lisibilité
-- **Nœuds de traitements** : variantes `mct-event` (losange), `mct-sync` (**pentagone**), `mct-syncop` (pentagone + rectangle d'opération fusionnés), `mct-operation` (rectangle), `mct-result` (rectangle vert/rouge), `sat-*`, `mpt-layer` — chaque variante a un style distinct. Le pentagone est un `clip-path` `polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)`, posé dans `MctSync`, `MctSyncop` et `MotSync`
+- **Nœuds de traitements** : variantes `mct-event` (losange), `mct-sync` (**pentagone**), `mct-syncop` (pentagone + rectangle d'opération fusionnés), `mct-operation` (rectangle), `mct-result` (rectangle vert/rouge), `sat-*`, `mpt-layer` — chaque variante a un style distinct. Le pentagone est un `clip-path` `polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)`, posé en ligne dans `ProcessNode.tsx` par les trois composants `MctSync`, `MctSyncop` et `MotSync`
 - **Arêtes MCT en segment droit** : les 22 figures MCT sont tracées en diagonale plutôt qu'en escalier. Le drapeau `data.straight` est posé **uniquement** par `DiagramCanvas.tsx` d'après `diagram.id.startsWith('mct')`, puis consommé par `TraitementEdge.tsx` (qui bascule entre `getStraightPath` et `getSmoothStepPath`) — la règle « quelles figures sont droites » est ainsi écrite à un seul endroit. SAT, MPT, MOT, MCD, MLD et MPD gardent l'escalier et passent par `RelationshipEdge.tsx`
 
 ## Principe Merise
