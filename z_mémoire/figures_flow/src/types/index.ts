@@ -89,6 +89,17 @@ export interface EntityNodeData {
    * cible de l'export est la carte interne, pas le wrapper `react-flow__node`.
    */
   minHeight?: number
+  /**
+   * Niveau hiérarchique d'une boîte d'organigramme, qui décide de son style.
+   *
+   * L'organigramme d'origine distingue déjà les niveaux par la boîte et non par
+   * le trait : les services sont les seules boîtes à fond blanc et à bordure
+   * gauche fine. Retiré de ce niveau, ce signal — le seul qui reste une fois les
+   * liens sous les directions supprimés.
+   *
+   * Par défaut `dir`, le style le plus proche de l'ancien style unique.
+   */
+  orgLevel?: 'gov' | 'dir' | 'svc'
 }
 
 export interface SqlLegendItem {
@@ -135,6 +146,16 @@ export interface RelationshipEdgeData {
   busGap?: number
   /** Rayon des angles de la barre de distribution. 0 = angles vifs. */
   busRadius?: number
+  /**
+   * Couleur du trait, en CSS. Sinon `OrgBusEdge` retombe sur la couleur d'arête
+   * par défaut de l'application, ce qui rend impossible de distinguer une branche
+   * de gouvernance d'un rattachement latéral.
+   *
+   * L'organigramme d'origine utilise trois traitements : gris 2 px pour la
+   * chaîne de gouvernance et la barre, teinte de l'entité 1,7 px en tirets pour
+   * le PMO, teinte de la direction 1,2 px pour les liens vers les services.
+   */
+  stroke?: string
   /**
    * Fraction de la descente à laquelle se fait la course horizontale, entre 0
    * (au bord du source) et 1 (sur la barre, le défaut).

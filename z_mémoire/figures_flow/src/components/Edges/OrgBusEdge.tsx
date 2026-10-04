@@ -67,6 +67,15 @@ function roundedPolyline(points: Pt[], radius: number): string {
 
 const DEFAULT_BUS_GAP = 56
 const DEFAULT_BUS_RADIUS = 12
+/**
+ * Motif de tirets du rattachement PMO, repris de l'organigramme d'origine
+ * (`stroke-dasharray: 6 3` sur le SVG qu'il pose à la main).
+ *
+ * Un `6 3` court et serré se lit comme un pointillé de rattachement, là où le
+ * `7 5` se lisait comme un trait pointillé long, plus proche d'un lien polygonal
+ * que d'un organigramme.
+ */
+const DASH_PMO = '6 3'
 
 /**
  * Arête de distribution d'un organigramme : on descend sous la boîte parente,
@@ -105,6 +114,7 @@ export default function OrgBusEdge({
   // redonne ce comportement, fraction 0 la fait partir du bord de la source.
   const runY = sourceY + gap * (data.trunkFraction ?? 1)
   const radius = data.busRadius ?? DEFAULT_BUS_RADIUS
+  const stroke = selected ? undefined : data.stroke
   const path = roundedPolyline(
     [
       { x: sourceX, y: sourceY },
@@ -160,11 +170,18 @@ export default function OrgBusEdge({
       <BaseEdge
         id={id}
         path={path}
-        className={selected ? 'stroke-primary' : 'stroke-[var(--xy-edge-stroke-default)]'}
+        // Trois cas, et un seul porteur de couleur : la sélection, sinon la
+        // figure, sinon le défaut de l'application. Une couleur posée par la
+        // figure est passée par `style` et non par une classe utilitaire, qu'elle
+        // ne pourrait pas remplacer — la classe passerait après le style inline.
+        className={
+          stroke ? undefined : selected ? 'stroke-primary' : 'stroke-[var(--xy-edge-stroke-default)]'
+        }
         interactionWidth={20}
         style={{
+          stroke,
           strokeWidth: data.isStrong ? 2 : 1.5,
-          strokeDasharray: data.isDashed ? '7 5' : undefined,
+          strokeDasharray: data.isDashed ? DASH_PMO : undefined,
         }}
       />
       {debug && (
