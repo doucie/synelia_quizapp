@@ -15,6 +15,8 @@ interface FullscreenOverlayProps {
   onExportPositions: () => void
   onResetPositions: () => void
   onExitFullscreen: () => void
+  /** Figure au placement imposé : la toolbar masque les commandes de position. */
+  fixedLayout?: boolean
 }
 
 export default function FullscreenOverlay({
@@ -29,6 +31,7 @@ export default function FullscreenOverlay({
   onExportPositions,
   onResetPositions,
   onExitFullscreen,
+  fixedLayout,
 }: FullscreenOverlayProps) {
   const [sidebarPill, setSidebarPill] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -137,6 +140,7 @@ export default function FullscreenOverlay({
             onExportSvg={onExportSvg}
             onExportPositions={onExportPositions}
             onResetPositions={onResetPositions}
+            fixedLayout={fixedLayout}
           />
         </div>
       )}

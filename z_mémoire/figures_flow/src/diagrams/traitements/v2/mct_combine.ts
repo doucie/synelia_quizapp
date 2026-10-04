@@ -23,7 +23,7 @@ import { mct8Audit } from '../../archive/mct_8_audit'
  * - `mctParcours2` : T3 Planification, T4 Conduire l'entretien, T5 Évaluation —
  *   tout le cycle d'entretien, du créneau réservé au verdict.
  * - `mctParcours3` : T6 Décision, T7 Annulation — la décision et sa mise en
- *   æuvre, avec les trois résultats de T6 qui alimentent la synchronisation de T7.
+ *   æuvre, avec les deux résultats de T6 qui alimentent la synchronisation de T7.
  * - `mctParcours4` : T8 Audit, seul sur sa figure. Ce n'est pas un oubli :
  *   l'audit est transverse, il n'a aucun lien entrant ni sortant, donc il n'a
  *   jamais fait partie de la chaîne. Il est isolé pour que les trois figures
@@ -34,15 +34,18 @@ import { mct8Audit } from '../../archive/mct_8_audit'
  * definition du modèle : c'est le même arrangement que le MOT v2, qui importe
  * ses MCT depuis `archive/`.
  *
- * **Deux coutures ne sont pas représentées.** Une arête ne peut pas relier deux
+* **Deux coutures ne sont pas représentées.** Une arête ne peut pas relier deux
  * figures : `x-t2-r1-t3-op` et `x-t5-r1-t6-op` citent une extrémité absente du
  * lot, `buildCombine` les retire donc et signale l'erreur. Conséquence : « Quiz
  * validé » et « Entretien validé » restent sans arête sortante. « Candidat accepté
- * pour l'évaluation » apparaît comme le déclencheur propre de T3, et T6 n'a
- * aucun événement : son unique déclencheur est le résultat de T5. Choix assumé :
- * rien n'est ajouté (ni nœud de sortie, ni libellé modifié) pour ne pas
- * introduire d'élément absent du modèle Merise — la continuité est portée par les
- * titres « 1/4 » … « 4/4 » et par le texte du mémoire.
+ * pour l'évaluation » apparaît comme le déclencheur propre de T3. Choix assumé :
+ * rien n'est ajouté (ni nœud de sortie, ni libellé modifié) pour ne pas introduire
+ * d'élément absent du modèle Merise — la continuité est portée par les titres
+ * « 1/4 » … « 4/4 » et par le texte du mémoire.
+ *
+ * Les pentagones de T3 et de T6 restent donc **vides** alors que le plan leur donne
+ * deux événements : chacun n'a qu'une flèche entrante dessinée — son événement
+ * propre. `syncLabel` décrit les flèches dessinées, pas la logique abstraite.
  */
 
 /** Hauteur d'une rangée de traitement. Le nœud le plus bas d'un MCT est à y ≈ 500. */
@@ -171,7 +174,6 @@ export const mctParcours3: DiagramDefinition = buildCombine({
   crossLinks: [
     { id: 'x-t6-r1-t7-op', source: 't6-mct6-r1', target: 't7-mct7-op', sourceHandle: 'bottom', targetHandle: 'top' },
     { id: 'x-t6-r2-t7-op', source: 't6-mct6-r2', target: 't7-mct7-op', sourceHandle: 'bottom', targetHandle: 'top' },
-    { id: 'x-t6-r3-t7-op', source: 't6-mct6-r3', target: 't7-mct7-op', sourceHandle: 'bottom', targetHandle: 'top' },
   ],
 })
 

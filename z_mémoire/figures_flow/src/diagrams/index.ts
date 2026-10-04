@@ -81,6 +81,7 @@ import { sat1SetupPreselection as archSat1 } from './archive/sat_1_setup_presele
 import { sat2EntretienAudit as archSat2 } from './archive/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz as archMpt1 } from './archive/mpt_1_candidature_quiz'
 import { mpt2EntretienDecision as archMpt2 } from './archive/mpt_2_entretien_decision'
+import { syneliaAvecAg } from './organigramme/synelia_avec_ag'
 
 export const diagrams: DiagramDefinition[] = [
   // --- Nouveaux MCD (5) ---
@@ -113,6 +114,9 @@ export const diagrams: DiagramDefinition[] = [
 
   // --- MOT (1) ---
   motOrganisationnelV2,
+
+  // --- Organigramme (1) ---
+  syneliaAvecAg,
 
   // --- Palette (1) ---
   colorPalette,

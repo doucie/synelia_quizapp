@@ -12,6 +12,11 @@ interface ToolbarProps {
   onExportSvg: () => void
   onExportPositions: () => void
   onResetPositions: () => void
+  /**
+   * Figure au placement imposé (`rigidLayout`) : « Export » et « ↺ » portent sur
+   * les positions, qui n'existent pas pour elle — les boutons sont masqués.
+   */
+  fixedLayout?: boolean
 }
 
 export default function Toolbar({
@@ -22,6 +27,7 @@ export default function Toolbar({
   onExportSvg,
   onExportPositions,
   onResetPositions,
+  fixedLayout,
 }: ToolbarProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const edgeDebug = useEdgeDebugEnabled()
@@ -70,20 +76,24 @@ export default function Toolbar({
       >
         SVG
       </button>
-      <button
-        onClick={onExportPositions}
-        className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-        title="Exporter les positions"
-      >
-        Export
-      </button>
-      <button
-        onClick={onResetPositions}
-        className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-        title="Réinitialiser les positions"
-      >
-        ↺
-      </button>
+      {!fixedLayout && (
+        <>
+          <button
+            onClick={onExportPositions}
+            className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            title="Exporter les positions"
+          >
+            Export
+          </button>
+          <button
+            onClick={onResetPositions}
+            className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            title="Réinitialiser les positions"
+          >
+            ↺
+          </button>
+        </>
+      )}
       <button
         onClick={onToggleFullscreen}
         className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"

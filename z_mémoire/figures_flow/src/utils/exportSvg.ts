@@ -1,4 +1,5 @@
 import { toCanvas } from 'html-to-image'
+import { DEFAULT_MOT_TABLE_CONFIG } from '../types'
 import { isEdgeDebugEnabled } from './edgeDebug'
 
 /**
@@ -13,7 +14,7 @@ export async function exportNodeSvg(nodeId: string, filename: string): Promise<v
   if (!el) return
 
   const pr = 2
-  const canvas = await captureNodePadded(el)
+  const { canvas } = await captureNodePadded(el)
 
   const w = canvas.width / pr
   const h = canvas.height / pr
@@ -40,6 +41,34 @@ function download(blob: Blob, filename: string) {
 
 const TRANSLATE_RE = /translate\(([-\d.]+)px?,\s*([-\d.]+)px?\)/
 
+/**
+ * Variables CSS à recopier sur le wrapper de capture.
+ *
+ * Le clone est inséré sous `document.body`, donc **hors** du sous-arbre de
+ * `DiagramCanvas` où ces variables sont déclarées, et les nœuds MCT écrivent
+ * leurs tailles en `calc(var(--mct-*-scale, 1) * Npx)`. `html-to-image` les
+ * recopie élément par élément (`cloneCSSStyle` énumère les longhands de
+ * `getComputedStyle`, ce qui inclut ou non les custom properties selon le
+ * navigateur) — on ne veut pas dependre de ce détail : les valeurs sont donc
+ * recopiées explicitement sur le wrapper, qui est la racine capturée.
+ * Lues sur le nœud live, elles y sont déjà résolues par héritage. Les noms
+ * sont dérivés de la config, source unique.
+ */
+const CAPTURE_CSS_VARS = [
+  ...Object.keys(DEFAULT_MOT_TABLE_CONFIG.mctFontScales).map((k) => `--mct-${k}-scale`),
+  // L'organigramme n'a pas de table de config : son échelle est le champ
+  // `fontScale` de `DiagramDefinition`, posé sur la racine dans `DiagramCanvas`.
+  // Elle se déclare donc en dur ici, et le nom doit rester aligné sur celui-là.
+  '--org-font-scale',
+]
+
+interface NodeCapture {
+  canvas: HTMLCanvasElement
+  /** Décalage de la cible dans l'enveloppe `.react-flow__node`, en unités monde. */
+  dx: number
+  dy: number
+}
+
 interface NodePlacement {
   href: string
   x: number
@@ -63,18 +92,43 @@ interface NodePlacement {
 const NODE_CAPTURE_PAD = 16
 
 /**
- * Cible de capture : la carte bordée d'un nœud si elle existe, sinon l'enveloppe.
+ * Cible de capture : l'élément à rasteriser pour ce nœud.
  *
- * L'objet capturé important c'est la CARTE, pas l'enveloppe `.react-flow__node` :
- * les blocs qui exportent parfaitement (ex. `SqlScriptBlock`, racine
- * `w-full overflow-hidden` à hauteur de contenu) SONT leur carte, tandis que la
- * carte des entités (`h-full`, hauteur 100% de l'enveloppe RF + Handles absolus)
- * perdait sa bordure-bas une fois clonée dans l'enveloppe. En clonant la carte
- * seule dans le wrapper paddé, on reproduit pour toutes les cartes le cas qui
- * marche déjà. Fallback sur l'enveloppe pour les nœuds sans carte bordée
- * (formes polygonales MCT/SAT, …).
+ * **Invariant à ne jamais casser** : le raster doit être dimensionné *et*
+ * positionné d'après la boîte de l'élément **réellement rasterisé**. Les deux
+ * ne coïncident que si la cible est l'enveloppe elle-même — d'où les deux
+ * résolutions ci-dessous, et le décalage `dx`/`dy` que `captureNodePadded`
+ * mesure pour que tout écart ultérieur soit inoffensif.
+ *
+ * 1. `[data-export-root]` — contrat explicite, prioritaire. Le pose un nœud
+ *    composé de plusieurs formes, dont aucune n'est « la carte ».
+ * 2. Repli : la première carte bordée des 4 côtés. C'est le cas MCD / MLD /
+ *    MPD-SQL, où la carte **est** la racine du nœud (cible == enveloppe).
+ * 3. Repli final : l'enveloppe.
+ *
+ * `mct-syncop` (T0–T8) est le cas qui rend le contrat explicite nécessaire :
+ * son nœud empile pentagone + opération, l'opération est bordée des 4 côtés
+ * alors que le pentagone porte `borderBottom: 'none'`. Le repli (2) renvoyait
+ * donc **l'opération seule** — le pentagone disparaissait du SVG et le
+ * rectangle d'opération était peint au sommet d'un PNG dimensionné sur
+ * `pentagone + opération`, donc remonté d'une hauteur de pentagone. Cette
+ * hauteur *variable* selon le libellé (9 px sur T7, 12 px ailleurs) est ce qui
+ * donnait l'impression de positions aléatoires.
  */
-function resolveCaptureTarget(el: HTMLElement): HTMLElement {
+function resolveCaptureTarget(el: HTMLElement): { target: HTMLElement; explicit: boolean } {
+  if (el.hasAttribute('data-export-root')) return { target: el, explicit: true }
+
+  const findTagged = (node: HTMLElement): HTMLElement | null => {
+    if (node.hasAttribute('data-export-root')) return node
+    for (const child of node.children as HTMLCollection) {
+      const found = findTagged(child as HTMLElement)
+      if (found) return found
+    }
+    return null
+  }
+  const tagged = findTagged(el)
+  if (tagged) return { target: tagged, explicit: true }
+
   const walk = (node: HTMLElement, depth: number): HTMLElement | null => {
     if (depth > 0) {
       const cs = getComputedStyle(node)
@@ -98,7 +152,7 @@ function resolveCaptureTarget(el: HTMLElement): HTMLElement {
     }
     return null
   }
-  return walk(el, 0) ?? el
+  return { target: walk(el, 0) ?? el, explicit: false }
 }
 
 /**
@@ -142,11 +196,16 @@ function ensureBottomBorder(canvas: HTMLCanvasElement, target: HTMLElement) {
   }
   const info = {
     bordered: bw.top > 0 || bw.bottom > 0 || bw.left > 0 || bw.right > 0,
+    clipped: cs.clipPath !== 'none',
     edgeRow: null as number | null,
     painted: false,
     color,
   }
-  if (!borderColor || !info.bordered) return info
+  // Forme clippée (pentagones MCT / SAT / MOT) : le ring rectangulaire repeint
+  // à coins arrondis **aplatirait la pointe**, et la sonde de boîte (dernière
+  // rangée opaque au centre) tombe sur la bande horizontale, pas sur la pointe.
+  // On laisse donc la bordure du raster telle quelle.
+  if (!borderColor || !info.bordered || info.clipped) return info
 
   // Boutons de calage (px phys), valables pendant les tests :
   const radiusDelta = 0 // +N => coins grossis (si le bg arrondit plus que nous)
@@ -307,19 +366,44 @@ function showCapturePreview(canvas: HTMLCanvasElement, caption: string) {
  * - Clone inséré dans un wrapper `fixed` invisible (aucun flicker, styles
  *   calculés résolus car attaché au DOM) ; transform/position neutralisés →
  *   contenu ancré en haut-gauche du wrapper.
- * - Cible = carte interne bordée quand elle existe (voir `resolveCaptureTarget`) ;
- *   `position:relative` sur le clone ré-ancre les Handles absolus sur la carte
- *   (= sa boîte live), le padding du wrapper ne les décale plus.
+ * - Cible = `[data-export-root]`, sinon la carte interne bordée (voir
+ *   `resolveCaptureTarget`) ; `position:relative` sur le clone ré-ancre les
+ *   Handles absolus sur la cible (= sa boîte live), le padding du wrapper ne les
+ *   décale plus.
  * - `width`/`height` optionnels : passés quand on connaît la taille exacte
  *   (figure) pour forcer un canvas précis ; omis pour l'export solo (mesure
  *   naturelle du wrapper, padding inclus).
- * - Sortie : canvas éventuellement corrigé par `ensureBottomBorder` (plan B).
+ * - `zoom` : divise les mesures écran pour rendre `dx`/`dy` en unités monde.
+ * - Sortie : canvas éventuellement corrigé par `ensureBottomBorder` (plan C),
+ *   plus le décalage de la cible dans l'enveloppe, qui doit commander le
+ *   placement du raster.
  */
 async function captureNodePadded(
   el: HTMLElement,
-  opts: { width?: number; height?: number } = {},
-): Promise<HTMLCanvasElement> {
-  const target = resolveCaptureTarget(el)
+  opts: { width?: number; height?: number; zoom?: number } = {},
+): Promise<NodeCapture> {
+  const zoom = opts.zoom ?? 1
+  const { target, explicit } = resolveCaptureTarget(el)
+
+  // Décalage de la cible dans l'enveloppe, mesuré sur le DOM **live** avant le
+  // clone. C'est lui qui doit commander le placement du raster : l'enveloppe
+  // sert à dimensionner le canvas, mais si la cible est un descendant (carte
+  // d'entité, composite `mct-syncop`, …) le contenu peint est plus petit et
+  // n'est plus ancré en haut-gauche de l'image.
+  const er = el.getBoundingClientRect()
+  const tr = target.getBoundingClientRect()
+  const dx = (tr.left - er.left) / zoom
+  const dy = (tr.top - er.top) / zoom
+
+  if (!explicit && (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)) {
+    console.warn(
+      `[exportSvg] nœud « ${el.getAttribute('data-id') ?? '?'} » : la cible rasterisée est ` +
+        `décalée de (${dx.toFixed(1)}, ${dy.toFixed(1)}) px dans l'enveloppe et n'est pas ` +
+        `taguée [data-export-root]. Posez l'attribut sur la racine à capturer ` +
+        `(nœud composé de plusieurs formes).`,
+    )
+  }
+
   const clone = target.cloneNode(true) as HTMLElement
   clone.style.transform = 'none'
   clone.style.left = '0'
@@ -352,6 +436,16 @@ async function captureNodePadded(
   wrapper.appendChild(clone)
   host.appendChild(wrapper)
   document.body.appendChild(host)
+
+  // Variables CSS : lues sur le nœud live (déjà résolues par héritage),
+  // recopiées sur le wrapper — racine capturée — pour que les `calc()` du
+  // clone rendent exactement comme le live.
+  const liveCs = getComputedStyle(el)
+  for (const name of CAPTURE_CSS_VARS) {
+    const value = liveCs.getPropertyValue(name).trim()
+    if (value) wrapper.style.setProperty(name, value)
+  }
+
   try {
     const canvas = await toCanvas(wrapper, {
       pixelRatio: 2,
@@ -375,10 +469,10 @@ async function captureNodePadded(
     }
     showCapturePreview(
       canvas,
-      `#${el.getAttribute('data-id')} · ${fix.bordered ? 'bordure' : 'sans bordure'} · ` +
+      `#${el.getAttribute('data-id')} · ${fix.clipped ? 'pentagone' : fix.bordered ? 'bordure' : 'sans bordure'} · ` +
         `${fix.painted ? 'redessinée ✓' : '—'}`,
     )
-    return canvas
+    return { canvas, dx, dy }
   } finally {
     host.remove()
   }
@@ -487,14 +581,15 @@ export async function exportSvg(filename = 'diagram.svg') {
     maxX = Math.max(maxX, fx + nw)
     maxY = Math.max(maxY, fy + nh)
 
-    const canvas = await captureNodePadded(el, {
+    const { canvas, dx, dy } = await captureNodePadded(el, {
       width: Math.ceil(nw) + NODE_CAPTURE_PAD * 2,
       height: Math.ceil(nh) + NODE_CAPTURE_PAD * 2,
+      zoom,
     })
     nodeImages.push({
       href: canvas.toDataURL('image/png'),
-      x: fx - NODE_CAPTURE_PAD,
-      y: fy - NODE_CAPTURE_PAD,
+      x: fx + dx - NODE_CAPTURE_PAD,
+      y: fy + dy - NODE_CAPTURE_PAD,
       w: canvas.width / 2,
       h: canvas.height / 2,
     })

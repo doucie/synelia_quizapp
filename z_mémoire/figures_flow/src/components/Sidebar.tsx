@@ -15,6 +15,7 @@ const categories: { label: string; key: Category }[] = [
   { label: 'MPD — Script SQL', key: 'mpd-sql' },
   { label: 'Traitements', key: 'traitements' },
   { label: 'MOT', key: 'mot' },
+  { label: 'Organigramme', key: 'organigramme' },
   { label: 'Anciennes figures', key: 'archive' },
   { label: 'Palette', key: 'palette' },
 ]
@@ -26,6 +27,7 @@ const categoryIcons: Record<Category, string> = {
   'mpd-sql': '▤',
   traitements: '⚙',
   mot: '☰',
+  organigramme: '⌸',
   archive: '◀',
   palette: '◉',
 }

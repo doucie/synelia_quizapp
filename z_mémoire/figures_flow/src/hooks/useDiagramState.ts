@@ -147,7 +147,26 @@ export function useDiagramState(diagramId: string) {
     localStorage.removeItem(storageKey)
   }, [storageKey])
 
-  return { saveState, resetState }
+  /**
+   * Efface les positions enregistrées en conservant le viewport.
+   *
+   * `resetState` vide toute l'entrée, zoom et panoramique compris : c'est trop
+   * pour une figure au placement imposé, où l'on veut effacer des positions
+   * périmées sans perdre la vue. Sans objet pour les autres figures, qui
+   * n'appellent pas cette fonction.
+   */
+  const clearPositions = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (!raw) return
+      const { positions: _drop, ...rest } = JSON.parse(raw) as DiagramState
+      localStorage.setItem(storageKey, JSON.stringify(rest))
+    } catch {
+      // ignore
+    }
+  }, [storageKey])
+
+  return { saveState, resetState, clearPositions }
 }
 
 interface MotMctMapEntry {

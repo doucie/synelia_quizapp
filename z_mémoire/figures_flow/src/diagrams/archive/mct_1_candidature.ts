@@ -23,11 +23,11 @@ export const mct1Candidature: DiagramDefinition = {
       },
     },
     {
-      id: 'mct1-r1', type: 'process', position: { x: 80, y: 420 },
+      id: 'mct1-r1', type: 'process', position: { x: 80, y: 450 },
       data: { variant: 'mct-result', label: 'Candidat accepté pour quiz', rule: 'Éligible ET Quota OK' },
     },
     {
-      id: 'mct1-r2', type: 'process', position: { x: 400, y: 420 },
+      id: 'mct1-r2', type: 'process', position: { x: 400, y: 450 },
       data: { variant: 'mct-result', label: 'Candidature rejetée', rule: 'Non éligible OU Quota atteint', fail: true },
     },
   ],

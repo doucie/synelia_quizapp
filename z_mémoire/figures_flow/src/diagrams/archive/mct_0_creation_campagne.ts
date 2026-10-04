@@ -17,14 +17,14 @@ export const mct0CreationCampagne: DiagramDefinition = {
         syncLabel: '',
         items: [
           'Vérifier la cohérence des dates de campagne',
-          'Valider l\'adéquation avec les modèles de pipeline disponibles',
+          'Vérifier la disponibilité du modèle de pipeline retenu',
           'Attribuer les droits d\'accès par défaut',
         ],
         emissionRules: ['Toujours'],
       },
     },
     {
-      id: 'mct0-r1', type: 'process', position: { x: 220, y: 420 },
+      id: 'mct0-r1', type: 'process', position: { x: 220, y: 450 },
       data: { variant: 'mct-result', label: 'Campagne ouverte', rule: 'Toujours' },
     },
   ],

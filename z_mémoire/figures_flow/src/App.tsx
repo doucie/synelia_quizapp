@@ -105,6 +105,7 @@ export default function App() {
               onExportPositions={handleExportPositions}
               onResetPositions={handleResetPositions}
               onExitFullscreen={() => setFullscreen(false)}
+              fixedLayout={activeDiagram?.rigidLayout === true}
             />
           )}
         </ReactFlowProvider>

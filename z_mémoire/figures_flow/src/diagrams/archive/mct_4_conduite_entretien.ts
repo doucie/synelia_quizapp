@@ -23,16 +23,16 @@ export const mct4ConduiteEntretien: DiagramDefinition = {
       },
     },
     {
-      id: 'mct4-r1', type: 'process', position: { x: 30, y: 420 },
+      id: 'mct4-r1', type: 'process', position: { x: 30, y: 450 },
       data: { variant: 'mct-result', label: 'Entretien en cours', rule: 'Candidat présent' },
     },
     {
-      id: 'mct4-r2', type: 'process', position: { x: 220, y: 420 },
+      id: 'mct4-r2', type: 'process', position: { x: 220, y: 450 },
       data: { variant: 'mct-result', label: 'Entretien annulé', rule: 'Candidat absent', fail: true },
     },
     {
-      id: 'mct4-r3', type: 'process', position: { x: 410, y: 420 },
-      data: { variant: 'mct-result', label: 'Entretien reporté', rule: 'Report demandé' },
+      id: 'mct4-r3', type: 'process', position: { x: 410, y: 450 },
+      data: { variant: 'mct-result', label: 'Demande de report transmise', rule: 'Report demandé' },
     },
   ],
   edges: [

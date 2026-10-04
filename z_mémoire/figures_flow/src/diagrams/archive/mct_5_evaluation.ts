@@ -23,11 +23,11 @@ export const mct5Evaluation: DiagramDefinition = {
       },
     },
     {
-      id: 'mct5-r1', type: 'process', position: { x: 80, y: 400 },
+      id: 'mct5-r1', type: 'process', position: { x: 80, y: 450 },
       data: { variant: 'mct-result', label: 'Entretien validé', rule: 'Favorable' },
     },
     {
-      id: 'mct5-r2', type: 'process', position: { x: 400, y: 400 },
+      id: 'mct5-r2', type: 'process', position: { x: 400, y: 450 },
       data: { variant: 'mct-result', label: 'Entretien refusé', rule: 'Insuffisant', fail: true },
     },
   ],

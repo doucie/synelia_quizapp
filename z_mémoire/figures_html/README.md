@@ -1,33 +1,49 @@
 # Figures HTML pour le mémoire
 
-Pages HTML/CSS autonomes pour produire les schémas Merise du mémoire.
-À ouvrir simplement dans un navigateur, puis capturer.
+Pages HTML/CSS autonomes pour produire les schémas du mémoire, à ouvrir
+simplement dans un navigateur.
 
 ## Ouverture
 
-Double-clique sur [index.html](index.html) ou ouvre directement une page :
+Double-clique sur [index.html](index.html). La page propose deux onglets :
 
-- [mcd.html](mcd.html) — Modèle Conceptuel de Données
-- [mld.html](mld.html) — Modèle Logique de Données Relationnel
-- [mpd.html](mpd.html) — Modèle Physique de Données (MySQL 8)
-- [sat.html](sat.html) — Schéma Analytique des Traitements (MOT : couloirs par acteur + phases temporelles)
-- [mct.html](mct.html) — Modèle Conceptuel des Traitements (événements → synchro → opération → résultats)
+| Onglet | Contenu |
+|---|---|
+| **À utiliser** | les 8 figures retenues pour le mémoire |
+| **Écartées** | les 56 figures écartées, regroupées par motif (figure confuse, mal présentée, pas facilement compréhensible, non retenue) |
 
-Les cinq pages utilisent le même canevas absolu (`.canvas` + `<svg class="links">` + `window.LINKS`),
-donc la barre d'outils ci-dessous est disponible partout, y compris pour repositionner
-les événements / synchros / opérations / résultats du MCT et les tâches du SAT.
+L'onglet **À utiliser** est actif par défaut à chaque ouverture. L'état
+d'ouverture des accordéons de l'onglet *Écartées* est mémorisé dans
+`localStorage` (clé `figures_index_open_folders`).
 
-## Captures
+Aucun fichier n'est supprimé : les figures écartées restent sur le disque,
+seule leur visibilité dans l'index change.
 
-Dépose tes captures dans [captures/](captures/). Convention de nommage :
+### Figures retenues (onglet « À utiliser »)
 
-```
-captures/mcd.png
-captures/mld.png
-captures/mpd.png
-captures/sat.png
-captures/mct.png
-```
+- [organigramme_synelia_avec_ag.html](organigramme_synelia_avec_ag.html) — Organigramme avec AG
+- [matrice_benchmark.html](matrice_benchmark.html) — Matrice de benchmark
+- [pyramide_moscow.html](pyramide_moscow.html) — Pyramide MoSCoW
+- [stack_technique.html](stack_technique.html) — Stack technique
+- [pubsub_notifications.html](pubsub_notifications.html) — Architecture de notifications
+- [pyramide_tests.html](pyramide_tests.html) — Pyramide des tests
+- [carte_api_endpoints.html](carte_api_endpoints.html) — Carte des endpoints API
+- [pile_technologique.html](pile_technologique.html) — Pile technologique
+
+### Figures écartées (onglet « Écartées »)
+
+- **Bonne idée, mais figure confuse** : `uc_1_candidat_recruteur`,
+  `uc_2_admin_gouvernance`, `uc_3_tableaux_bord`, `machine_etats_campagne`
+- **Bonne idée, mais mal présentée** : `du_besoin_a_la_solution`,
+  `pyramide_objectifs`, `machine_etats_candidature`
+- **Bonne idée, pas facilement compréhensible** : `sequences`
+- **Non retenues** : les 48 autres, dont l'intégralité des schémas Merise
+  (MCD / MLD / MPD, SAT, MCT, MPT, MCC), les diagrammes de classes, les
+  cas d'utilisation et l'architecture.
+
+> Les schémas Merise du mémoire ne sont plus produits depuis ce dossier :
+> la source actuelle est [../figures_flow](../figures_flow), qui les génère
+> en SVG vectoriel. Les pages de ce dossier sont conservées comme archives.
 
 ## Mode édition (déplacement des entités)
 
@@ -69,15 +85,18 @@ Conventions visuelles :
 
 ## Insertion dans le mémoire Typst
 
-Quand tes captures sont prêtes, remplace les blocs Merise dans
+Ne pas produire de PNG : chaque page dispose d'un bouton **« Exporter SVG »**
+qui produit un fichier vectoriel, à déposer dans ce dossier sous le nom de la
+figure. Remplace ensuite le bloc correspondant dans
 [../template_memoire/typst/sections/body.typ](../template_memoire/typst/sections/body.typ)
 par :
 
 ```typst
 figure(
-  image("../../figures_html/captures/mcd.png", width: 100%),
-  caption: [MCD cible du module recrutement.],
+  image("../../figures_html/matrice_benchmark.svg", width: 100%),
+  caption: [Matrice de benchmark.],
 )
 ```
 
-(et idem pour `mld`, `mpd`, `sat`, `mct`).
+Le SVG reste net à l'impression quelle que soit l'échelle, contrairement à une
+capture PNG.

@@ -16,9 +16,13 @@ export interface EdgeAnchorItem {
 const SOURCE_HANDLES = ['right', 'left', 'top', 'bottom']
 const TARGET_HANDLES = ['left', 'right', 'top', 'bottom']
 
-/** Un MCT se lit de haut en bas : le côté par défaut est le bas en source, le haut en cible. */
-const MCT_SOURCE_HANDLES = ['bottom', 'right', 'left', 'top']
-const MCT_TARGET_HANDLES = ['top', 'left', 'right', 'bottom']
+/**
+ * Une figure verticale se lit de haut en bas : le bas est l'ancrage par défaut
+ * en source, le haut en cible. Partagé par le MCT (`ProcessNode`) et
+ * l'organigramme (`OrgNode`), qui rendent leurs `<Handle>` dans cet ordre.
+ */
+const VERTICAL_SOURCE_HANDLES = ['bottom', 'right', 'left', 'top']
+const VERTICAL_TARGET_HANDLES = ['top', 'left', 'right', 'bottom']
 
 const MCT_VERTICAL_VARIANTS = new Set([
   'mct-event',
@@ -27,6 +31,19 @@ const MCT_VERTICAL_VARIANTS = new Set([
   'mct-operation',
   'mct-result',
 ])
+
+/**
+ * L'organigramme partage l'ordre de `VERTICAL_*` mais garde son propre jeu de
+ * variants : à lui seul, il ne justifie pas de distinguer les deux groupes, et
+ * le jour où `ProcessNode` change d'ordre, on veut savoir quel des deux nœuds
+ * est en cause sans avoir à énumérer les cinq variantes MCT.
+ */
+const ORG_VERTICAL_VARIANTS = new Set<EntityNodeData['variant']>(['org-box'])
+
+/** Variants dont les `<Handle>` suivent l'ordre vertical. */
+function isVerticalVariant(variant: EntityNodeData['variant']): boolean {
+  return MCT_VERTICAL_VARIANTS.has(variant) || ORG_VERTICAL_VARIANTS.has(variant)
+}
 
 /**
  * Ordre des handles pour un nœud et un côté donné. Le premier élément est l'ancrage
@@ -42,8 +59,8 @@ export function handleIdsOf(node: Node | undefined, kind: HandleKind): string[] 
     if (kind === 'source') return [...data.emissionRules]
     return ['top']
   }
-  if (MCT_VERTICAL_VARIANTS.has(data.variant)) {
-    return kind === 'source' ? MCT_SOURCE_HANDLES : MCT_TARGET_HANDLES
+  if (isVerticalVariant(data.variant)) {
+    return kind === 'source' ? VERTICAL_SOURCE_HANDLES : VERTICAL_TARGET_HANDLES
   }
   return kind === 'source' ? SOURCE_HANDLES : TARGET_HANDLES
 }

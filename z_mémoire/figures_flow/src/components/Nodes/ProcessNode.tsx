@@ -75,8 +75,16 @@ function MctEvent({ data }: { data: EntityNodeData }) {
 function MctSync({ data }: { data: EntityNodeData }) {
   const { color, label } = data
   return (
+    // `pt-3 pb-7`, pas `py-3` : le clip-path ne réserve le rectangle pleine largeur
+    // qu'à ses 50 % supérieurs, donc le libellé doit tenir dans la moitié haute de
+    // la boîte. La règle est `paddingBottom ≥ paddingTop + 2 × encre − lineBox`,
+    // soit 27.6 px pour une police de 12 px (ligne de 18 px, encre de capitale
+    // ≈ 1.4em majorée de la descendante de parenthèse) — `pb-7` (28 px) est le
+    // premier palier qui la respecte. Les 10 px ajoutés étirent la pointe vers le
+    // bas : c'est la hauteur qu'il faut, jamais la largeur, car la conique est
+    // calculée sur les % de la *hauteur*. Même règle pour `MctSync` et `MotSync`.
     <div
-      className={clsx('flex flex-col items-center justify-center px-4 py-3 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
+      className={clsx('flex flex-col items-center justify-center px-4 pt-3 pb-7 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
       style={{
         border: color ? `2px solid ${color}` : '2px solid hsl(330, 100%, 40%)',
         clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)',
@@ -95,14 +103,33 @@ function MctSync({ data }: { data: EntityNodeData }) {
 const SYNCOP_OP_COLOR = 'hsl(166, 100%, 40%)'
 
 function MctSyncop({ data }: { data: EntityNodeData }) {
-  const { label, items, emissionRules, syncLabel } = data
+  const { label, items, emissionRules, syncLabel, syncFontSize } = data
   const opColor = SYNCOP_OP_COLOR
   const rules = emissionRules ?? []
+  // `items-center`, pas `items-stretch` : le pentagone garde la largeur de son
+  // libellé (`fit-content`), c'est bien la convention Merise. Seul le clip-path
+  // posait problème — il ne réserve le rectangle pleine largeur qu'à ses 50 %
+  // supérieurs, et le bas d'un libellé long comme `(RET OU REF) ET DA` était
+  // rongé par la conique. La correction est donc en **hauteur** : `pt-3 pb-7`
+  // (+10 px sur 42 px) étire la pointe vers le bas et laisse au texte la bande
+  // utile. Voir aussi `MctSync` et `MotSync`.
+  //
+  // `syncFontSize` est un réglage **typographique**, indépendant de la géométrie :
+  // il sert à garder le libellé proportionné à l'opération qu'il surmonte, pas à
+  // éviter le rognage. 12 px par défaut, 9 px pour la formule de T7.
   return (
-    <div className="flex flex-col items-center">
+    // `data-export-root` : ce nœud est un **composite** de deux formes, et
+    // aucune n'est « la carte » — l'opération est bordée des 4 côtés, le
+    // pentagone a `borderBottom: 'none'`. Sans cet attribut, la résolution de
+    // cible de l'export SVG (`resolveCaptureTarget`) retombait sur l'opération
+    // seule : le pentagone disparaissait du SVG et l'opération se retrouvait
+    // peinte en haut d'une image dimensionnée sur `pentagone + opération`, donc
+    // remontée d'une hauteur de pentagone variable selon le libellé. Taguer la
+    // racine fait rasteriser le composite entier, à sa vraie hauteur.
+    <div className="flex flex-col items-center" data-export-root>
       {/* Sync pentagon — couleur fixe rose Merise */}
       <div
-        className={clsx('flex flex-col items-center justify-center px-4 py-3 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
+        className={clsx('flex flex-col items-center justify-center px-4 pt-3 pb-7 text-center shadow-[0_7px_9px_0_rgba(0,0,0,0.02)]', 'bg-background/70 min-w-[80px]')}
         style={{
           border: '2px solid hsl(330, 100%, 40%)',
           borderBottom: 'none',
@@ -110,7 +137,7 @@ function MctSyncop({ data }: { data: EntityNodeData }) {
           background: 'hsla(330, 100%, 40%, 0.15)',
         }}
       >
-        <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'calc(var(--mct-sync-scale, 1) * 12px)', color: 'hsl(330, 100%, 40%)' }}>{syncLabel || ''}</span>
+        <span className="font-bold uppercase tracking-wider" style={{ fontSize: `calc(var(--mct-sync-scale, 1) * ${syncFontSize ?? 12}px)`, color: 'hsl(330, 100%, 40%)' }}>{syncLabel || ''}</span>
       </div>
       {/* Operation rectangle — copie exacte de MctOperation */}
       <div
@@ -338,8 +365,14 @@ function MotEvent({ label, isTrigger }: { label: string; isTrigger: boolean }) {
 
 function MotSync({ label }: { label: string }) {
   return (
+    // Même règle que `MctSyncop`, à l'échelle 8 px : la bande utile vaut la moitié
+    // supérieure, d'où 14.4 px de padding-bottom requis, arrondis à `pb-4`.
+    // **Composant actuellement mort** : `motMatrix` n'est fourni par aucune
+    // figure enregistrée, donc `MotMatrix` / `MotMctCell` / `MotSync` ne sont
+    // jamais rendus. Le seul MOT enregistré, `motOrganisationnelV2`, est bâti sur
+    // les MCT legacy en positions absolues — il passe donc par `MctSync`, pas ici.
     <div
-      className="flex flex-col items-center justify-center px-3 py-1 text-center"
+      className="flex flex-col items-center justify-center px-3 pt-1 pb-4 text-center"
       style={{
         border: `2px solid ${MOT_COLORS.sync}`,
         clipPath: 'polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%)',

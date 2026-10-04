@@ -23,11 +23,11 @@ export const mct2Quiz: DiagramDefinition = {
       },
     },
     {
-      id: 'mct2-r1', type: 'process', position: { x: 80, y: 400 },
+      id: 'mct2-r1', type: 'process', position: { x: 80, y: 450 },
       data: { variant: 'mct-result', label: 'Quiz validé', rule: 'Score ≥ seuil' },
     },
     {
-      id: 'mct2-r2', type: 'process', position: { x: 400, y: 400 },
+      id: 'mct2-r2', type: 'process', position: { x: 400, y: 450 },
       data: { variant: 'mct-result', label: 'Quiz échoué', rule: 'Score < seuil', fail: true },
     },
   ],

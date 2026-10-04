@@ -19,16 +19,21 @@ export const mct3Planification: DiagramDefinition = {
           'Bloquer le créneau dans l\'agenda',
           'Envoyer l\'invitation au candidat et aux recruteurs',
         ],
-        emissionRules: ['Toujours'],
+        emissionRules: ['Créneau confirmé', 'Report demandé'],
       },
     },
     {
-      id: 'mct3-r1', type: 'process', position: { x: 220, y: 420 },
-      data: { variant: 'mct-result', label: 'Entretien planifié', rule: 'Toujours' },
+      id: 'mct3-r1', type: 'process', position: { x: 80, y: 450 },
+      data: { variant: 'mct-result', label: 'Entretien planifié', rule: 'Créneau confirmé' },
+    },
+    {
+      id: 'mct3-r2', type: 'process', position: { x: 400, y: 450 },
+      data: { variant: 'mct-result', label: 'Demande de report transmise', rule: 'Report demandé' },
     },
   ],
   edges: [
     { id: 'e-mct3-e1-op', source: 'mct3-e1', target: 'mct3-op', type: 'traitement', data: { isStrong: true } },
-    { id: 'e-mct3-op-r1', source: 'mct3-op', target: 'mct3-r1', sourceHandle: 'Toujours', type: 'traitement', data: {} },
+    { id: 'e-mct3-op-r1', source: 'mct3-op', target: 'mct3-r1', sourceHandle: 'Créneau confirmé', type: 'traitement', data: {} },
+    { id: 'e-mct3-op-r2', source: 'mct3-op', target: 'mct3-r2', sourceHandle: 'Report demandé', type: 'traitement', data: {} },
   ],
 }

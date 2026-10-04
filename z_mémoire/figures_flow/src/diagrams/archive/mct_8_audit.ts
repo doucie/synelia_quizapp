@@ -22,7 +22,7 @@ export const mct8Audit: DiagramDefinition = {
       },
     },
     {
-      id: 'mct8-r1', type: 'process', position: { x: 220, y: 420 },
+      id: 'mct8-r1', type: 'process', position: { x: 220, y: 450 },
       data: { variant: 'mct-result', label: 'Trace enregistrée', rule: 'Toujours' },
     },
   ],

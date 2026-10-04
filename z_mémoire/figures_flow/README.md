@@ -388,8 +388,10 @@ Ouvrir l'URL affichée (généralement `http://localhost:5173`).
   aux exports SVG — `html-to-image` ne peut pas lire les feuilles remotes (Google Fonts/Fontshare :
   `SecurityError cssRules`) donc sans fichiers locaux les cartes exportées seraient rendues en police
   de fallback et la bordure-bas ne tombe pas (métriques ≠ live).
-- **Export complet (figure ou bloc)** : bordure des cartes repeinte au raster (Plan C) —
-  règles et approches écartées dans `plans/rules/regles_export_svg.md`.
+- **Export complet (figure ou bloc)** : raster positionné d'après la boîte de l'élément réellement
+  rasterisé (invariant + contrat `[data-export-root]` pour les nœuds composites comme `mct-syncop`),
+  bordure des cartes repeinte au raster (Plan C) — règles et approches écartées dans
+  `plans/rules/regles_export_svg.md`.
 
 ## Design
 

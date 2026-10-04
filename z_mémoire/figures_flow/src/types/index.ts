@@ -1,11 +1,11 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { SqlTokenKind } from '../utils/sqlTokens'
 
-export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot'
+export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot' | 'organigramme'
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -37,6 +37,13 @@ export interface EntityNodeData {
   color?: string
   badge?: string
   syncLabel?: string
+  /**
+   * Taille en px du libellé de synchronisation, multipliée par `--mct-sync-scale`.
+   * 12 par défaut. Passé à 9 par le nœud qui porte la formule de T7
+   * (`(RET OU REF) ET DA`), le seul libellé assez long pour sortir du gabarit :
+   * le pentagone reste ainsi proportionné à l'opération qu'il surmonte.
+   */
+  syncFontSize?: number
   items?: string[]
   emissionRules?: string[]
   rule?: string
@@ -61,6 +68,27 @@ export interface EntityNodeData {
   auditNote?: string
   /** Légende de lecture de la vue « script » (couleur → signification). */
   sqlLegend?: SqlLegendItem[]
+  /**
+   * Sur-titre d'une boîte d'organigramme (variante `org-box`) : le rôle rendu
+   * en capitales au-dessus du libellé, dans la couleur de la boîte. Absent sur
+   * les simples services, qui n'ont qu'un libellé et un titulaire.
+   */
+  eyebrow?: string
+  /** Titulaire d'une boîte d'organigramme, rendu en second ligne, atténué. */
+  person?: string
+  /**
+   * Hauteur plancher de la carte, en px.
+   *
+   * À ne pas confondre avec `height`, que l'export abandonne (cf.
+   * `captureNodePadded`) : `min-height` est un longhand distinct, il survit au
+   * `clone.style.height = 'auto'`. Il donne donc des boîtes de hauteur identique
+   * par rangée, sur l'écran comme dans le SVG, tout en laissant la boîte grandir
+   * si le contenu déborde réellement.
+   *
+   * Lu par `OrgNode` et posé sur la **carte**, pas sur le `style` du nœud : la
+   * cible de l'export est la carte interne, pas le wrapper `react-flow__node`.
+   */
+  minHeight?: number
 }
 
 export interface SqlLegendItem {
@@ -97,6 +125,27 @@ export interface RelationshipEdgeData {
   roleToPos?: number
   roleFromSense?: 'auto' | 'forward' | 'backward'
   roleToSense?: 'auto' | 'forward' | 'backward'
+  /**
+   * Hauteur de la barre de distribution, en px sous le bord du nœud source.
+   *
+   * Lue par `OrgBusEdge` uniquement. Comme des frères partagent le même parent,
+   * ils en déduisent le même `busY` sans coordination : leurs segments
+   * horizontaux se recouvrent et forment une barre continue.
+   */
+  busGap?: number
+  /** Rayon des angles de la barre de distribution. 0 = angles vifs. */
+  busRadius?: number
+  /**
+   * Fraction de la descente à laquelle se fait la course horizontale, entre 0
+   * (au bord du source) et 1 (sur la barre, le défaut).
+   *
+   * Lue par `OrgBusEdge` uniquement. Permet à une branche de s'accrocher au
+   * **milieu du tronc** d'un parent au lieu de partir de la boîte elle-même ou de
+   * descendre jusqu'à la barre — c'est ainsi que le PMO s'attache à la liaison
+   * qui descend du SG. `busGap` doit rester aligné sur celui des frères pour que
+   * la fraction porte sur le même segment visible.
+   */
+  trunkFraction?: number
 }
 
 export type RelationshipEdge = Edge<RelationshipEdgeData>
@@ -135,6 +184,27 @@ export interface DiagramDefinition {
    * absence désactive complètement l'encadrement et le verrou.
    */
   sections?: DiagramSection[]
+  /**
+   * Échelle typographique de la figure, appliquée via `--org-font-scale`.
+   *
+   * La figure est dessinée pour l'impression : la taille de police utile se calcule
+   * sur la largeur du canevas, pas sur le zoom de l'écran. Une figure large impose
+   * donc une police large pour conserver le même corps une fois réduite à la
+   * largeur d'une page A4. 1 par défaut ; n'expose qu'un curseur, pas une géométrie.
+   */
+  fontScale?: number
+  /**
+   * Figure au placement **imposé** : ses nœuds ne se déplacent pas.
+   *
+   * Réservé aux figures dont la géométrie est le contenu — un organigramme n'a
+   * rien à arranger, contrairement à un MCD ou un MLD où l'on repositionne des
+   * entités pour les désempiler. Le drapeau n'est lu que par `DiagramCanvas` :
+   * il ignore les positions sauvegardées, les efface au chargement, et coupe le
+   * glissement, la reconnexion d'arête, la sélection et la suppression au clavier.
+   * Le panoramique et le zoom restent actifs — sans quoi la figure serait
+   * consultable seulement en export.
+   */
+  rigidLayout?: boolean
 }
 
 export interface DiagramSection {

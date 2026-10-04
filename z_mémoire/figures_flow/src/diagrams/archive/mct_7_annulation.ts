@@ -14,7 +14,8 @@ export const mct7Annulation: DiagramDefinition = {
       id: 'mct7-op', type: 'process', position: { x: 220, y: 200 },
       data: {
         variant: 'mct-syncop', label: 'T7 — Traiter l\'annulation',
-        syncLabel: '(RET OU ATT OU REF) ET DA',
+        syncLabel: '(RET OU REF) ET DA',
+        syncFontSize: 9,
         items: [
           'Vérifier l\'éligibilité à l\'annulation',
         ],
@@ -22,11 +23,11 @@ export const mct7Annulation: DiagramDefinition = {
       },
     },
     {
-      id: 'mct7-r1', type: 'process', position: { x: 80, y: 420 },
+      id: 'mct7-r1', type: 'process', position: { x: 80, y: 450 },
       data: { variant: 'mct-result', label: 'Décision annulée', rule: 'Autorisée' },
     },
     {
-      id: 'mct7-r2', type: 'process', position: { x: 400, y: 420 },
+      id: 'mct7-r2', type: 'process', position: { x: 400, y: 450 },
       data: { variant: 'mct-result', label: 'Décision maintenue', rule: 'Refusée', fail: true },
     },
   ],

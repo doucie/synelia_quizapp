@@ -1,18 +1,20 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { EntityNodeData } from '../../types'
 import { clsx } from 'clsx'
+import { hsla } from '../../utils/color'
 import SqlScriptBlock from './SqlScriptBlock'
-
-function hsla(color: string | undefined, alpha: number): string | undefined {
-  if (!color) return
-  const m = color.match(/^hsl\((\d+)/)
-  if (!m) return
-  return `hsla(${m[1]}, 100%, 40%, ${alpha})`
-}
+import OrgNode from './OrgNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
   const isTable = variant === 'mld' || variant === 'mpd'
+
+  // Organigramme : le rendu est une boîte à trois lignes (rôle / intitulé /
+  // titulaire), sans rapport avec la table ou la carte MCD — il est délégué à
+  // OrgNode, comme `mpd-sql` l'est à SqlScriptBlock.
+  if (variant === 'org-box') {
+    return <OrgNode data={data as EntityNodeData} />
+  }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
   // voir avec un tableau de colonnes, il est délégué à SqlScriptBlock.

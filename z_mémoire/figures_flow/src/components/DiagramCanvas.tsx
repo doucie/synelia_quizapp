@@ -20,6 +20,7 @@ import MotTableToolbar from './MotTableToolbar'
 import TreatmentFrames, { TreatmentFrameControls, FRAME_PAD, type FrameBox } from './TreatmentFrames'
 import RelationshipEdge from './Edges/RelationshipEdge'
 import TraitementEdge from './Edges/TraitementEdge'
+import OrgBusEdge from './Edges/OrgBusEdge'
 import { validHandles } from './Edges/edgeAnchors'
 import { loadDiagramState, useDiagramState, loadPositions, loadCardinalitySides, loadMotPositions, loadMotCardinalitySides, loadMotTableConfig, saveMotTableConfig } from '../hooks/useDiagramState'
 import { useGroupMove } from '../hooks/useGroupMove'
@@ -29,7 +30,11 @@ import { getMotMctMap, getMotOriginalPositions } from '../diagrams/mot/mot_organ
 import type { DiagramDefinition, DiagramSection, RelationshipEdgeData, MotTableConfig } from '../types'
 
 const nodeTypes: NodeTypes = { entity: EntityNode, process: ProcessNode }
-const edgeTypes: EdgeTypes = { relationship: RelationshipEdge, traitement: TraitementEdge }
+const edgeTypes: EdgeTypes = {
+  relationship: RelationshipEdge,
+  traitement: TraitementEdge,
+  orgBus: OrgBusEdge,
+}
 
 /** Taille d'un nœud avant sa première mesure (défaut de `node.measured`). */
 const FALLBACK_SIZE = { w: 220, h: 80 }
@@ -106,6 +111,11 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
       } else {
         nodes = loadMotPositions(nodes, motMap)
       }
+    } else if (diagram.rigidLayout) {
+      // Une figure au placement imposé ne doit pas restaurer des déplacements
+      // effectués précédemment. Ses nœuds restent à la géométrie définie dans le
+      // diagramme.
+      nodes = nodes
     } else {
       nodes = loadPositions(diagram.id, nodes)
     }
@@ -162,7 +172,21 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
     nodesRef.current = nodes
   }, [nodes])
 
-  const { saveState } = useDiagramState(diagram?.id ?? '')
+  const { saveState, clearPositions } = useDiagramState(diagram?.id ?? '')
+
+  /**
+   * Une figure au placement imposé ne doit pas hériter d'un déplacement
+   * effectué lors d'une session précédente : ses positions sauvegardées sont
+   * effacées au montage, le viewport est conservé (cf. `clearPositions`).
+   *
+   * Le hook est appelé plus haut, au corps du composant : l'appeler ici ferait
+   * échouer `Invalid hook call`, React n'installant son dispatcher que pendant
+   * le rendu. `clearPositions` est stable, l'effet ne se reboucle pas.
+   */
+  const rigid = diagram?.rigidLayout === true
+  useEffect(() => {
+    if (rigid) clearPositions()
+  }, [rigid, clearPositions])
 
   const isMot = diagram?.id === 'mot-organisationnel-v2'
   const sections = diagram?.sections
@@ -652,6 +676,11 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         '--mct-operation-scale': motTableConfig.mctFontScales.operation,
         '--mct-result-scale': motTableConfig.mctFontScales.result,
         '--mct-sync-scale': motTableConfig.mctFontScales.sync,
+        // Organigramme : la police se règle sur la largeur du canevas, pas sur le
+        // zoom de l'écran — voir `fontScale` dans `types/index.ts`. La variable est
+        // aussi déclarée dans `CAPTURE_CSS_VARS` (`utils/exportSvg.ts`), sans quoi
+        // l'export SVG la perdrait et retomberait sur 1.
+        '--org-font-scale': diagram.fontScale ?? 1,
       } as React.CSSProperties}
     >
       {/* Couche 1 — sous les nœuds : fond de tableau du MOT + encadrements.
@@ -699,6 +728,10 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         minZoom={0.1}
         panOnDrag={1}
         selectionOnDrag={false}
+        nodesDraggable={!rigid}
+        edgesReconnectable={!rigid}
+        elementsSelectable={!rigid}
+        deleteKeyCode={rigid ? null : undefined}
       >
         {showBackground && <Background gap={10} size={1} />}
         <Controls />
