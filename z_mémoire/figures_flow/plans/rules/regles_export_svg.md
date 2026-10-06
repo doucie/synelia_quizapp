@@ -174,3 +174,32 @@ la bordure basse de l'opération sort mal (variante : une raster par carte).
 - **Encadrements de traitements** : hors périmètre. `TreatmentFrames` est un
   frère de `<ReactFlow>`, donc hors de `.react-flow__renderer` : ils ne sont pas
   exportés, décision assumée (2026-10-03).
+
+## 8. Les largeurs en `%` ne survivent pas au clone (2026-10-06)
+
+Une racine `[data-export-root]` dimensionnée en `%` (`w-full`) se **rétracte sur
+son contenu, alignée à gauche**, dans le raster — alors que le raster lui-même
+garde les dimensions mesurées sur le live, et que l’écran affiche la bonne
+largeur. L’enveloppe clonée perd sa largeur calculée ; les `%` s’y résolvent
+contre un parent rétracté.
+
+Symptômes mesurés sur `memoire-perimetre-projet` : cadre 648 px au lieu de 820,
+pills d’exclus de 194 à 502 px selon le texte, légende de 514 px décalée à
+gauche — et, par ricochet, un vide inclu/exclu de 232 px au lieu des 60 px
+dessinés. Même défaut latent sur `memoire-acteurs-systeme` (cartes 508–527 px
+au lieu de 555, cercles non équidistants). Traître parce que l’écran est
+parfait : seul le SVG est faux.
+
+Règle : **toute racine dont la largeur porte la géométrie la pose en px inline**,
+via `data.exportWidth` (cf. `EntityNodeData`), en cohérence avec le `width` du
+`style` du nœud dans le modèle. Valable pour tout futur composant `memoire`.
+
+Corollaire hauteurs (même lot) : une `height` posée **sur la racine** est
+écrasée par le `height: auto` de la capture — le filet de la Figure 1
+(`height: 2` sur la racine) mesurait zéro pixel non transparent dans le SVG.
+Les dimensions fixes vivent sur un **enfant interne**, jamais sur la racine :
+ni `%`, ni hauteur fixe sur `[data-export-root]`.
+
+Détection : bornes opaques par raster (pixels `alpha > 128` et canal `< 250`),
+comparées aux largeurs du modèle. La technique ne crée aucun fichier : lecture
+du SVG et analyse en mémoire (PowerShell + `System.Drawing`, sans écriture).

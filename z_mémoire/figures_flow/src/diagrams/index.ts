@@ -28,6 +28,11 @@ import { mctParcours1, mctParcours2, mctParcours3, mctParcours4 } from './traite
 // === MOT ===
 import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
 
+// === Mémoire ===
+import { acteursSysteme as memoireActeurs } from './memoire/acteurs_systeme'
+import { perimetreProjet as memoirePerimetre } from './memoire/perimetre_projet'
+import { quadrantFrontend as memoireQuadrant } from './memoire/quadrant_frontend'
+
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
 
@@ -117,6 +122,11 @@ export const diagrams: DiagramDefinition[] = [
 
   // --- Organigramme (1) ---
   syneliaAvecAg,
+
+  // --- Mémoire (3) ---
+  memoireActeurs,
+  memoirePerimetre,
+  memoireQuadrant,
 
   // --- Palette (1) ---
   colorPalette,

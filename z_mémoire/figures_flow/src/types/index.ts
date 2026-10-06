@@ -1,11 +1,11 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { SqlTokenKind } from '../utils/sqlTokens'
 
-export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot' | 'organigramme'
+export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot' | 'organigramme' | 'memoire'
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -36,6 +36,39 @@ export interface EntityNodeData {
   attributes?: Attribute[]
   color?: string
   badge?: string
+  /** Initiale affichée dans le cercle d’un acteur du mémoire. */
+  actorInitial?: string
+  /** Phrase-fonction affichée sous le rôle d’un acteur du mémoire. */
+  actorFunction?: string
+  /** Filet commun d’alignement, sans acteur ni texte. */
+  actorRule?: boolean
+  /** Rôle d’un nœud de périmètre : cadre composite, ligne ou légende. */
+  scopeKind?: 'frame' | 'item' | 'caption'
+  /** Lignes rendues dans un cadre de périmètre (variante `scope`, `frame`). */
+  scopeItems?: string[]
+  /** Ton d’une ligne de périmètre : mise en avant ou mise en retrait. */
+  scopeTone?: 'included' | 'excluded'
+  /** Rôle d’un nœud de quadrant : fond, pastille, étiquette, axe ou libellé. */
+  quadKind?: 'zone' | 'dot' | 'tag' | 'hline' | 'vline' | 'axisLabel'
+  /** Couleur de la pastille d’un point de quadrant. */
+  quadColor?: string
+  /** Légende courte sous le nom d’un point de quadrant. */
+  quadLegend?: string
+  /** Alignement du texte d’un libellé d’axe de quadrant. */
+  quadAlign?: 'left' | 'center' | 'right'
+  /** Teintes des quatre zones d’un fond de quadrant (haut-gauche, haut-droit, bas-gauche, bas-droit). */
+  quadCells?: [string, string, string, string]
+  /**
+   * Largeur px explicite de la racine d’export (`[data-export-root]`).
+   *
+   * Les largeurs en `%` (`w-full`) ne survivent pas au clone de capture :
+   * l’enveloppe clonée perd sa largeur calculée et la racine se rétracte sur
+   * son contenu, alignée à gauche — alors que le raster, lui, garde les
+   * dimensions mesurées sur le live. Toute racine dont la largeur porte la
+   * géométrie DOIT donc la poser ici, en px inline (cf. `regles_export_svg`,
+   * §8). Rester cohérent avec le `width` du `style` du nœud dans le modèle.
+   */
+  exportWidth?: number
   syncLabel?: string
   /**
    * Taille en px du libellé de synchronisation, multipliée par `--mct-sync-scale`.
@@ -214,6 +247,38 @@ export interface DiagramDefinition {
    * largeur d'une page A4. 1 par défaut ; n'expose qu'un curseur, pas une géométrie.
    */
   fontScale?: number
+  /**
+   * Pile de fontes de la figure, appliquée par héritage sur la racine du canevas.
+   *
+   * **Une figure dont les hauteurs sont un relevé doit épingler sa fonte.**
+   *
+   * `useFontPreference` laisse le sélecteur de la toolbar écrire `--font-sans` sur
+   * `documentElement` : le choix de l'utilisateur est cosmétique, mais il change la
+   * largeur du texte, donc le nombre de lignes, donc la hauteur des cartes. Or les
+   * positions, elles, sont calculées à partir des planchers — un relevé pris dans
+   * une seule fonte. Changer de fonte recalcule donc les hauteurs **sans**
+   * recalculer les positions, et les cartes se recouvrent.
+   *
+   * Concretement, sur l'organigramme : « Trésorerie / Comptabilité » tient sur une
+   * ligne en Cabinet Grotesk (61 px) et sur deux en Poppins (100 px), alors que le
+   * plancher vaut 61 et que l'entraxe vaut 79. Le même texte, dans la même figure,
+   * mesures 24 px de large de plus.
+   *
+   * Poser ce champ neutralise le sélecteur **pour la figure seulement** : la
+   * toolbar et la sidebar gardent la fonte choisie par l'utilisateur. L'export
+   * recopie la valeur calculée sur son wrapper (`utils/exportSvg.ts`), sans quoi le
+   * clone — reparenté sous `body` — perdrait l'héritage et retomberait sur la
+   * préférence du navigateur : le SVG exporté dépendrait alors de qui l'exporte.
+   *
+   * Choisir une pile dont les replis sont **plus étroits** que la fonte de référence
+   * rend la figure résistante à un échec de chargement : le reflux réduit le
+   * nombre de lignes, jamais l'inverse.
+   *
+   * Réservé aux figures rigides. Les figures déplaçables suivent la préférence :
+   * leurs positions sont stockées par nœud, un reflux les déforme sans les
+   * superposer de façon systématique.
+   */
+  fontFamily?: string
   /**
    * Figure au placement **imposé** : ses nœuds ne se déplacent pas.
    *

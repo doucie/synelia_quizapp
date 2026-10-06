@@ -16,6 +16,7 @@ const categories: { label: string; key: Category }[] = [
   { label: 'Traitements', key: 'traitements' },
   { label: 'MOT', key: 'mot' },
   { label: 'Organigramme', key: 'organigramme' },
+  { label: 'Mémoire', key: 'memoire' },
   { label: 'Anciennes figures', key: 'archive' },
   { label: 'Palette', key: 'palette' },
 ]
@@ -28,6 +29,7 @@ const categoryIcons: Record<Category, string> = {
   traitements: '⚙',
   mot: '☰',
   organigramme: '⌸',
+  memoire: '◍',
   archive: '◀',
   palette: '◉',
 }

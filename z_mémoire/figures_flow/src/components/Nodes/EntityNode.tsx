@@ -4,6 +4,9 @@ import { clsx } from 'clsx'
 import { hsla } from '../../utils/color'
 import SqlScriptBlock from './SqlScriptBlock'
 import OrgNode from './OrgNode'
+import ActorNode from './ActorNode'
+import ScopeNode from './ScopeNode'
+import QuadrantNode from './QuadrantNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -14,6 +17,22 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // OrgNode, comme `mpd-sql` l'est à SqlScriptBlock.
   if (variant === 'org-box') {
     return <OrgNode data={data as EntityNodeData} />
+  }
+
+  // Figure du mémoire : la neutralité impose un rendu dédié, sans carte
+  // individuelle ni poignée. Comme `org-box` et `mpd-sql`, il est délégué.
+  if (variant === 'actor') {
+    return <ActorNode data={data as EntityNodeData} />
+  }
+
+  // Périmètre de projet : cadre composite, lignes et légende. Même délégation.
+  if (variant === 'scope') {
+    return <ScopeNode data={data as EntityNodeData} />
+  }
+
+  // Quadrant de positionnement : points, axes et libellés. Même délégation.
+  if (variant === 'quadrant') {
+    return <QuadrantNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à

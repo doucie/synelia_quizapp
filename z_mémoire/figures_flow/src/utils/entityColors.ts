@@ -41,6 +41,9 @@ export function isProcessVariant(variant: string): boolean {
 
 export function applyEntityColors(nodes: Node<EntityNodeData>[]): Node<EntityNodeData>[] {
   return nodes.map((node, i) => {
+    // Les acteurs du mémoire portent une couleur catégorielle explicite : un
+    // remplacement automatique par ordre d’index fausserait leur neutralité.
+    if (node.data.variant === 'actor' && node.data.color) return node
     if (isProcessVariant(node.data.variant)) {
       const fn = PROCESS_HUES[node.data.variant]
       const hue = fn?.(node.data) ?? 15

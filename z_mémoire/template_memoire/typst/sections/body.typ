@@ -1,4 +1,4 @@
-﻿#import "../theme.typ": top-heading, part-page, note-box, page-footer, body-header, document-table, palette
+﻿#import "../theme.typ": top-heading, part-page, note-box, page-footer, body-header, document-table, palette, landscape-figure
 
 #let merise-lines(..items) = grid(
   columns: (1fr),
@@ -90,9 +90,16 @@
 
   L'organisation interne du groupe est portée par une gouvernance à trois niveaux : la Direction Générale assurée par Patrick KOUASSI, fondateur du groupe, l'Administration Générale exercée par Jorge VILANOVA, et le Secrétariat Général confié à Stéphane OUATTARA (Secrétaire Général et COO), auquel est rattaché le PMO Gouvernance. Cinq directions opérationnelles complémentaires se déploient ensuite : Business & International, Production & Expérience Client, Innovation & Expertise, Performance Financière & Fiscalité, et Administration & Capital Humain. Cette gouvernance structurée favorise un pilotage transverse, dans lequel les expertises technologiques et les unités d'activité communiquent étroitement avec les fonctions support.
 
-  #figure(
-    image("../captures/7-organigrammes/Organigramme du Groupe Synelia.png", width: 100%),
-    caption: [Organigramme du Groupe Synelia — Gouvernance, directions opérationnelles et services rattachés (juin 2026).],
+  // Page paysage pleine : l'organigramme tient sur 25,3 x 15,9 cm, ce qu'aucune
+  // page portrait ne pourrait offrir sans le réduire sous la lisibilité. Voir
+  // `landscape-figure` dans `theme.typ` pour les deux contraintes qu'elle
+  // impose — largeur explicite et `placement: none`.
+  #landscape-figure(
+    figure(
+      image("../captures/7-organigrammes/organigramme-synelia-avec-ag.svg", width: 25.3cm),
+      caption: [Organigramme du Groupe Synelia — Gouvernance, directions opérationnelles et services rattachés (juin 2026).],
+      placement: none,
+    )
   )
 
   #document-table(
@@ -182,10 +189,20 @@
 
   Le #strong[recruteur] ou gestionnaire métier constitue l'acteur principal du processus opérationnel : il crée les campagnes, suit les candidatures, planifie les entretiens, consulte les évaluations et participe aux décisions. Le #strong[candidat], quant à lui, interagit avec l'application à travers des parcours publics sécurisés, principalement pour soumettre sa candidature, passer un quiz, consulter son suivi ou répondre à des sollicitations liées à son dossier.
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-acteurs-systeme.svg", width: 100%),
+    caption: [Acteurs du système de SyneliaQuizApp — présentation neutre, sans hiérarchie.],
+  )
+
   === Frontières du projet
   Le projet inclut donc le cœur du processus de recrutement, mais il n'a pas vocation à couvrir l'ensemble du système d'information RH de l'entreprise. Des fonctionnalités comme l'intégration directe avec les job boards, la visioconférence intégrée, la gestion de la paie ou des contrats, l'application mobile native, le multilingue ou le matching automatique par intelligence artificielle sont volontairement laissées hors du périmètre de cette version.
 
   Cette délimitation est importante d'un point de vue méthodologique. Elle permet de concentrer l'effort sur une version robuste du processus principal, plutôt que de disperser le développement sur des fonctions annexes encore prématurées. Le choix retenu privilégie donc la cohérence métier, la stabilité de l'architecture et la qualité du noyau fonctionnel.
+
+  #figure(
+    image("../captures/8-figures-memoire/memoire-perimetre-projet.svg", width: 100%),
+    caption: [Frontières du projet — périmètre couvert et exclusions assumées pour la version 1.],
+  )
 
   == Contraintes du projet
   Le projet s'inscrit dans un ensemble de contraintes qu'il convient de reconnaître explicitement. Sur le plan technique, l'application doit rester accessible depuis un navigateur web moderne, proposer des temps de réponse acceptables sur les opérations courantes et conserver une architecture suffisamment claire pour être maintenue et étendue. Elle doit également composer avec plusieurs technologies complémentaires et avec un modèle de données évolutif.
@@ -275,6 +292,11 @@
     [Angular], [Framework opinionné, TypeScript par défaut, architecture modulaire imposée, injection de dépendances native, routage et formulaires intégrés, outillage CLI complet.], [Courbe d'apprentissage plus marquée et verbosité initiale supérieure à des frameworks plus légers.],
     [React], [Souplesse, large écosystème, communauté très active, productivité élevée pour les interfaces composables.], [Non opinionné : nécessite des choix complémentaires sur le routage, les formulaires, l'état global et l'organisation modulaire, ce qui fragilise la cohérence d'un projet à long terme s'il n'est pas strictement encadré.],
     [Vue.js], [Bonne ergonomie, courbe d'apprentissage douce, qualité de la documentation.], [Écosystème plus restreint en contexte entreprise francophone ; intégration native de la sécurité et des grands modules métier moins structurée qu'Angular.],
+  )
+
+  #figure(
+    image("../captures/8-figures-memoire/memoire-quadrant-frontend.svg", width: 100%),
+    caption: [Positionnement des frameworks frontend — compromis structure imposée / robustesse entreprise.],
   )
 
   Le choix d'#strong[Angular] répond directement à la nature du produit. Comme le documente Adam Freeman dans *Pro Angular 16* (2023), la richesse du domaine, la coexistence d'une surface publique candidate et d'une surface interne, la nécessité d'imposer une structure modulaire stable et le besoin d'un typage strict dès la couche présentation rendent un framework opinionné plus pertinent qu'un framework librement composable. L'usage par défaut de TypeScript, l'injection de dépendances, le routage intégré et la gestion native des formulaires réactifs apportent un cadre de travail homogène, ce qui réduit le coût de maintenance et facilite l'arrivée de nouveaux contributeurs sur le projet. React et Vue restent techniquement valables, mais leur souplesse devient un risque lorsqu'aucune équipe dédiée n'est en mesure de figer durablement les conventions transverses.
