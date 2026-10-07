@@ -64,7 +64,7 @@ const leaf = (
   },
 })
 
-const edge = (id: string, source: string, target: string, label: string) => ({
+const edge = (id: string, source: string, target: string, label: string, onAxis?: boolean) => ({
   id,
   source,
   target,
@@ -73,7 +73,10 @@ const edge = (id: string, source: string, target: string, label: string) => ({
   type: 'traitement' as const,
   // Pastilles à 22 px : le 10 px par défaut est calibré pour le MCT (12 px),
   // invisible à côté du texte à 24 px de l’arbre.
-  data: { label, labelPx: 22 },
+  // `noAnchorOffset` sur les descentes survivantes : elles partagent l’ancrage
+  // `bottom` avec la sortie latérale (±14 px), ce qui coudait la descente —
+  // elles restent pile sur l’axe, la pastille tombe sur le trait.
+  data: { label, labelPx: 22, ...(onAxis ? { noAnchorOffset: true } : {}) },
 })
 
 export const arbreSgbd: DiagramDefinition = {
@@ -137,13 +140,13 @@ export const arbreSgbd: DiagramDefinition = {
   ],
   edges: [
     edge('e-q1-mongo', 'q1', 'leaf-mongo', 'Non'),
-    edge('e-q1-q2', 'q1', 'q2', 'Oui'),
+    edge('e-q1-q2', 'q1', 'q2', 'Oui', true),
     edge('e-q2-pg', 'q2', 'leaf-pg', 'Oui'),
-    edge('e-q2-q3', 'q2', 'q3', 'Non'),
+    edge('e-q2-q3', 'q2', 'q3', 'Non', true),
     edge('e-q3-maria', 'q3', 'leaf-maria', 'Non'),
     // Conclusion par élimination, pas réponse Oui/Non — « Oui » provisoire,
     // à rejuger à l’écran avec le demandeur.
-    edge('e-q3-mysql', 'q3', 'leaf-mysql', 'Oui'),
+    edge('e-q3-mysql', 'q3', 'leaf-mysql', 'Oui', true),
   ],
   rigidLayout: true,
   fontScale: 4 / 3,

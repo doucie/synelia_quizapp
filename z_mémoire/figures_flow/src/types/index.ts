@@ -158,6 +158,16 @@ export interface RelationshipEdgeData {
    * fige le rendu des figures existantes.
    */
   labelPx?: number
+  /**
+   * Ignore l’offset d’ancrage partagé (`edgePathOffset`) des deux côtés.
+   *
+   * Quand plusieurs arêtes touchent le même ancrage, l’offset les éventaille
+   * (±14 px à 2) : sur une descente droite (même abscisse en source et cible),
+   * un offset d’un seul côté dessine un coude. Les descentes survivantes de
+   * l’arbre de décision le posent pour rester pile sur l’axe. Opt-in par
+   * arête : le défaut fige le rendu des figures existantes.
+   */
+  noAnchorOffset?: boolean
   cardFrom?: string
   cardTo?: string
   roleFrom?: string

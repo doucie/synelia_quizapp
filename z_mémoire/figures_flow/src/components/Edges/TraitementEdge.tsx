@@ -117,10 +117,14 @@ export default function TraitementEdge({
 
   const srcOnHorizontalSide = resolvedSource === 'left' || resolvedSource === 'right'
   const tgtOnHorizontalSide = resolvedTarget === 'left' || resolvedTarget === 'right'
-  const sx = srcOnHorizontalSide ? sourceX : sourceX + fromEdgeOff
-  const sy = srcOnHorizontalSide ? sourceY + fromEdgeOff : sourceY
-  const tx = tgtOnHorizontalSide ? targetX : targetX + toEdgeOff
-  const ty = tgtOnHorizontalSide ? targetY + toEdgeOff : targetY
+  // `noAnchorOffset` : descente droite sur l’axe (arbre de décision) — l’offset
+  // d’ancrage partagé est ignoré des deux côtés, le `smoothstep` à x1 == x2
+  // dégénère en droite verticale pure et la pastille tombe pile dessus.
+  const noOff = data?.noAnchorOffset === true
+  const sx = srcOnHorizontalSide ? sourceX : sourceX + (noOff ? 0 : fromEdgeOff)
+  const sy = srcOnHorizontalSide ? sourceY + (noOff ? 0 : fromEdgeOff) : sourceY
+  const tx = tgtOnHorizontalSide ? targetX : targetX + (noOff ? 0 : toEdgeOff)
+  const ty = tgtOnHorizontalSide ? targetY + (noOff ? 0 : toEdgeOff) : targetY
 
   // Sur les figures MCT, un segment droit : l'éventail des règles d'émission est
   // déjà réparti le long du bord inférieur du nœud d'opération, donc les diagonales
