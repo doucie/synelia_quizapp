@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -58,6 +58,12 @@ export interface EntityNodeData {
   quadAlign?: 'left' | 'center' | 'right'
   /** Teintes des quatre zones d’un fond de quadrant (haut-gauche, haut-droit, bas-gauche, bas-droit). */
   quadCells?: [string, string, string, string]
+  /** Rôle d’un nœud d’arbre de décision : question, feuille écartée ou feuille retenue. */
+  decisionKind?: 'question' | 'out' | 'kept'
+  /** Justificatif court sous le nom d’une feuille d’arbre de décision. */
+  decisionNote?: string
+  /** Logo affiché sur une feuille d’arbre de décision (SVG inline, Simple Icons). */
+  decisionLogo?: 'mysql' | 'postgresql' | 'mongodb' | 'mariadb'
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *

@@ -7,6 +7,7 @@ import OrgNode from './OrgNode'
 import ActorNode from './ActorNode'
 import ScopeNode from './ScopeNode'
 import QuadrantNode from './QuadrantNode'
+import DecisionNode from './DecisionNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -33,6 +34,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Quadrant de positionnement : points, axes et libellés. Même délégation.
   if (variant === 'quadrant') {
     return <QuadrantNode data={data as EntityNodeData} />
+  }
+
+  // Arbre de décision : questions, feuilles écartées et feuille retenue.
+  // Même délégation.
+  if (variant === 'decision') {
+    return <DecisionNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à

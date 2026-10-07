@@ -316,6 +316,11 @@
 
   #strong[MySQL 8] a été retenu parce qu'il offre le meilleur compromis entre richesse fonctionnelle, cohérence transactionnelle et simplicité d'exploitation. Sa parfaite intégration avec JPA et Hibernate, dont C. Bauer, G. King et G. Gregory, dans *Java Persistence with Hibernate* (2ᵉ édition, 2016), décrivent les principes de mapping objet-relationnel, ainsi qu'avec Flyway pour les migrations versionnées, permet d'industrialiser les évolutions de schéma, ce qui est essentiel dans un projet en évolution continue. PostgreSQL aurait été un choix techniquement défendable, mais son surplus fonctionnel n'apportait pas de valeur métier additionnelle au regard des besoins identifiés. MongoDB, en revanche, a été écarté sans ambiguïté : substituer un modèle documentaire à un domaine relationnel aussi structuré aurait conduit à déplacer dans le code applicatif les contraintes que la base sait nativement garantir, au prix d'une fragilité accrue.
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-arbre-sgbd.svg", width: 100%),
+    caption: [Arbre de décision du choix du SGBD — élimination en trois étapes, MySQL 8 retenu.],
+  )
+
   === Synthèse comparative
   La pile retenue se distingue donc moins par une supériorité absolue de chacune de ses briques que par la cohérence d'ensemble qu'elle produit. Spring Boot, Angular et MySQL partagent une logique commune : framework opinionné, typage strict, structure imposée et écosystème stable. Cette homogénéité de philosophie est, pour un projet métier de cette taille, un avantage déterminant.
 

@@ -32,6 +32,7 @@ import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
 import { acteursSysteme as memoireActeurs } from './memoire/acteurs_systeme'
 import { perimetreProjet as memoirePerimetre } from './memoire/perimetre_projet'
 import { quadrantFrontend as memoireQuadrant } from './memoire/quadrant_frontend'
+import { arbreSgbd as memoireArbreSgbd } from './memoire/arbre_sgbd'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -123,10 +124,11 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (3) ---
+  // --- Mémoire (4) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
+  memoireArbreSgbd,
 
   // --- Palette (1) ---
   colorPalette,
