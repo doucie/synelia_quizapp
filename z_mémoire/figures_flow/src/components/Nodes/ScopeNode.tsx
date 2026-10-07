@@ -51,9 +51,24 @@ function IncludedRow({ text, last }: { text: string; last: boolean }) {
         backgroundColor: 'hsla(128, 100%, 40%, 0.08)',
       }}
     >
-      <span className="font-bold" style={{ ...px(ROW_SIZE), color: CHECK }}>
-        ✓
-      </span>
+      {/* Check SVG inline, pas « ✓ » : `CHECK` en `stroke`. */}
+      <svg
+        width={ROW_SIZE}
+        height={ROW_SIZE}
+        viewBox="0 0 24 24"
+        role="img"
+        aria-label="inclus"
+        style={{ flexShrink: 0, color: CHECK }}
+      >
+        <path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
       <span className="leading-snug text-foreground" style={px(ROW_SIZE)}>
         {text}
       </span>

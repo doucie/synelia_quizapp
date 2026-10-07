@@ -68,12 +68,15 @@ const leaf = (
   },
 })
 
+const SURVIVOR_STROKE = 'hsl(128, 100%, 40%)'
+
 const edge = (
   id: string,
   source: string,
   target: string,
   sourceHandle: string = 'bottom',
   targetHandle: string = 'top',
+  tone: 'out' | 'kept' = 'kept',
 ) => ({
   id,
   source,
@@ -81,7 +84,10 @@ const edge = (
   sourceHandle,
   targetHandle,
   type: 'traitement' as const,
-  data: {},
+  // Sorties : tirets (élimination). Descentes survivantes : vert safe hue
+  // (le chemin retenu). `isDashed` et `stroke` existent sur `TraitementEdge`,
+  // ce dernier lu aussi par `OrgBusEdge` — défauts inchangés ailleurs.
+  data: tone === 'out' ? { isDashed: true } : { stroke: SURVIVOR_STROKE },
 })
 
 const answer = (id: string, y: number, label: string) => ({
@@ -162,13 +168,13 @@ export const arbreSgbd: DiagramDefinition = {
   ],
   edges: [
     edge('e-q1-a1', 'q1', 'a1'),
-    edge('e-a1-mongo', 'a1', 'leaf-mongo', 'left'),
+    edge('e-a1-mongo', 'a1', 'leaf-mongo', 'left', 'top', 'out'),
     edge('e-a1-q2', 'a1', 'q2'),
     edge('e-q2-a2', 'q2', 'a2'),
-    edge('e-a2-pg', 'a2', 'leaf-pg', 'left'),
+    edge('e-a2-pg', 'a2', 'leaf-pg', 'left', 'top', 'out'),
     edge('e-a2-q3', 'a2', 'q3'),
     edge('e-q3-a3', 'q3', 'a3'),
-    edge('e-a3-maria', 'a3', 'leaf-maria', 'left'),
+    edge('e-a3-maria', 'a3', 'leaf-maria', 'left', 'top', 'out'),
     // Conclusion par élimination — le « Oui » de A3 reste provisoire,
     // à rejuger à l’écran avec le demandeur.
     edge('e-a3-mysql', 'a3', 'leaf-mysql'),

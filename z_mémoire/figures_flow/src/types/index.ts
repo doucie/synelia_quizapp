@@ -207,6 +207,10 @@ export interface RelationshipEdgeData {
    * par défaut de l'application, ce qui rend impossible de distinguer une branche
    * de gouvernance d'un rattachement latéral.
    *
+   * Lue aussi par `TraitementEdge` (sélection prioritaire, défaut inchangé
+   * sinon) : l’arbre de décision du mémoire colore ainsi ses descentes
+   * survivantes en vert.
+   *
    * L'organigramme d'origine utilise trois traitements : gris 2 px pour la
    * chaîne de gouvernance et la barre, teinte de l'entité 1,7 px en tirets pour
    * le PMO, teinte de la direction 1,2 px pour les liens vers les services.

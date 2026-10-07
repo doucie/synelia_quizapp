@@ -45,9 +45,9 @@ const LOGO_PATHS: Record<LogoKey, { d: string; brand: string }> = {
   },
 }
 
-/** Vert de validation, même famille que le `CHECK` de `ScopeNode`. */
-const KEPT = 'hsl(128, 100%, 32%)'
-const KEPT_BG = 'hsla(128, 100%, 40%, 0.10)'
+/** Vert safe hue de validation (valeurs exactes du mémoire). */
+const KEPT = 'hsl(128, 100%, 40%)'
+const KEPT_BG = 'rgba(0, 204, 27, 0.094)'
 
 const QUESTION_SIZE = 24
 const LEAF_NAME_SIZE = 24
@@ -101,6 +101,9 @@ function Tag({ kept }: { kept?: boolean }) {
         padding: '2px 10px',
         borderRadius: 9999,
         whiteSpace: 'nowrap',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
         ...(kept
           ? { backgroundColor: KEPT, color: '#ffffff' }
           : {
@@ -110,7 +113,24 @@ function Tag({ kept }: { kept?: boolean }) {
             }),
       }}
     >
-      {kept ? 'RETENU ✓' : 'ÉCARTÉ'}
+      {kept ? (
+        <>
+          RETENU
+          {/* Check SVG inline, pas « ✓ » : `currentColor` (blanc sur vert). */}
+          <svg width={TAG_SIZE} height={TAG_SIZE} viewBox="0 0 24 24" role="img" aria-label="retenu">
+            <path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </>
+      ) : (
+        'ÉCARTÉ'
+      )}
     </span>
   )
 }

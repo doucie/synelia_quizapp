@@ -41,6 +41,15 @@
 - **Bordures écartées renforcées** : `1px border` (95 % de clarté, invisible sur
   blanc) → `2px solid hsl(var(--muted-foreground))`, même famille que le tag
   ÉCARTÉ. Cartes `bg-muted`, logos gris et notes inchangés.
+- **Tirets + vert safe hue** : sorties en `isDashed` (`6 4`), descentes
+  survivantes en `stroke: hsl(128, 100%, 40%)` — `TraitementEdge` lit désormais
+  `data.stroke` (sélection prioritaire, défaut inchangé ; miroir d’`OrgBusEdge`,
+  MCT/orga intacts). Export réémet `stroke`/`dasharray` calculés : 6 verts + 3
+  tirets vérifiés dans le SVG. Carte MySQL au vert exact (`hsl(128, 100%, 40%)`,
+  fond `rgba(0, 204, 27, 0.094)`, badge blanc — contraste ~2,9:1 assumé).
+- **Check SVG, plus de « ✓ »** : badge RETENU + lignes incluses de la figure 2
+  (`ScopeNode`, `CHECK` en `stroke`) en `path M5 12.5l4.5 4.5L19 7.5` inline.
+  Figure 2 réexportée (7 rasters aux largeurs exactes).
 
 ## Logos (premier usage d’images du projet)
 

@@ -154,6 +154,10 @@ export default function TraitementEdge({
   const isDashed = data?.isDashed ?? false
   const isStrong = data?.isStrong ?? false
   const strokeClass = selected ? 'stroke-primary' : 'stroke-[var(--xy-edge-stroke-default)]'
+  // Couleur posée par la figure (`data.stroke`), comme `OrgBusEdge` : le
+  // `className` fige une couleur unique, impossible par arête autrement.
+  // Sélection prioritaire, défaut inchangé quand `stroke` est absent.
+  const stroke = selected ? undefined : data?.stroke
 
   const handleSideChange = (which: 'from' | 'to', side: string) => {
     const handle = HANDLE_ID[side]
@@ -197,6 +201,7 @@ export default function TraitementEdge({
           path={edgePath}
           className={strokeClass}
           style={{
+            stroke,
             strokeWidth: isStrong ? 2 : 1.5,
             strokeDasharray: isDashed ? '6 4' : undefined,
           }}
