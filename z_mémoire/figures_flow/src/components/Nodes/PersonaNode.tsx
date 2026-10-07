@@ -1,5 +1,5 @@
 import type { EntityNodeData } from '../../types'
-import { PersonaAvatar, AVATAR_TINT } from './avatars'
+import { PersonaAvatar } from './avatars'
 
 /**
  * Fiches persona des parties prenantes (figure du mémoire) : avatar illustré,
@@ -23,7 +23,7 @@ import { PersonaAvatar, AVATAR_TINT } from './avatars'
 const ROLE_SIZE = 28
 const BLOCK_LABEL_SIZE = 18
 const BLOCK_TEXT_SIZE = 20
-const AVATAR_SIZE = 120
+const AVATAR_SIZE = 144
 const ICON_SIZE = 20
 
 /** Même convention que les autres figures d’impression : `--org-font-scale`
@@ -113,15 +113,11 @@ export default function PersonaNode({ data }: { data: EntityNodeData }) {
         border: '1px solid hsl(var(--border))',
       }}
     >
-      {/* Pastille teintée + avatar : le fond du SVG est déjà à la teinte,
-        la pastille prolonge la même teinte en anneau (voir `AVATAR_TINT`). */}
+      {/* L’avatar remplit exactement le rond : tuile == clip circulaire, aucun
+        bord droit, aucune gouttière — le portrait est coupé au cercle. */}
       <span
         className="flex items-center justify-center overflow-hidden rounded-full"
-        style={{
-          width: AVATAR_SIZE + 24,
-          height: AVATAR_SIZE + 24,
-          backgroundColor: AVATAR_TINT[data.personaAvatar ?? 'candidat'],
-        }}
+        style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
       >
         <PersonaAvatar name={data.personaAvatar ?? 'candidat'} size={AVATAR_SIZE} />
       </span>

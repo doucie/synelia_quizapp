@@ -27,6 +27,9 @@
 - **Crop portrait `cover`** (`AVATAR_CROPS`, carré 900 haut-centré) : les SVG
   sont des scènes plein-pied, on ne montre que tête + épaules — vérifié à
   l’écran, les 4 visages cadrent du premier jet, aucun ajustement par avatar.
+- **Avatar plein-cercle** : la tuile 120 px dans un rond 144 laissait des bords
+  droits (traits coupés nets aux bornes du crop) — l’avatar fait désormais 144
+  et remplit exactement le rond : tuile == clip, vérifié à l’écran.
 - Icônes Feather MIT inline (`star`, `alert-triangle`, `settings`),
   `currentColor` teinte du rôle. Blocs au langage `QuadTag` (liseré 4 px).
 - Textes verbatim du tableau 3.1.1 (lignes 373-376, qui priment sur l’énoncé).
