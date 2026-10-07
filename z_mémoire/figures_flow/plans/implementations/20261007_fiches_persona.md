@@ -24,6 +24,9 @@
 - Inline via `dangerouslySetInnerHTML` (50 Ko de paths : pas de JSX
   maintenable), `<metadata>` purgée (sinon texte licence dans le DOM),
   `viewboxMask` suffixé par rôle (4 instances inline).
+- **Crop portrait `cover`** (`AVATAR_CROPS`, carré 900 haut-centré) : les SVG
+  sont des scènes plein-pied, on ne montre que tête + épaules — vérifié à
+  l’écran, les 4 visages cadrent du premier jet, aucun ajustement par avatar.
 - Icônes Feather MIT inline (`star`, `alert-triangle`, `settings`),
   `currentColor` teinte du rôle. Blocs au langage `QuadTag` (liseré 4 px).
 - Textes verbatim du tableau 3.1.1 (lignes 373-376, qui priment sur l’énoncé).

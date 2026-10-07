@@ -5,6 +5,8 @@
  * SVG inline, jamais `<img>` : l’export rasterise un clone du DOM.
  * Les `id` de masque sont suffixés par rôle (4 instances inline).
  * Fond teinté par rôle, appliqué à la requête (même teinte que la pastille).
+ * Crop portrait (`AVATAR_CROPS`) : les SVG sont des scènes plein-pied, on ne
+ * montre que tête + haut du torse, façon `cover`.
  */
 
 export type AvatarKey = 'candidat' | 'recruteur' | 'admin' | 'superadmin';
@@ -15,6 +17,17 @@ export const AVATAR_TINT: Record<AvatarKey, string> = {
   recruteur: '#e3ccff',
   admin: '#ccd0ff',
   superadmin: '#cce4ff',
+};
+
+/**
+ * Fenêtre de crop par avatar (portrait `cover`) : les SVG sont des scènes
+ * plein-pied, on cadre tête + haut du torse. Ajusté à l’écran par avatar.
+ */
+export const AVATAR_CROPS: Record<AvatarKey, string> = {
+  candidat: '422 150 900 900',
+  recruteur: '422 150 900 900',
+  admin: '422 150 900 900',
+  superadmin: '422 150 900 900',
 };
 
 const AVATAR_BODIES: Record<AvatarKey, string> = {
@@ -31,7 +44,7 @@ export function PersonaAvatar({ name, size }: { name: AvatarKey; size: number })
       aria-label={name}
       style={{ display: 'inline-block', width: size, height: size, flexShrink: 0 }}
       dangerouslySetInnerHTML={{
-        __html: `<svg width="${size}" height="${size}" viewBox="0 0 1744 1744" fill="none">${AVATAR_BODIES[name]}</svg>`,
+        __html: `<svg width="${size}" height="${size}" viewBox="${AVATAR_CROPS[name]}" fill="none">${AVATAR_BODIES[name]}</svg>`,
       }}
     />
   );
