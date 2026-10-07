@@ -33,6 +33,7 @@ import { acteursSysteme as memoireActeurs } from './memoire/acteurs_systeme'
 import { perimetreProjet as memoirePerimetre } from './memoire/perimetre_projet'
 import { quadrantFrontend as memoireQuadrant } from './memoire/quadrant_frontend'
 import { arbreSgbd as memoireArbreSgbd } from './memoire/arbre_sgbd'
+import { tourStack as memoireTourStack } from './memoire/tour_stack'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -124,11 +125,12 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (4) ---
+  // --- Mémoire (5) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
   memoireArbreSgbd,
+  memoireTourStack,
 
   // --- Palette (1) ---
   colorPalette,

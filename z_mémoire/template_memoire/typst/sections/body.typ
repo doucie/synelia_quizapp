@@ -334,6 +334,11 @@
     [Architecture], [REST en couches], [GraphQL, monolithe sans couches, microservices], [Adapté au volume et à la maturité du projet sans complexité d'exploitation inutile.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-tour-stack.svg", width: 100%),
+    caption: [Pile technique retenue — quatre couches, style REST transversal, alternatives écartées en retrait.],
+  )
+
   Au-delà de la justification individuelle de chaque brique, ces choix servent directement les objectifs du projet. La séparation frontend/backend rend le système plus évolutif. L'usage d'une base relationnelle soutient la richesse des relations métier. Les frameworks retenus facilitent la mise en œuvre de la sécurité, des notifications, de la documentation d'API et de la maintenance progressive du produit. Le choix technologique n'est donc pas seulement un choix d'outils ; il participe pleinement à la qualité architecturale de la solution proposée.
 
   == Critique de l'existant et solution proposée

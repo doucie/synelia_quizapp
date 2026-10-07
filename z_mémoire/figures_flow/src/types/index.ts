@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -63,7 +63,17 @@ export interface EntityNodeData {
   /** Justificatif court sous le nom d’une feuille d’arbre de décision. */
   decisionNote?: string
   /** Logo affiché sur une feuille d’arbre de décision (SVG inline, Simple Icons). */
-  decisionLogo?: 'mysql' | 'postgresql' | 'mongodb' | 'mariadb'
+  decisionLogo?: 'mysql' | 'postgresql' | 'mongodb' | 'mariadb' | 'angular' | 'springboot' | 'flyway'
+  /** Rôle d’un nœud de tour technique : couche, bandeau transversal ou légende. */
+  stackKind?: 'layer' | 'band' | 'caption'
+  /** Logo d’une couche de la tour (SVG inline, recoloré en accent SAFE_HUES). */
+  stackLogo?: 'mysql' | 'angular' | 'springboot' | 'flyway'
+  /** Accent SAFE_HUES d’une couche (logo + nom). */
+  stackColor?: string
+  /** Raison du choix, une ligne du tableau de synthèse, raccourcie sans changer le sens. */
+  stackReason?: string
+  /** Alternatives envisagées puis écartées, en fantômes (verbatim du tableau). */
+  stackGhosts?: string[]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *

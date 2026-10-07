@@ -8,6 +8,7 @@ import ActorNode from './ActorNode'
 import ScopeNode from './ScopeNode'
 import QuadrantNode from './QuadrantNode'
 import DecisionNode from './DecisionNode'
+import StackNode from './StackNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -40,6 +41,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'decision') {
     return <DecisionNode data={data as EntityNodeData} />
+  }
+
+  // Tour de la pile : couches, bandeau transversal et légende.
+  // Même délégation.
+  if (variant === 'stack') {
+    return <StackNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
