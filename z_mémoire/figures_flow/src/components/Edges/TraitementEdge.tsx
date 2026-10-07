@@ -203,16 +203,21 @@ export default function TraitementEdge({
           <div
             style={{
               position: 'absolute',
-              left: labelX - 60,
-              top: labelY - 14,
-              width: 120,
-              height: 28,
+              left: labelX,
+              top: labelY,
+              transform: 'translate(-50%, -50%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <span className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 text-[10px] leading-none text-foreground shadow-sm">
+            <span
+              className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 leading-none text-foreground shadow-sm"
+              style={{
+                fontSize: data.labelPx ?? 10,
+                padding: (data.labelPx ?? 10) >= 20 ? '8px 16px' : undefined,
+              }}
+            >
               {data.label}
             </span>
           </div>

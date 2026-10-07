@@ -71,7 +71,9 @@ const edge = (id: string, source: string, target: string, label: string) => ({
   sourceHandle: 'bottom',
   targetHandle: 'top',
   type: 'traitement' as const,
-  data: { label },
+  // Pastilles à 22 px : le 10 px par défaut est calibré pour le MCT (12 px),
+  // invisible à côté du texte à 24 px de l’arbre.
+  data: { label, labelPx: 22 },
 })
 
 export const arbreSgbd: DiagramDefinition = {

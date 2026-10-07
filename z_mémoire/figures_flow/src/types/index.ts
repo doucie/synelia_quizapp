@@ -151,6 +151,13 @@ export type EntityNode = Node<EntityNodeData, 'entity'>
 
 export interface RelationshipEdgeData {
   label?: string
+  /**
+   * Corps en px de la pastille `label` de `TraitementEdge`. 10 par défaut
+   * (calibré pour le MCT, texte à 12 px) ; l’arbre de décision du mémoire,
+   * dont le texte est à 24 px, le porte à 22. Opt-in par arête : le défaut
+   * fige le rendu des figures existantes.
+   */
+  labelPx?: number
   cardFrom?: string
   cardTo?: string
   roleFrom?: string
