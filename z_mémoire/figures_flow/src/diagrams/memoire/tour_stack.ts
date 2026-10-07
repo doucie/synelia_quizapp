@@ -23,7 +23,6 @@ const LAYER_X = BAND_WIDTH + 24
 const LAYER_WIDTH = 1060
 const LAYER_MIN_HEIGHT = 150
 const LAYER_GAP = 20
-const CAPTION_WIDTH = LAYER_X + LAYER_WIDTH
 
 const layer = (
   id: string,
@@ -106,21 +105,6 @@ export const tourStack: DiagramDefinition = {
       'Intégrité relationnelle, exploitation simple, JPA + Flyway.',
       ['PostgreSQL', 'MongoDB', 'MariaDB'],
     ),
-    {
-      id: 'legende-rest',
-      type: 'entity' as const,
-      // Sous la tour : 4 couches et leurs 3 gouttières, plus une respiration.
-      position: { x: 0, y: 4 * LAYER_MIN_HEIGHT + 3 * LAYER_GAP + 40 },
-      style: { width: CAPTION_WIDTH },
-      data: {
-        label:
-          'Style transversal : REST en couches — écartés : GraphQL, monolithe sans couches, microservices.',
-        variant: 'stack' as const,
-        stackKind: 'caption' as const,
-        // Toujours égal à `CAPTION_WIDTH` (cf. `exportWidth`).
-        exportWidth: CAPTION_WIDTH,
-      },
-    },
   ],
   edges: [],
   rigidLayout: true,
