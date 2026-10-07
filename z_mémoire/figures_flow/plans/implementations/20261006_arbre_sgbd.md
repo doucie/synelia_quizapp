@@ -31,6 +31,12 @@
   `edge_sides`, jamais dans l’export). Accepté, `TraitementEdge` intouché.
 - Q3→MySQL porte « Oui » **provisoire** (décision live : trait nu ? « Non » des
   deux côtés ?) — voir modèle (`e-q3-mysql`).
+- **Une seule réponse par question** : les 3 sorties latérales ne portent plus de
+  pastille (pas de `label` → `TraitementEdge` ne rend rien). Restent Q1→Q2 « Oui »,
+  Q2→Q3 « Non », Q3→MySQL « Oui » — la réponse qui continue ; répondre élimine
+  d’office la feuille, le tag ÉCARTÉ porte ce sens. Surcouche labels : 3 pastilles
+  (764–836), 7 rasters inchangés. Vrai T écarté : `OrgBusEdge` ne rend pas
+  `data.label`, l’ajouter aurait risqué la figure organigramme gelée.
 
 ## Logos (premier usage d’images du projet)
 
