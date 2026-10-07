@@ -24,10 +24,10 @@ export const AVATAR_TINT: Record<AvatarKey, string> = {
  * plein-pied, on cadre tête + haut du torse. Ajusté à l’écran par avatar.
  */
 export const AVATAR_CROPS: Record<AvatarKey, string> = {
-  candidat: '422 150 900 900',
-  recruteur: '422 150 900 900',
-  admin: '422 150 900 900',
-  superadmin: '422 150 900 900',
+  candidat: '297 80 1150 1150',
+  recruteur: '297 80 1150 1150',
+  admin: '297 80 1150 1150',
+  superadmin: '297 80 1150 1150',
 };
 
 const AVATAR_BODIES: Record<AvatarKey, string> = {

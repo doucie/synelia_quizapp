@@ -24,9 +24,10 @@
 - Inline via `dangerouslySetInnerHTML` (50 Ko de paths : pas de JSX
   maintenable), `<metadata>` purgée (sinon texte licence dans le DOM),
   `viewboxMask` suffixé par rôle (4 instances inline).
-- **Crop portrait `cover`** (`AVATAR_CROPS`, carré 900 haut-centré) : les SVG
-  sont des scènes plein-pied, on ne montre que tête + épaules — vérifié à
-  l’écran, les 4 visages cadrent du premier jet, aucun ajustement par avatar.
+- **Crop portrait `cover`** (`AVATAR_CROPS`) : les SVG sont des scènes
+  plein-pied, on ne montre que tête + épaules — carré 900 (têtes seules) puis
+  **1150 décadré** (`297 80 1150 1150`, visages ~78 %) pour voir les épaules.
+  Vérifié à l’écran à chaque étape, aucun ajustement par avatar.
 - **Avatar plein-cercle** : la tuile 120 px dans un rond 144 laissait des bords
   droits (traits coupés nets aux bornes du crop) — l’avatar fait désormais 144
   et remplit exactement le rond : tuile == clip, vérifié à l’écran.
