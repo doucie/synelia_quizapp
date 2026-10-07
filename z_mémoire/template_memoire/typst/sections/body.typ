@@ -983,6 +983,13 @@
     [États entretien / décision], [Planifié, répondu, évalué, décidé, annulé, replanifié.], [Traçabilité de la fin de parcours et cohérence des verdicts RH.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-cycle-etape.svg", width: 100%),
+    caption: [Cycle de vie générique d'une étape du pipeline — la boucle « réussie » prouve que le nombre et l'ordre des étapes ne sont pas codés en dur.],
+  )
+
+  Ce cycle s'applique à chaque étape du pipeline, quel que soit son type (quiz, présélection, entretien, décision). Voir la figure du comparateur de pipelines pour deux enchaînements concrets construits à partir de ce même cycle.
+
   == Maquettes et interfaces
   #label("ref-maquettes")
   La conception des interfaces de SyneliaQuizApp a été guidée par les principes d'ergonomie logicielle formalisés par J.-F. Nogier et J. Bouillot dans *Ergonomie du logiciel et design web* (6ᵉ édition, 2020), qui insistent sur l'adéquation entre l'interface et le modèle mental de l'utilisateur. Les maquettes et interfaces de la solution s'organisent autour de trois univers d'usage distincts. Le premier est l'espace public candidat, qui comprend les écrans de candidature, de vérification d'email, de quiz et de suivi. L'enjeu principal de cette interface est la simplicité : le candidat doit comprendre rapidement ce qu'on attend de lui, où il en est et quelles actions lui sont encore accessibles.

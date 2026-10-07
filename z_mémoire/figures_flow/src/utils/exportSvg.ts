@@ -526,7 +526,16 @@ export async function exportSvg(filename = 'diagram.svg') {
 
   // ---- Arêtes : chemins vectoriels (couleurs via style calculé) ----
   const edgeParts: string[] = []
-  const markerIds = new Set<string>()
+  // Origine → substitut sûr : les ids de markers RF (`1__color=hsl(128, 100%,
+  // 40%)&type=arrowclosed`) contiennent `=`, `&`, `(`, `)`, `%` — d’une part
+  // `querySelector(`marker#${id}`)` lèverait une exception de sélecteur,
+  // d’autre part `url(#…(…)…)` réémis tel quel serait tronqué à la première
+  // parenthèse par le parseur SVG. On réécrit donc en `m0`, `m1`, … des deux
+  // côtés (def + référence). Chemin mort jusqu’ici : RF émet `url('#id')`
+  // (avec quotes) que l’ancien regex `url\(#…` ne matchait pas — aucune figure
+  // existante ne porte de marker, leur export est inchangé.
+  const markerIds = new Map<string, string>()
+  const markerDefs = [...renderer.querySelectorAll('.react-flow__marker marker')]
   for (const edgeSvg of [...renderer.querySelectorAll('.react-flow__edges > svg')] as SVGElement[]) {
     const g = edgeSvg.querySelector('g.react-flow__edge') as SVGGElement | null
     if (!g) continue
@@ -548,14 +557,21 @@ export async function exportSvg(filename = 'diagram.svg') {
       let markerHref = ''
       const markerUrl = p.getAttribute('marker-end')
       if (markerUrl) {
-        const id = markerUrl.match(/url\(#([^)]+)\)/)?.[1]
+        // RF émet `url('#id')` (quotes AVANT le hash) et ses ids portent des
+        // `hsl(…)` : un `[^)]+` tronquerait au `)` interne et `#?` avant la
+        // quote raterait le hash — d’où l’ancre des deux côtés + capture large.
+        const id = markerUrl.match(/^url\(\s*['"]?#?([^'"]*?)['"]?\s*\)$/)?.[1]
         if (id) {
-          const marker = renderer.querySelector(`.react-flow__marker marker#${id}`) as Element | null
-          if (marker && !markerIds.has(id)) {
-            markerIds.add(id)
-            edgeParts.unshift(marker.outerHTML)
+          let safe = markerIds.get(id)
+          if (!safe) {
+            safe = `m${markerIds.size}`
+            markerIds.set(id, safe)
+            const marker = markerDefs.find((m) => m.getAttribute('id') === id)
+            // `outerHTML` échappe `&` en `&amp;` : on ne peut pas remplacer
+            // `id="..."` par égalité de chaîne — on réécrit le premier attribut.
+            if (marker) edgeParts.unshift(marker.outerHTML.replace(/ id="[^"]*"/, ` id="${safe}"`))
           }
-          markerHref = ` marker-end="url(#${id})"`
+          markerHref = ` marker-end="url(#${safe})"`
         }
       }
 

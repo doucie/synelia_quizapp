@@ -52,6 +52,7 @@ export default function TraitementEdge({
   targetHandleId: targetHandle,
   data: edgePropsData,
   selected,
+  markerEnd,
 }: EdgeProps) {
   const data = (edgePropsData ?? {}) as RelationshipEdgeData
   const { getEdges, setEdges, getNode } = useReactFlow()
@@ -200,6 +201,10 @@ export default function TraitementEdge({
           id={id}
           path={edgePath}
           className={strokeClass}
+          // Pointes de flèche : `EdgeWrapper` calcule déjà l’URL (`url('#…')`)
+          // depuis `edge.markerEnd` et rend les `<defs>` globales — il suffit
+          // de la retransmettre. Sans elle, aucune flèche sur la figure.
+          markerEnd={markerEnd}
           style={{
             stroke,
             strokeWidth: isStrong ? 2 : 1.5,

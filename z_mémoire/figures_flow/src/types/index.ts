@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -84,6 +84,12 @@ export interface EntityNodeData {
   personaRisque?: string
   /** Conséquence sur la conception (verbatim du tableau 3.1.1). */
   personaConception?: string
+  /** Rôle d’un nœud de machine à états : départ, état actif ou état terminal. */
+  stateKind?: 'start' | 'active' | 'terminal'
+  /** Précision sous le nom d’un état actif (rôle de l’étape dans le cycle). */
+  stateDesc?: string
+  /** Ton d’un état terminal : vert (retenu), rouge (rejeté) ou gris (neutre). */
+  stateTone?: 'kept' | 'rejected' | 'muted'
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
