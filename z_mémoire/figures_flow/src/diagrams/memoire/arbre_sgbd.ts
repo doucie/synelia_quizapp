@@ -4,21 +4,23 @@ import type { DiagramDefinition } from '../../types'
  * Choix du SGBD — arbre de décision (2.4.4).
  *
  * Un raisonnement d’élimination en 3 étapes qui aboutit à MySQL 8 : chaque
- * nœud pose une vraie question binaire, les pastilles Oui/Non sont sur les
- * traits. La branche survivante descend tout droit au centre
- * (Q1→Q2→Q3→MySQL 8) ; les trois feuilles écartées sortent à gauche, à leur
- * niveau. Libellés sourcés du texte : tableau de 2.4.4 (forces/limites des
- * quatre options) et § « MySQL 8 a été retenu… » (JPA/Hibernate, Flyway,
+ * nœud pose une vraie question binaire. La question n’a qu’**une seule
+ * liaison**, vers son nœud Réponse (« Oui » / « Non ») ; c’est la réponse qui
+ * porte les deux issues — la feuille écartée à gauche, la suite au centre.
+ * Répondre à la question élimine d’office la feuille, le tag ÉCARTÉ porte ce
+ * sens : aucune pastille sur les traits, les nœuds Réponse sont les étiquettes.
+ * Libellés sourcés du texte : tableau de 2.4.4 (forces/limites des quatre
+ * options) et § « MySQL 8 a été retenu… » (JPA/Hibernate, Flyway,
  * « fragilité accrue »).
  *
  * Arêtes `type: 'traitement'` posées par arête : le défaut `relationship`
  * (catégorie `memoire`) afficherait des cartes de cardinalité avec boutons ↺,
- * hors sujet ici. `data.label` donne la pastille Oui/Non native de
- * `TraitementEdge`. Pas de `straight` : la règle « quelles figures sont
- * droites » (`startsWith('mct')` dans `DiagramCanvas`) est inchangée — en
- * `smoothstep`, les descentes centrées restent droites et les sorties
- * latérales font des coudes orthogonaux, ce qui convient à un arbre.
- * Tous les handles sont déclarés : `bottom` en source, `top` en cible.
+ * hors sujet ici. `smoothstep` conservé (règle `startsWith('mct')` inchangée) :
+ * les descentes centrées restent droites, les sorties latérales font des
+ * coudes orthogonaux. Tous les handles sont déclarés ; chaque handle ne porte
+ * qu’une seule arête, donc l’offset d’ancrage partagé ne s’applique nulle
+ * part — pas d’entrée dans les familles verticales d’`edgeAnchors.ts`
+ * (réservées MCT/orga), pas de `noAnchorOffset`.
  */
 
 const Q_WIDTH = 480
@@ -27,6 +29,8 @@ const LEAF_WIDTH = 420
 const LEAF_X = 60
 const KEPT_WIDTH = 560
 const KEPT_X = 520
+const ANSWER_WIDTH = 160
+const ANSWER_X = 800 - ANSWER_WIDTH / 2
 
 const question = (id: string, y: number, label: string) => ({
   id,
@@ -64,23 +68,34 @@ const leaf = (
   },
 })
 
-const edge = (id: string, source: string, target: string, label?: string, onAxis?: boolean) => ({
+const edge = (
+  id: string,
+  source: string,
+  target: string,
+  sourceHandle: string = 'bottom',
+  targetHandle: string = 'top',
+) => ({
   id,
   source,
   target,
-  sourceHandle: 'bottom',
-  targetHandle: 'top',
+  sourceHandle,
+  targetHandle,
   type: 'traitement' as const,
-  // Une seule réponse par question : la pastille est posée sur la descente
-  // survivante (la réponse qui continue), jamais sur la sortie latérale —
-  // répondre à la question élimine d’office la feuille écartée, le tag
-  // ÉCARTÉ de la feuille porte ce sens. Sans `label`, pas de pastille.
-  // Pastilles à 22 px : le 10 px par défaut est calibré pour le MCT (12 px),
-  // invisible à côté du texte à 24 px de l’arbre.
-  // `noAnchorOffset` sur les descentes survivantes : elles partagent l’ancrage
-  // `bottom` avec la sortie latérale (±14 px), ce qui coudait la descente —
-  // elles restent pile sur l’axe, la pastille tombe sur le trait.
-  data: { ...(label ? { label, labelPx: 22 } : {}), ...(onAxis ? { noAnchorOffset: true } : {}) },
+  data: {},
+})
+
+const answer = (id: string, y: number, label: string) => ({
+  id,
+  type: 'entity' as const,
+  position: { x: ANSWER_X, y },
+  style: { width: ANSWER_WIDTH },
+  data: {
+    label,
+    variant: 'decision' as const,
+    decisionKind: 'answer' as const,
+    // Toujours égal à `ANSWER_WIDTH` (cf. `exportWidth`).
+    exportWidth: ANSWER_WIDTH,
+  },
 })
 
 export const arbreSgbd: DiagramDefinition = {
@@ -94,6 +109,7 @@ export const arbreSgbd: DiagramDefinition = {
       40,
       'Domaine fortement relationnel avec contraintes d’intégrité fortes ?',
     ),
+    answer('a1', 240, 'Oui'),
     leaf(
       'leaf-mongo',
       400,
@@ -106,6 +122,7 @@ export const arbreSgbd: DiagramDefinition = {
       400,
       'Besoin de types avancés (JSONB, extensions) avec un bénéfice métier immédiat ?',
     ),
+    answer('a2', 620, 'Non'),
     leaf(
       'leaf-pg',
       760,
@@ -118,6 +135,7 @@ export const arbreSgbd: DiagramDefinition = {
       760,
       'MariaDB apporte-t-il un gain fonctionnel décisif par rapport à MySQL 8 ?',
     ),
+    answer('a3', 980, 'Oui'),
     leaf(
       'leaf-maria',
       1120,
@@ -143,14 +161,17 @@ export const arbreSgbd: DiagramDefinition = {
     },
   ],
   edges: [
-    edge('e-q1-mongo', 'q1', 'leaf-mongo'),
-    edge('e-q1-q2', 'q1', 'q2', 'Oui', true),
-    edge('e-q2-pg', 'q2', 'leaf-pg'),
-    edge('e-q2-q3', 'q2', 'q3', 'Non', true),
-    edge('e-q3-maria', 'q3', 'leaf-maria'),
-    // Conclusion par élimination, pas réponse Oui/Non — « Oui » provisoire,
+    edge('e-q1-a1', 'q1', 'a1'),
+    edge('e-a1-mongo', 'a1', 'leaf-mongo', 'left'),
+    edge('e-a1-q2', 'a1', 'q2'),
+    edge('e-q2-a2', 'q2', 'a2'),
+    edge('e-a2-pg', 'a2', 'leaf-pg', 'left'),
+    edge('e-a2-q3', 'a2', 'q3'),
+    edge('e-q3-a3', 'q3', 'a3'),
+    edge('e-a3-maria', 'a3', 'leaf-maria', 'left'),
+    // Conclusion par élimination — le « Oui » de A3 reste provisoire,
     // à rejuger à l’écran avec le demandeur.
-    edge('e-q3-mysql', 'q3', 'leaf-mysql', 'Oui', true),
+    edge('e-a3-mysql', 'a3', 'leaf-mysql'),
   ],
   rigidLayout: true,
   fontScale: 4 / 3,

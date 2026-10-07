@@ -31,12 +31,16 @@
   `edge_sides`, jamais dans l’export). Accepté, `TraitementEdge` intouché.
 - Q3→MySQL porte « Oui » **provisoire** (décision live : trait nu ? « Non » des
   deux côtés ?) — voir modèle (`e-q3-mysql`).
-- **Une seule réponse par question** : les 3 sorties latérales ne portent plus de
-  pastille (pas de `label` → `TraitementEdge` ne rend rien). Restent Q1→Q2 « Oui »,
-  Q2→Q3 « Non », Q3→MySQL « Oui » — la réponse qui continue ; répondre élimine
-  d’office la feuille, le tag ÉCARTÉ porte ce sens. Surcouche labels : 3 pastilles
-  (764–836), 7 rasters inchangés. Vrai T écarté : `OrgBusEdge` ne rend pas
-  `data.label`, l’ajouter aurait risqué la figure organigramme gelée.
+- **Une seule réponse par question → nœud Réponse** : la pastille est un vrai
+  nœud (`decisionKind: 'answer'`, 160 px, Oui/Non 22 px gras, bordure `muted`
+  2 px), pas une étiquette d’arête. La question n’a qu’une liaison (vers sa
+  réponse) ; la réponse porte les deux issues (`bottom` → suite, `left` →
+  écart). 10 nœuds / 9 arêtes muettes / 0 pastille — plus aucun ancrage
+  partagé, donc `noAnchorOffset`/`labelPx` sans usage (champs opt-in conservés).
+  Export : 10 rasters aux largeurs exactes, sans surcouche labels.
+- **Bordures écartées renforcées** : `1px border` (95 % de clarté, invisible sur
+  blanc) → `2px solid hsl(var(--muted-foreground))`, même famille que le tag
+  ÉCARTÉ. Cartes `bg-muted`, logos gris et notes inchangés.
 
 ## Logos (premier usage d’images du projet)
 

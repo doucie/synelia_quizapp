@@ -58,8 +58,8 @@ export interface EntityNodeData {
   quadAlign?: 'left' | 'center' | 'right'
   /** Teintes des quatre zones d’un fond de quadrant (haut-gauche, haut-droit, bas-gauche, bas-droit). */
   quadCells?: [string, string, string, string]
-  /** Rôle d’un nœud d’arbre de décision : question, feuille écartée ou feuille retenue. */
-  decisionKind?: 'question' | 'out' | 'kept'
+  /** Rôle d’un nœud d’arbre de décision : question, réponse, feuille écartée ou feuille retenue. */
+  decisionKind?: 'question' | 'answer' | 'out' | 'kept'
   /** Justificatif court sous le nom d’une feuille d’arbre de décision. */
   decisionNote?: string
   /** Logo affiché sur une feuille d’arbre de décision (SVG inline, Simple Icons). */

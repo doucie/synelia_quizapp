@@ -54,6 +54,7 @@ const LEAF_NAME_SIZE = 24
 const LEAF_NOTE_SIZE = 20
 const TAG_SIZE = 18
 const KEPT_NAME_SIZE = 28
+const ANSWER_SIZE = 22
 
 /** Même convention que les autres figures d’impression : `--org-font-scale`
  * est déjà recopiée pendant l’export SVG. */
@@ -144,7 +145,9 @@ function Leaf({ data, kept }: { data: EntityNodeData; kept?: boolean }) {
       style={{
         padding: kept ? '24px 28px' : '20px 24px',
         width: data.exportWidth,
-        border: kept ? `3px solid ${KEPT}` : '1px solid hsl(var(--border))',
+        // Écartées : `2px muted` — le `1px border` (95 % de clarté en clair)
+        // se fondait dans la page blanche. Même famille que le tag ÉCARTÉ.
+        border: kept ? `3px solid ${KEPT}` : '2px solid hsl(var(--muted-foreground))',
         backgroundColor: kept ? KEPT_BG : undefined,
       }}
     >
@@ -171,5 +174,38 @@ function Leaf({ data, kept }: { data: EntityNodeData; kept?: boolean }) {
 export default function DecisionNode({ data }: { data: EntityNodeData }) {
   if (data.decisionKind === 'out') return <Leaf data={data} />
   if (data.decisionKind === 'kept') return <Leaf data={data} kept />
+  if (data.decisionKind === 'answer') return <Answer data={data} />
   return <Question data={data} />
+}
+
+/**
+ * Réponse à une question : la pastille « Oui » / « Non » est un vrai nœud, pas
+ * une étiquette d’arête. C’est elle qui porte les deux issues (la feuille
+ * écartée et la suite) : la question n’a qu’une seule liaison, vers sa
+ * réponse. Handles `top` en cible, `bottom` (suite) et `left` (écart) en
+ * source — tous déclarés par les arêtes, pas d’entrée dans les familles
+ * verticales d’`edgeAnchors.ts`.
+ */
+function Answer({ data }: { data: EntityNodeData }) {
+  return (
+    <div
+      data-export-root
+      className="w-full rounded-full bg-background"
+      // `exportWidth`, pas `w-full` seul : voir le contrat sur `EntityNodeData`.
+      // Bordure `muted` comme les écartées : `border` (95 % de clarté) serait
+      // invisible sur page blanche.
+      style={{
+        padding: '10px 28px',
+        width: data.exportWidth,
+        border: '2px solid hsl(var(--muted-foreground))',
+      }}
+    >
+      <div className="text-center font-bold text-foreground" style={px(ANSWER_SIZE)}>
+        {data.label}
+      </div>
+      <Handle id="bottom" type="source" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="left" type="source" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+    </div>
+  )
 }
