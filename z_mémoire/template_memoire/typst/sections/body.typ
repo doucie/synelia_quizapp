@@ -376,6 +376,11 @@
     [Super administrateur], [Gouverner la plateforme, superviser la sécurité et maintenir la configuration globale.], [Mauvaise gouvernance des rôles, défaut de supervision ou de paramétrage global.], [Séparation nette entre administration métier et administration de plateforme.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-fiches-persona.svg", width: 100%),
+    caption: [Parties prenantes — attentes, risques métier et conséquences sur la conception.],
+  )
+
   === Démarche de formalisation
   La formalisation des besoins a suivi quatre opérations complémentaires : recenser les parcours métier réels, regrouper les attentes par modules applicatifs, exprimer les règles de gestion qui conditionnent les transitions d'état, puis vérifier la cohérence de cette modélisation avec le schéma de données, les écrans existants et les validations déjà réalisées. Cette méthode a permis d'éviter une double impasse fréquente dans les mémoires techniques : d'un côté un discours purement théorique sans ancrage logiciel, de l'autre une description du code dépourvue de logique d'analyse.
 

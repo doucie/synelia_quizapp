@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -74,6 +74,16 @@ export interface EntityNodeData {
   stackReason?: string
   /** Alternatives envisagées puis écartées, en fantômes (verbatim du tableau). */
   stackGhosts?: string[]
+  /** Avatar illustré d’une fiche persona (DiceBear inline, même style). */
+  personaAvatar?: 'candidat' | 'recruteur' | 'admin' | 'superadmin'
+  /** Couleur du rôle d’une fiche persona (teinte fig. 1 : 210/240/285/330). */
+  personaColor?: string
+  /** Attentes principales d’une fiche persona (verbatim du tableau 3.1.1). */
+  personaAttentes?: string
+  /** Risque métier d’une fiche persona (verbatim du tableau 3.1.1). */
+  personaRisque?: string
+  /** Conséquence sur la conception (verbatim du tableau 3.1.1). */
+  personaConception?: string
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *

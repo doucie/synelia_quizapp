@@ -9,6 +9,7 @@ import ScopeNode from './ScopeNode'
 import QuadrantNode from './QuadrantNode'
 import DecisionNode from './DecisionNode'
 import StackNode from './StackNode'
+import PersonaNode from './PersonaNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -47,6 +48,11 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'stack') {
     return <StackNode data={data as EntityNodeData} />
+  }
+
+  // Fiches persona : avatar, rôle, trois blocs. Même délégation.
+  if (variant === 'persona') {
+    return <PersonaNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
