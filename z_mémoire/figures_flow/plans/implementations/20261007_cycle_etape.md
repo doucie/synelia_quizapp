@@ -76,6 +76,9 @@
   pastilles `labelPx` 24 + `whiteSpace: nowrap` (fini les retours ligne) ;
   `data.labelBorder` opt-in (bordure pastille assortie à la cible : rouge
   vers REJETÉ, vert vers ACCEPTÉ — défaut `border-border` inchangé).
+- **Pastilles lisibles** : graisse `bold`, bordure 2 px, défaut `muted`
+  (le 1 px `border-border` se lavait), `labelPx` 26 — `data.label` réservé à
+  cette figure, aucun impact MCT.
 - **Ambre + gris foncé** : `saut autorisé` en ambre `30` (couleur de SKIPPED,
   trait + flèche + pastille) ; lectures `inactivité`/`retrait` en
   `hsl(var(--muted-foreground))` (~47 % vs ~72 % du défaut — marqueurs OK car

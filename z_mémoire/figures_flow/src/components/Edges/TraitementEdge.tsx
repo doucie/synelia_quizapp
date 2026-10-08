@@ -226,13 +226,16 @@ export default function TraitementEdge({
             }}
           >
             <span
-              className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 leading-none text-foreground shadow-sm"
+              className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1 font-bold leading-none text-foreground shadow-sm"
               style={{
                 fontSize: data.labelPx ?? 10,
                 padding: (data.labelPx ?? 10) >= 20 ? '8px 16px' : undefined,
-                // Bordure teintée par la cible (`labelBorder`), jamais de
-                // retour à la ligne dans une pastille. Opt-in : défaut inchangé.
-                borderColor: data.labelBorder,
+                // Pastilles lisibles : bordure 2 px, `muted` par défaut (le
+                // `border-border` à 95 % se lavait à l’impression). `labelBorder`
+                // assortit à la cible quand posée. `data.label` n’est utilisé
+                // que par la figure 4.3.3 — aucun impact MCT.
+                borderWidth: 2,
+                borderColor: data.labelBorder ?? 'hsl(var(--muted-foreground))',
                 whiteSpace: 'nowrap',
               }}
             >

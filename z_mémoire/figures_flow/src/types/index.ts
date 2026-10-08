@@ -186,8 +186,8 @@ export interface RelationshipEdgeData {
   labelPx?: number
   /**
    * Couleur de bordure de la pastille `label` (`TraitementEdge`), assortie à
-   * la cible (ex. rouge vers REJETÉ). Opt-in par arête : le défaut
-   * (`border-border`) fige le rendu des figures existantes.
+   * la cible (ex. rouge vers REJETÉ). Sans elle : bordure `muted` 2 px.
+   * `data.label` n’est utilisé que par la figure 4.3.3.
    */
   labelBorder?: string
   /**

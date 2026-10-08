@@ -70,7 +70,7 @@ const edge = (
   data: {
     // Traits à 2 px (`isStrong`) : à 1.5 ils se perdaient à l’impression.
     isStrong: true,
-    ...(opts.label ? { label: opts.label, labelPx: 24, ...(opts.border ? { labelBorder: opts.border } : {}) } : {}),
+    ...(opts.label ? { label: opts.label, labelPx: 26, ...(opts.border ? { labelBorder: opts.border } : {}) } : {}),
     ...(opts.stroke ? { stroke: opts.stroke } : {}),
     ...(opts.dashed ? { isDashed: true } : {}),
   },
