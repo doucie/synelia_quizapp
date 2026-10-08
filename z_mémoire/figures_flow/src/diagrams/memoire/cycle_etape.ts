@@ -2,34 +2,43 @@ import { MarkerType } from '@xyflow/react'
 import type { DiagramDefinition } from '../../types'
 
 /**
- * Cycle de vie générique d’une étape du pipeline (4.3.3).
+ * Cycle de vie d’une occurrence d’étape (4.3.3) — reconstruit sur le vrai
+ * moteur (`ApplicationProgressBusiness`), pas sur le mémoire.
  *
- * Pas une séquence fixe d’étapes nommées : le cycle d’UNE étape quelconque
- * (quiz, présélection, entretien, décision). La flèche « réussie » repart en
- * boucle vers EN_ATTENTE — c’est elle qui prouve que le nombre et l’ordre des
- * étapes ne sont pas codés en dur. Si dernière étape, « réussie » mène à
- * DÉCIDÉ ; sinon les trois sorties d’échec (REJETÉ, ABANDONNÉE, RETIRÉE).
+ * - Toutes les occurrences sont pré-créées `PENDING` à l’init : avancer, c’est
+ *   activer (`activateNextPendingStage` = premier `PENDING` d’ordre supérieur),
+ *   jamais créer. Un seul `IN_PROGRESS` à la fois.
+ * - `passStage` : `COMPLETED` → activation suivante (fin s’il n’y en a plus).
+ * - `failStage` : `FAILED` → si éliminatoire, cascade `SKIPPED` + arrêt, sinon
+ *   on continue. `skipStage` : `SKIPPED` → suite (`CANDIDATURE`/`DECISION`
+ *   non skippables). `rollbackStage` : vrai retour en arrière vers
+ *   `IN_PROGRESS` (dessiné depuis `COMPLETED`, valable pour tout résolu).
+ * - Gardes : précédent requis résolu, pas de mail requis en attente.
+ * - Verdict : pas un état universel — la décision (`PRE_SCREEN`/`FINAL`,
+ *   accepté/rejeté) fait muter l’étape `PRESELECTION`/`DECISION` via le moteur.
+ * - `AWAITING_VALIDATION` (jamais piloté côté progression) et
+ *   `EXPIRED`/`CANCELLED` quiz (déclarés, jamais posés — l’inactivité donne
+ *   `FAILED`) sont omis, voir légende body.
  *
- * États français = convention des figures du mémoire ; correspondance code
- * (`application_progress.progress_status`) : EN_ATTENTE ≈ `PENDING`,
- * EN_COURS ≈ `IN_PROGRESS`, réussie ≈ `COMPLETED`, échouée ≈ `FAILED`,
- * expirée ≈ `EXPIRED`, retirée ≈ `SKIPPED` / `CANCELLED`. DÉCIDÉ, REJETÉ,
- * ABANDONNÉE et RETIRÉE sont la lecture terminale du dossier.
+ * Le bandeau bas n’est pas le moteur mais sa LECTURE dossier (miroirs,
+ * `applicationAbandoned`, retrait) : mini-boîtes en pointillés reliées en
+ * tirets fins avec pastille-condition — jamais des transitions.
  *
- * Pointes de flèche (`markerEnd`, première figure du projet à en porter) :
- * `EdgeWrapper` calcule l’URL et rend les `<defs>` globales depuis le champ
- * `markerEnd` de l’arête — `TraitementEdge` ne fait que retransmettre à
- * `BaseEdge`. Couleur explicite assortie au trait (l’héritage par défaut est
- * incertain) ; arêtes neutres et tirets : défaut (`#b1b1b7`, = le trait).
- * `smoothstep` conservé (règle `startsWith('mct')` inchangée) ; handles tous
- * déclarés ; l’ancre `right` d’EN_COURS porte 4 arêtes (offsets absorbés par
- * les coudes, précédent des sorties de la figure 4).
+ * Flèches `markerEnd` (couleur explicite), pastilles `labelPx: 22`,
+ * `smoothstep` (règle `startsWith('mct')` inchangée), handles tous déclarés.
+ * Chaque ancre ne porte que des arêtes compatibles : les groupes de 2 ne
+ * concernent que des tirets fins (fourche ±14 assumée, précédent fig. 4),
+ * les descentes pleines restent en groupe de 1, droites.
  */
 
 const COL_X = 560
 const COL_WIDTH = 480
+const SIDE_X = 60
+const SIDE_WIDTH = 380
 const TERM_X = 1200
 const TERM_WIDTH = 380
+const BAND_Y = 1280
+const TAG_Y = 1220
 
 const GREEN = 'hsl(128, 100%, 40%)'
 const RED = 'hsl(0, 100%, 40%)'
@@ -58,44 +67,66 @@ const edge = (
   },
 })
 
-const active = (id: string, y: number, label: string, stateDesc: string) => ({
+const active = (id: string, x: number, y: number, w: number, label: string, stateDesc: string) => ({
   id,
   type: 'entity' as const,
-  position: { x: COL_X, y },
-  style: { width: COL_WIDTH },
+  position: { x, y },
+  style: { width: w },
   data: {
     label,
     variant: 'state' as const,
     stateKind: 'active' as const,
     stateDesc,
-    // Toujours égal à `COL_WIDTH` (cf. `exportWidth`).
-    exportWidth: COL_WIDTH,
+    // Toujours égal à la largeur posée (cf. `exportWidth`).
+    exportWidth: w,
   },
 })
 
 const terminal = (
   id: string,
+  x: number,
   y: number,
+  w: number,
   label: string,
   stateTone: 'kept' | 'rejected' | 'muted',
 ) => ({
   id,
   type: 'entity' as const,
-  position: { x: TERM_X, y },
-  style: { width: TERM_WIDTH },
+  position: { x, y },
+  style: { width: w },
   data: {
     label,
     variant: 'state' as const,
     stateKind: 'terminal' as const,
     stateTone,
-    // Toujours égal à `TERM_WIDTH` (cf. `exportWidth`).
-    exportWidth: TERM_WIDTH,
+    // Toujours égal à la largeur posée (cf. `exportWidth`).
+    exportWidth: w,
+  },
+})
+
+const dossier = (
+  id: string,
+  x: number,
+  label: string,
+  stateTone: 'kept' | 'rejected' | 'muted',
+) => ({
+  id,
+  type: 'entity' as const,
+  position: { x, y: BAND_Y },
+  style: { width: 300 },
+  data: {
+    label,
+    variant: 'state' as const,
+    stateKind: 'dossier' as const,
+    stateTone,
+    // Toujours égal à 300 (cf. `exportWidth`).
+    exportWidth: 300,
   },
 })
 
 export const cycleEtape: DiagramDefinition = {
   id: 'memoire-cycle-etape',
-  title: 'Cycle de vie générique d’une étape du pipeline',
+  title: 'Cycle de vie d’une occurrence d’étape',
   category: 'memoire',
   domain: '4.3.3 — Diagrammes d’activités et d’états',
   nodes: [
@@ -111,39 +142,65 @@ export const cycleEtape: DiagramDefinition = {
         exportWidth: 24,
       },
     },
-    active('en-attente', 140, 'EN_ATTENTE', 'L’étape est prête à démarrer.'),
-    active(
-      'en-cours',
-      430,
-      'EN_COURS',
-      'Étape active : quiz en passation, entretien planifié, etc.',
-    ),
-    terminal('decide', 140, 'DÉCIDÉ', 'kept'),
-    terminal('rejete', 430, 'REJETÉ', 'rejected'),
-    terminal('abandonnee', 580, 'ABANDONNÉE', 'muted'),
-    terminal('retiree', 730, 'RETIRÉE', 'muted'),
+    active('pending', COL_X, 140, COL_WIDTH, 'PENDING', 'Occurrence créée à l’init, en attente d’activation.'),
+    active('in-progress', COL_X, 430, COL_WIDTH, 'IN_PROGRESS', 'Une seule active à la fois : quiz, entretien, décision…'),
+    active('completed', COL_X, 720, COL_WIDTH, 'COMPLETED', 'Score ≥ seuil ou validation manuelle.'),
+    terminal('failed', TERM_X, 430, TERM_WIDTH, 'FAILED', 'rejected'),
+    terminal('skipped', SIDE_X, 430, SIDE_WIDTH, 'SKIPPED', 'muted'),
+    {
+      id: 'etape-suivante',
+      type: 'entity' as const,
+      position: { x: 600, y: 1010 },
+      style: { width: 400 },
+      data: {
+        label: 'ÉTAPE SUIVANTE — même cycle',
+        variant: 'state' as const,
+        stateKind: 'ghost' as const,
+        stateDesc: 'Fin du pipeline s’il n’y en a plus.',
+        // Toujours égal à 400 (cf. `exportWidth`).
+        exportWidth: 400,
+      },
+    },
+    {
+      id: 'tag-dossier',
+      type: 'entity' as const,
+      position: { x: SIDE_X, y: TAG_Y },
+      style: { width: 600 },
+      data: {
+        label: 'DOSSIER (lecture)',
+        variant: 'state' as const,
+        stateKind: 'tag' as const,
+        exportWidth: 600,
+      },
+    },
+    dossier('d-abandonnee', SIDE_X, 'ABANDONNÉE', 'muted'),
+    dossier('d-retiree', 390, 'RETIRÉE', 'muted'),
+    dossier('d-accepte', 720, 'ACCEPTÉ', 'kept'),
+    dossier('d-rejete', 1050, 'REJETÉ', 'rejected'),
   ],
   edges: [
-    edge('e-depart', 'depart', 'en-attente', 'bottom', 'top'),
-    edge('e-declenchement', 'en-attente', 'en-cours', 'bottom', 'top', { label: 'déclenchement' }),
-    // La boucle : même abscisse des deux côtés → droite verticale pure.
-    edge('e-reussie', 'en-cours', 'en-attente', 'left', 'left', {
-      label: 'réussie',
+    edge('e-init', 'depart', 'pending', 'bottom', 'top', { label: 'init' }),
+    edge('e-activation', 'pending', 'in-progress', 'bottom', 'top', { label: 'activation' }),
+    edge('e-validation', 'in-progress', 'completed', 'bottom', 'top', { label: 'validation' }),
+    edge('e-next', 'completed', 'etape-suivante', 'bottom', 'top', {
+      label: 'activation suivante',
       stroke: GREEN,
       marker: GREEN,
     }),
-    edge('e-decide', 'en-cours', 'decide', 'right', 'left', {
-      label: 'dernière étape',
-      stroke: GREEN,
-      marker: GREEN,
-    }),
-    edge('e-rejete', 'en-cours', 'rejete', 'right', 'left', {
-      label: 'échouée',
+    edge('e-fail', 'in-progress', 'failed', 'right', 'left', {
+      label: 'échec',
       stroke: RED,
       marker: RED,
     }),
-    edge('e-expiree', 'en-cours', 'abandonnee', 'right', 'left', { label: 'expirée', dashed: true }),
-    edge('e-retiree', 'en-cours', 'retiree', 'right', 'left', { label: 'retirée', dashed: true }),
+    edge('e-skip', 'pending', 'skipped', 'left', 'top', { label: 'saut autorisé', dashed: true }),
+    // Seule réouverture dessinée (depuis COMPLETED) : `rollbackStage` vaut
+    // pour tout état résolu — voir légende body pour FAILED.
+    edge('e-reopen', 'completed', 'in-progress', 'left', 'left', { label: 'réouverture', dashed: true }),
+    // Lectures dossier : tirets fins, flèche neutre, pastille-condition.
+    edge('e-l-rejete', 'failed', 'd-rejete', 'bottom', 'top', { label: 'si éliminatoire', dashed: true }),
+    edge('e-l-accepte', 'completed', 'd-accepte', 'right', 'top', { label: 'si DECISION', dashed: true }),
+    edge('e-l-abandon', 'in-progress', 'd-abandonnee', 'left', 'top', { label: 'inactivité', dashed: true }),
+    edge('e-l-retrait', 'in-progress', 'd-retiree', 'left', 'top', { label: 'retrait', dashed: true }),
   ],
   rigidLayout: true,
   fontScale: 4 / 3,

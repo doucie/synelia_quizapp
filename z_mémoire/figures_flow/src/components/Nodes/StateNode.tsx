@@ -26,6 +26,8 @@ import type { EntityNodeData } from '../../types'
 
 const STATE_NAME_SIZE = 24
 const STATE_DESC_SIZE = 20
+const SMALL_NAME_SIZE = 20
+const TAG_SIZE = 18
 
 /** Même convention que les autres figures d’impression : `--org-font-scale`
  * est déjà recopiée pendant l’export SVG. */
@@ -94,13 +96,14 @@ function Active({ data }: { data: EntityNodeData }) {
           {data.stateDesc}
         </div>
       )}
-      {/* `left`/`right` dans les DEUX types : la boucle arrive sur un `target
-        left` (React Flow ne rend pas une arête dont le handle cible manque —
-        c’est ce qui faisait disparaître la boucle « réussie »). Handles
-        inutilisés invisibles (boîte nulle, figure rigide). */}
+      {/* Toutes les arêtes de la figure déclarent leurs handles — pas d’entrée
+        dans les familles verticales d’`edgeAnchors.ts`. `left`/`right` dans
+        les DEUX types : une arête n’est pas rendue si son handle cible manque.
+        Handles inutilisés invisibles (boîte nulle, figure rigide). */}
       <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="target" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="bottom" type="target" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="bottom" type="source" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="left" type="source" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="source" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
@@ -125,7 +128,80 @@ function Terminal({ data }: { data: EntityNodeData }) {
       <div className="text-center leading-tight font-bold" style={{ ...px(STATE_NAME_SIZE), color: tone.text }}>
         {data.label}
       </div>
+      {/* Lectures dossier (`bottom` → bandeau) + arrivées latérales. */}
       <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="bottom" type="source" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
+    </div>
+  )
+}
+
+/**
+ * Étape suivante (fantôme) : la suite du pipeline n’est pas une boîte de plus,
+ * c’est le même cycle qui recommence — tracé en pointillés, comme les fantômes
+ * de la figure 5. On n’entre que par le haut.
+ */
+function Ghost({ data }: { data: EntityNodeData }) {
+  return (
+    <div
+      data-export-root
+      className="w-full rounded-xl bg-background"
+      // `exportWidth`, pas `w-full` seul : voir le contrat sur `EntityNodeData`.
+      style={{
+        padding: '16px 24px',
+        width: data.exportWidth,
+        border: '2px dashed hsl(var(--muted-foreground))',
+      }}
+    >
+      <div className="text-center leading-tight font-bold text-muted-foreground" style={px(SMALL_NAME_SIZE)}>
+        {data.label}
+      </div>
+      {data.stateDesc && (
+        <div className="text-center leading-snug text-foreground/85" style={{ ...px(STATE_DESC_SIZE), marginTop: 8 }}>
+          {data.stateDesc}
+        </div>
+      )}
+      <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+    </div>
+  )
+}
+
+/**
+ * Lecture dossier : pas un état moteur mais un verdict dérivé (miroirs,
+ * `applicationAbandoned`, retrait). Plus petite que les terminaux, bordure en
+ * tirets, ton atténué — on n’entre que par le haut.
+ */
+function Dossier({ data }: { data: EntityNodeData }) {
+  const tone = TONE[data.stateTone ?? 'muted']
+  return (
+    <div
+      data-export-root
+      className="w-full rounded-lg bg-background"
+      // `exportWidth`, pas `w-full` seul : voir le contrat sur `EntityNodeData`.
+      style={{
+        padding: '12px 20px',
+        width: data.exportWidth,
+        border: `1.5px dashed ${tone.border}`,
+      }}
+    >
+      <div className="text-center leading-tight font-bold" style={{ ...px(SMALL_NAME_SIZE), color: tone.text }}>
+        {data.label}
+      </div>
+      <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+    </div>
+  )
+}
+
+/** Étiquette de zone, sans carte ni handle (comme les libellés d’axes fig. 3). */
+function ZoneTag({ data }: { data: EntityNodeData }) {
+  return (
+    <div
+      data-export-root
+      className="w-full font-bold tracking-wide text-muted-foreground"
+      // `exportWidth`, pas `w-full` seul : voir le contrat sur `EntityNodeData`.
+      style={{ ...px(TAG_SIZE), width: data.exportWidth }}
+    >
+      {data.label}
     </div>
   )
 }
@@ -133,5 +209,8 @@ function Terminal({ data }: { data: EntityNodeData }) {
 export default function StateNode({ data }: { data: EntityNodeData }) {
   if (data.stateKind === 'start') return <Start data={data} />
   if (data.stateKind === 'terminal') return <Terminal data={data} />
+  if (data.stateKind === 'ghost') return <Ghost data={data} />
+  if (data.stateKind === 'dossier') return <Dossier data={data} />
+  if (data.stateKind === 'tag') return <ZoneTag data={data} />
   return <Active data={data} />
 }

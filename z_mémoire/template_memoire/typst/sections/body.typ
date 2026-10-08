@@ -985,10 +985,10 @@
 
   #figure(
     image("../captures/8-figures-memoire/memoire-cycle-etape.svg", width: 100%),
-    caption: [Cycle de vie générique d'une étape du pipeline — la boucle « réussie » prouve que le nombre et l'ordre des étapes ne sont pas codés en dur.],
+    caption: [Cycle de vie d'une occurrence d'étape — activation, validation, échec, saut, réouverture et lecture dossier.],
   )
 
-  Ce cycle s'applique à chaque étape du pipeline, quel que soit son type (quiz, présélection, entretien, décision). Voir la figure du comparateur de pipelines pour deux enchaînements concrets construits à partir de ce même cycle.
+  Toutes les occurrences d'étape sont créées en attente à l'initialisation du dossier : faire progresser, c'est activer, jamais créer. La réouverture vaut pour tout état résolu (une seule flèche dessinée, depuis l'étape validée). Abandon, retrait et verdict final se lisent au niveau du dossier (bandeau bas). Voir la figure du comparateur de pipelines pour deux enchaînements concrets construits à partir de ce même cycle.
 
   == Maquettes et interfaces
   #label("ref-maquettes")

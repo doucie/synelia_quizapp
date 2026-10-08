@@ -84,8 +84,8 @@ export interface EntityNodeData {
   personaRisque?: string
   /** Conséquence sur la conception (verbatim du tableau 3.1.1). */
   personaConception?: string
-  /** Rôle d’un nœud de machine à états : départ, état actif ou état terminal. */
-  stateKind?: 'start' | 'active' | 'terminal'
+  /** Rôle d’un nœud de machine à états : départ, état actif ou terminal, fantôme, lecture dossier ou étiquette. */
+  stateKind?: 'start' | 'active' | 'terminal' | 'ghost' | 'dossier' | 'tag'
   /** Précision sous le nom d’un état actif (rôle de l’étape dans le cycle). */
   stateDesc?: string
   /** Ton d’un état terminal : vert (retenu), rouge (rejeté) ou gris (neutre). */
