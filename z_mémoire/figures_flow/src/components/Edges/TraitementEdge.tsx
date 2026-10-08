@@ -230,6 +230,10 @@ export default function TraitementEdge({
               style={{
                 fontSize: data.labelPx ?? 10,
                 padding: (data.labelPx ?? 10) >= 20 ? '8px 16px' : undefined,
+                // Bordure teintée par la cible (`labelBorder`), jamais de
+                // retour à la ligne dans une pastille. Opt-in : défaut inchangé.
+                borderColor: data.labelBorder,
+                whiteSpace: 'nowrap',
               }}
             >
               {data.label}

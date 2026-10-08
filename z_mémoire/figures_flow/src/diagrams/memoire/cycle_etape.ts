@@ -54,7 +54,7 @@ const edge = (
   target: string,
   sourceHandle: string,
   targetHandle: string,
-  opts: { label?: string; stroke?: string; dashed?: boolean; marker?: string } = {},
+  opts: { label?: string; stroke?: string; dashed?: boolean; marker?: string; border?: string } = {},
 ) => ({
   id,
   source,
@@ -64,7 +64,9 @@ const edge = (
   type: 'traitement' as const,
   markerEnd: arrow(opts.marker),
   data: {
-    ...(opts.label ? { label: opts.label, labelPx: 22 } : {}),
+    // Traits à 2 px (`isStrong`) : à 1.5 ils se perdaient à l’impression.
+    isStrong: true,
+    ...(opts.label ? { label: opts.label, labelPx: 24, ...(opts.border ? { labelBorder: opts.border } : {}) } : {}),
     ...(opts.stroke ? { stroke: opts.stroke } : {}),
     ...(opts.dashed ? { isDashed: true } : {}),
   },
@@ -219,11 +221,22 @@ export const cycleEtape: DiagramDefinition = {
       stroke: REOPEN,
       marker: REOPEN,
     }),
-    // Lectures dossier : tirets fins gris, flèche neutre, pastille-condition.
-    // Les deux voies de gauche courent parallèles (±14) mais se distinguent
-    // par leurs pastilles disjointes ; le rollback a son couloir à droite.
-    edge('e-l-rejete', 'failed', 'd-rejete', 'bottom', 'top', { label: 'si éliminatoire', dashed: true }),
-    edge('e-l-accepte', 'completed', 'd-accepte', 'right', 'top', { label: 'si DECISION', dashed: true }),
+    // Lectures dossier : tirets fins, flèche et pastille assorties à la cible
+    // (rouge vers REJETÉ, vert vers ACCEPTÉ, gris vers les neutres).
+    edge('e-l-rejete', 'failed', 'd-rejete', 'bottom', 'top', {
+      label: 'si éliminatoire',
+      dashed: true,
+      stroke: RED,
+      marker: RED,
+      border: RED,
+    }),
+    edge('e-l-accepte', 'completed', 'd-accepte', 'right', 'top', {
+      label: 'si DECISION',
+      dashed: true,
+      stroke: GREEN,
+      marker: GREEN,
+      border: GREEN,
+    }),
     edge('e-l-abandon', 'in-progress', 'd-abandonnee', 'left', 'top', { label: 'inactivité', dashed: true }),
     edge('e-l-retrait', 'in-progress', 'd-retiree', 'left', 'top', { label: 'retrait', dashed: true }),
   ],

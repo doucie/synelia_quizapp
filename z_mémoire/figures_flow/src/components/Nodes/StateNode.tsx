@@ -192,7 +192,7 @@ function Ghost({ data }: { data: EntityNodeData }) {
       style={{
         padding: '16px 24px',
         width: data.exportWidth,
-        border: '2px dashed hsl(var(--muted-foreground))',
+        border: '2.5px dashed hsl(var(--muted-foreground))',
       }}
     >
       <div className="text-center leading-tight font-bold text-muted-foreground" style={px(SMALL_NAME_SIZE)}>
@@ -223,8 +223,8 @@ function Dossier({ data }: { data: EntityNodeData }) {
       style={{
         padding: '12px 20px',
         width: data.exportWidth,
-        // Tirets 2.5 px : à 1.5 ils se perdaient à l’échelle d’impression.
-        border: `2.5px dashed ${tone.border}`,
+        // Tirets 3 px : en dessous ils se perdent à l’échelle d’impression.
+        border: `3px dashed ${tone.border}`,
       }}
     >
       <div className="text-center leading-tight font-bold" style={{ ...px(SMALL_NAME_SIZE), color: tone.text }}>

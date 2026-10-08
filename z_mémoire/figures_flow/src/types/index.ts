@@ -185,6 +185,12 @@ export interface RelationshipEdgeData {
    */
   labelPx?: number
   /**
+   * Couleur de bordure de la pastille `label` (`TraitementEdge`), assortie à
+   * la cible (ex. rouge vers REJETÉ). Opt-in par arête : le défaut
+   * (`border-border`) fige le rendu des figures existantes.
+   */
+  labelBorder?: string
+  /**
    * Ignore l’offset d’ancrage partagé (`edgePathOffset`) des deux côtés.
    *
    * Quand plusieurs arêtes touchent le même ancrage, l’offset les éventaille

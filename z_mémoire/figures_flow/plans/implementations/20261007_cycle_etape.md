@@ -71,6 +71,11 @@
   pastilles disjointes vérifiées à l’écran.
 - Dossier : tirets `1.5 → 2.5 px` (illisibles à l’échelle d’impression avant),
   tons inchangés.
+- **Épaisseurs + pastilles cibles** : traits à 2 px via `isStrong` (champ
+  existant, défaut `1.5` inchangé), dossier `3 px`, fantôme `2.5 px` ;
+  pastilles `labelPx` 24 + `whiteSpace: nowrap` (fini les retours ligne) ;
+  `data.labelBorder` opt-in (bordure pastille assortie à la cible : rouge
+  vers REJETÉ, vert vers ACCEPTÉ — défaut `border-border` inchangé).
 - Micro-décalages : SKIPPED `y` 430 → **280 (haut**, la voie `inactivité` file à
   gauche à `y≈505), fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).
 - **Ancres étagées `right`/`right-low`** : `échec` sort au centre, `réouverture`
