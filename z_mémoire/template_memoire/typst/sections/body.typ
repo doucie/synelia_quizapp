@@ -439,6 +439,11 @@
   === Notifications et dashboard
   Le besoin ne se limite pas à stocker des données ; il consiste aussi à faire circuler l'information au bon moment. L'application doit donc générer des notifications internes et des emails pour signaler les événements significatifs du processus : vérification, convocation, réponse candidat, résultat d'une demande, décision ou défaut de configuration critique.
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-notif-canaux.svg", width: 100%),
+    caption: [Notifications — chaque événement métier alimente ses canaux, sauf le défaut critique, interne uniquement.],
+  )
+
   Parallèlement, le dashboard doit fournir des vues synthétiques permettant de suivre l'activité, de filtrer les dossiers, d'identifier les actions en attente et de faciliter le pilotage quotidien par les équipes. Le système doit ainsi rendre visibles les éléments réellement utiles à la décision, sans noyer l'utilisateur dans une masse d'informations non contextualisées.
 
   === Matrice synthétique des besoins fonctionnels

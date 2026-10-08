@@ -12,6 +12,7 @@ import StackNode from './StackNode'
 import PersonaNode from './PersonaNode'
 import StateNode from './StateNode'
 import AuthNode from './AuthNode'
+import NotifNode from './NotifNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -66,6 +67,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'auth') {
     return <AuthNode data={data as EntityNodeData} />
+  }
+
+  // Correspondance notifications : événements, canaux, légende.
+  // Même délégation.
+  if (variant === 'notif') {
+    return <NotifNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à

@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -96,6 +96,12 @@ export interface EntityNodeData {
   authIcon?: 'key' | 'shield' | 'users' | 'lock' | 'link' | 'mail' | 'hash' | 'usercheck'
   /** Teinte SAFE_HUES de la branche d’une étape ou d’un bandeau de fourche. */
   authColor?: string
+  /** Rôle d’un nœud de correspondance notifications : événement, canal ou légende. */
+  notifKind?: 'event' | 'channel' | 'caption'
+  /** Icône Feather d’un canal de notification (jeu partagé `Nodes/icons.tsx`). */
+  notifIcon?: 'bell' | 'mail'
+  /** Accent SAFE_HUES d’un canal de notification (nom + médaillon). */
+  notifColor?: string
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -222,6 +228,15 @@ export interface RelationshipEdgeData {
    * est ainsi écrite à un seul endroit. À ce jour, seules les figures MCT le sont.
    */
   straight?: boolean
+  /**
+   * Tracer l'arête en courbe de Bézier au lieu du tracé en escalier.
+   *
+   * Même statut que `straight` : opt-in posé par la figure (`data.curved`),
+   * jamais deviné par le composant. À ce jour, seule la correspondance
+   * notifications l’utilise — l’export recopie le `d`, aucun coût côté
+   * `exportSvg.ts`.
+   */
+  curved?: boolean
   diagramId?: string
   attributes?: string[]
   reflexOffset?: number

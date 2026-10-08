@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   BaseEdge,
+  getBezierPath,
   getSmoothStepPath,
   getStraightPath,
   EdgeLabelRenderer,
@@ -133,14 +134,25 @@ export default function TraitementEdge({
   // distinguer. `sx`/`sy`/`tx`/`ty` portent déjà l'offset d'ancrage : il produit
   // des diagonales parallèles là où il produisait des marches parallèles, sans
   // qu'aucun réglage de `edgeAnchors.ts` ne change.
-  // Les deux fonctions renvoient `[path, labelX, labelY, …]` : label et overlay
-  // de debug restent donc alignés sur le milieu de l'arête dans les deux cas.
+  // Les trois fonctions renvoient `[path, labelX, labelY, …]` : label et overlay
+  // de debug restent donc alignés sur le milieu de l'arête dans les trois cas.
+  // `curved` (Bézier, correspondance notifications) a la priorité sur
+  // `straight` : les deux sont des opt-in posés par figure, jamais cumulés.
   const [edgePath, labelX, labelY] = data.straight
     ? getStraightPath({
         sourceX: sx,
         sourceY: sy,
         targetX: tx,
         targetY: ty,
+      })
+    : data.curved
+    ? getBezierPath({
+        sourceX: sx,
+        sourceY: sy,
+        sourcePosition,
+        targetX: tx,
+        targetY: ty,
+        targetPosition,
       })
     : getSmoothStepPath({
         sourceX: sx,
