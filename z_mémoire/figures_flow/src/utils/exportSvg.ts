@@ -453,6 +453,18 @@ async function captureNodePadded(
     if (value) wrapper.style.setProperty(name, value)
   }
 
+  // La fonte voyage sur le wrapper, et non via une variable custom : `host` est
+  // reparentÔö£┬« sous `body`, donc le clone perd l'hÔö£┬«ritage de la racine du canevas et
+  // retomberait sur le `--font-sans` du sÔö£┬«lecteur de la toolbar. Sans cette recopie,
+  // une figure qui Ôö£┬«pingle sa fonte s'exporterait dans la police de celui qui
+  // exporte ├ö├ç├Â et l'organigramme y perdait une ligne sur Ôö¼┬¢ TrÔö£┬«sorerie /
+  // ComptabilitÔö£┬« Ôö¼Ôòù. `html-to-image` recopiant le style du clone dans la
+  // `foreignObject`, une valeur inline sur le wrapper est ce qui survit.
+  //
+  // Neutre pour une figure qui n'Ôö£┬«pingle rien : la valeur calculÔö£┬«e est alors celle
+  // qu'hÔö£┬«ritait dÔö£┬«jÔö£├í le clone.
+  if (liveCs.fontFamily) wrapper.style.fontFamily = liveCs.fontFamily
+
   try {
     const canvas = await toCanvas(wrapper, {
       pixelRatio: 2,
