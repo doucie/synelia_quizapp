@@ -65,12 +65,17 @@ function Band({ data }: { data: EntityNodeData }) {
   return (
     <div
       data-export-root
-      className="w-full rounded-full"
+      className="w-full rounded-full border-solid"
       style={{
         padding: '12px 24px',
         width: data.exportWidth,
         textAlign: 'center',
-        backgroundColor: hsla(data.authColor, 0.12),
+        // Blanc opaque version thème (pas `#ffffff` figé : blanc sur blanc en
+        // dark mode) + bordure 2 px couleur de branche : le bandeau se
+        // distingue des étapes teintées et porte son statut d’en-tête.
+        backgroundColor: 'hsl(var(--background))',
+        borderWidth: 2,
+        borderColor: color,
       }}
     >
       <span className="font-bold tracking-wide" style={{ ...px(BAND_SIZE), color }}>

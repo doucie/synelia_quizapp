@@ -34,6 +34,9 @@ volontairement distincte du comparateur de pipelines (deux rails indépendants).
       tronc. La fourche garde l’offset (±14 px = l’éventail voulu).
 - [x] Tous les handles déclarés → aucune entrée dans `edgeAnchors.ts`
       (précédent `arbre_sgbd`). Arêtes `type: 'traitement'`, muettes.
+- [x] Bandeaux distincts des étapes (retour demandeur) : fond blanc opaque
+      version thème (`hsl(var(--background))`, pas `#ffffff` figé) + bordure
+      2 px couleur de branche. Même langage que la convergence.
 - [x] Rigide : `rigidLayout`, `fontScale: 4/3`, fonte épinglée, `exportWidth` =
       `width`, `minHeight` par rangée (jamais `height`), texte `/85`.
 
