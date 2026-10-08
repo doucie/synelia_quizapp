@@ -158,8 +158,9 @@ export const cycleEtape: DiagramDefinition = {
     active('in-progress', COL_X, 430, COL_WIDTH, 'IN_PROGRESS', 'Une seule active à la fois : quiz, entretien, décision…', 'active'),
     active('completed', COL_X, 720, COL_WIDTH, 'COMPLETED', 'Score ≥ seuil ou validation manuelle.', 'done'),
     terminal('failed', TERM_X, 430, TERM_WIDTH, 'FAILED', 'rejected'),
-    // y=560 (pas 430) : la chute `inactivité` frôlait le coin bas-droit.
-    terminal('skipped', SIDE_X, 560, SIDE_WIDTH, 'SKIPPED', 'skipped'),
+    // y=280 (haut) : la voie `inactivité` file à gauche à y≈505 puis descend
+    // — en bas elle croisait la boîte ; en haut la bande est vide.
+    terminal('skipped', SIDE_X, 280, SIDE_WIDTH, 'SKIPPED', 'skipped'),
     {
       id: 'etape-suivante',
       type: 'entity' as const,
@@ -201,19 +202,20 @@ export const cycleEtape: DiagramDefinition = {
       stroke: GREEN,
       marker: GREEN,
     }),
-    edge('e-fail', 'in-progress', 'failed', 'right', 'left', {
+    edge('e-fail', 'in-progress', 'failed', 'top', 'top', {
       label: 'échec',
       stroke: RED,
       marker: RED,
     }),
     edge('e-skip', 'pending', 'skipped', 'left', 'top', { label: 'saut autorisé', dashed: true }),
-    // Réouverture par le couloir DROIT (`right→right`, x≈1026) : à gauche elle
-    // partageait le couloir des lectures (`x≈560`, indissociables même en
-    // couleurs) — le `smoothstep` colle toujours à `source.x`, seul un autre
-    // ancrage sépare vraiment. Couloir vérifié vide ; `accepté` partage le
-    // départ (fourche ±14 déterministe) mais diverge aussitôt (bleu vs gris,
-    // pastilles à ~400 px). Vaut pour tout état résolu — voir légende FAILED.
-    edge('e-reopen', 'completed', 'in-progress', 'right', 'right', {
+    // Réouverture par le BAS d’IN_PROGRESS (`right→bottom`) : l’arrivée par
+    // `right` partageait le point d’ancrage du départ `échec` (même y) — les
+    // handles sont toujours au centre du bord, seul un autre ancrage sépare
+    // vraiment (~200 px d’écart). Diagonale vérifiée vide (au-dessus de
+    // `e-next`, à gauche de FAILED). Départ partagé avec `accepté` (fourche
+    // ±14 : l’un monte, l’autre descend). Vaut pour tout état résolu — voir
+    // légende FAILED.
+    edge('e-reopen', 'completed', 'in-progress', 'right', 'bottom', {
       label: 'réouverture',
       dashed: true,
       stroke: REOPEN,

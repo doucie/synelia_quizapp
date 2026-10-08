@@ -71,5 +71,9 @@
   pastilles disjointes vérifiées à l’écran.
 - Dossier : tirets `1.5 → 2.5 px` (illisibles à l’échelle d’impression avant),
   tons inchangés.
-- Micro-décalages : SKIPPED `y` 430 → 560 (chute `inactivité` frôlée),
-  fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).
+- Micro-décalages : SKIPPED `y` 430 → **280 (haut**, la voie `inactivité` file à
+  gauche à `y≈505), fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).
+- **Rollback par le bas + `échec` par le haut** : les deux ancres `right`
+  partageaient le même point — le rollback arrive en `bottom` (~200 px
+  d’écart), `échec` sort par `top` (grand ∩ au-dessus, même gris = continuité
+  invisible). Nouveau handle `top` source sur `Active`.

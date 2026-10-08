@@ -137,6 +137,8 @@ function Active({ data }: { data: EntityNodeData }) {
       <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="target" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="bottom" type="target" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
+      {/* `top` aussi en source (sortie `échec` par le haut) : même raison. */}
+      <Handle id="top" type="source" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="bottom" type="source" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="left" type="source" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="source" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
