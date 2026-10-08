@@ -681,6 +681,11 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
         // aussi déclarée dans `CAPTURE_CSS_VARS` (`utils/exportSvg.ts`), sans quoi
         // l'export SVG la perdrait et retomberait sur 1.
         '--org-font-scale': diagram.fontScale ?? 1,
+        // Fonte de la figure, quand elle en épingle une — voir `fontFamily` dans
+        // `types/index.ts`. Posée ici, sur la racine qui contient les nœuds, elle
+        // l'emporte sur le `--font-sans` du sélecteur de la toolbar par héritage,
+        // sans toucher au chrome de l'application. `undefined` = héritage inchangé.
+        fontFamily: diagram.fontFamily,
       } as React.CSSProperties}
     >
       {/* Couche 1 — sous les nœuds : fond de tableau du MOT + encadrements.

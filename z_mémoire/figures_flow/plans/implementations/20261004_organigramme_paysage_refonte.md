@@ -192,17 +192,59 @@ Grotesk. Noté, pas corrigé.
 ## Liste de contrôle
 
 - [x] Diagnostic des trois défauts, sourcé sur l'original
-- [ ] `types/index.ts` : `EntityNodeData.orgLevel`
-- [ ] `Nodes/OrgNode.tsx` : 3 styles + corps par niveau
-- [ ] `Edges/OrgBusEdge.tsx` : `data.stroke`, tiret `6 3`
-- [ ] `diagrams/organigramme/synelia_avec_ag.ts` : teintes, largeurs, `fontScale`,
+- [x] `types/index.ts` : `EntityNodeData.orgLevel`
+- [x] `Nodes/OrgNode.tsx` : 3 styles + corps par niveau
+- [x] `Edges/OrgBusEdge.tsx` : `data.stroke`, tiret `6 3`
+- [x] `diagrams/organigramme/synelia_avec_ag.ts` : teintes, largeurs, `fontScale`,
       suppression des 14 arêtes, libellés en entier, planchers par colonne
-- [ ] `NOM` recalé sur le tableau, `dY = 0`
-- [ ] Contrôle géométrique : alignement, dégagements, recouvrements
-- [ ] `theme.typ` : `#landscape-figure`
-- [ ] `body.typ` : figure de la ligne 93
-- [ ] Export SVG : `min-height` survécu au clone
-- [ ] `npx tsc --noEmit` : 76 erreurs de référence, aucune nouvelle
-- [ ] `npx vite build`
-- [ ] Compilation Typst de la page paysage
-- [ ] `figures_html/index.html` : lien vers le SVG
+- [x] `NOM` recalé sur le tableau, `dY = 0`
+- [x] Contrôle géométrique : alignement, dégagements, recouvrements
+- [x] `theme.typ` : `#landscape-figure`
+- [x] `body.typ` : figure de la ligne 93
+- [x] Export SVG : `min-height` survécu au clone
+- [x] `npx tsc --noEmit` : **76** erreurs de référence, soit la baseline de
+      `20261003`, et aucune dans les trois fichiers de la figure
+- [x] `npx vite build`
+- [x] Compilation Typst de la page paysage
+- [x] `figures_html/index.html` : lien vers le SVG
+
+## Ce que la vérification a donné
+
+Le contrôle n'a pas été visuel : les libellés sont rasterisés dans l'export, on
+ne peut donc pas les inspecter depuis le SVG. Il a été **structurel**, par un
+script CDP (`%TEMP%\opencode\verify-org.mjs`) qui relit le DOM et le SVG exporté.
+
+| contrôle | résultat |
+|---|---|
+| libellés dans le DOM | 23/23, aucun `Ã`/`â€` (mojibake) |
+| boîtes au-dessus de leur plancher | 0/23 |
+| rasters : position et taille | 23/23 à ≤ 1 px |
+| pages paysage dans le PDF | 1 sur 135, A4 paysage 841,9 × 595,3 pt |
+| emprise imprimée | 25,26 cm de large, 15,08 cm de haut d'encre |
+
+Deux résultats méritent d'être notés parce qu'ils invaliderent des estimations :
+
+- **`d2` ne déborde pas.** Les 23 boîtes mesurent *exactement* leur plancher, donc
+  `NOM.dir = 204` est une valeur mesurée, et les 238 px du plan `20261003`
+  n'étaient qu'une hypothèse. Les 5 colonnes de services se lisent
+  `[140, 140, 140, 61, 100]` — la 4ᵉ n'a aucun titulaire, sa colonne est courte.
+- **`min-height` survit au clone.** C'était l'hypothèse dont dépendait toute la
+  géométrie (`clone.style.height = 'auto'` dans `captureNodePadded`). Elle est
+  confirmée par le fait que chaque raster retrouve la taille de sa carte.
+
+Un défaut d'ancrage a été trouvé au passage : `@xyflow/react` impose des handles
+de 6 px dans une feuille **non mise en couche**, qui bat Tailwind. Les ancres
+étaient donc décalées de 3 px vers l'intérieur de chaque boîte, et les pastilles
+étaient visibles à l'impression. `OrgNode` pose désormais un style inline de
+taille nulle. `ProcessNode` n'a pas été touché — hors périmètre.
+
+### Écart assumé sur le corps imprimé
+
+Le plan visait 10,9 pt, calculé sur un canevas de 2644 px. L'export fait
+**2531 px**, parce que `exportSvg` recadre sur la boîte englobante réelle des
+rasters. À 25,3 cm de large, le corps sort donc à **11,3 pt** et non 10,9.
+
+Ce n'est pas un défaut : la zone utile est la même et le corps est plus lisible.
+Deux leviers si l'on veut revenir à 10,9 pt : réduire la largeur de l'image à
+24,26 cm dans `body.typ`, ou refondre le canevas pour que le recadrage soit nul.
+Le second est le bon, mais il déplace toute la géométrie.

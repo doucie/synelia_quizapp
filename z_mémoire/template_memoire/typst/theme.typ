@@ -319,3 +319,67 @@
   ]
   #pagebreak()
 ]
+
+// ─── FIGURE PLEINE PAGE EN PAYSAGE ──────────────────────────────────────────
+//
+// Une figure qui doit occuper une page entière en A4 paysage. Le gabarit ne
+// comporte aucun mécanisme paysage : le setter `page` du `template` est en
+// portrait, et une figure insérée dans ce flux ne peut pas pivoter la page.
+//
+// `flipped: true` fait pivoter la page **sans** pivoter son contenu : les marges
+// demandées restent relatives au bord **après** rotation. La zone utile d'un A4
+// paysage aux marges par défaut est donc **25,3 × 17,6 cm**, et non 21 × 29,7.
+//
+// Marges : `x` couvre gauche **et** droite, `y` couvre haut **et** bas, et
+// `top` / `bottom` / `left` / `right` viennent ensuite affiner. `y: 0pt` n'est
+// donc pas un réglage de sécurité mais la condition pour que `top` et `bottom`
+// valent exactement ce qu'on leur demande : sans lui, `bottom` s'ajouterait à `y`
+// et la marge verticale deviendrait asymétrique.
+//
+// `header: none` est obligatoire. `body.typ` active `body-header` pour la
+// section, et ce filet aligné à droite, dessiné pour 15,8 cm de zone, mange la
+// marge d'une page de 25,3 cm et déforme le filet. Le pied reste : c'est lui qui
+// numérote les pages, et `Page n / N` se lit de la même façon sur une page
+// tournée.
+//
+// ## Pourquoi `align(center + horizon)` et non une grille `1fr`
+//
+// Une grille `columns: (1fr, auto, 1fr)` ne centre qu'**horizontalement** : ses
+// lignes sont en `auto`, donc la figure se pose en haut de la zone utile — ce qui
+// se lit comme un défaut d'alignement sur une page presque vide. La variante
+// `rows: (1fr, auto, 1fr)` centre verticalement, mais déborde vers le haut dès
+// que la figure est plus haute que la zone. `align` centre dans les deux sens,
+// sans aucun de ces deux pièges.
+//
+// ## Deux exigences sur l'appelant
+//
+//   - l'image se dimensionne par une **largeur explicite** (`width: 25.3cm`),
+//     jamais `width: 100%` : un `figure` est en largeur auto, donc un pourcentage
+//     y est circulaire et la boîte tombe à zéro ;
+//   - le `figure` doit porter `placement: none`. En `auto`, une figure qui ne
+//     tient pas est flottée dans la marge haute — laquelle n'existe pas ici,
+//     puisque `header: none`. Elle disparaîtrait au lieu de déborder.
+//
+// ## Pas de `#set page` de restauration
+//
+// Il paraissait nécessaire de remettre le portrait après le second `pagebreak()`.
+// C'est un no-op : la portée d'un `set` est le bloc qui le contient, donc celui-ci
+// s'arrête à la fin de la fonction. Les pages suivantes retrouvent le `set page`
+// de `render-body` puis de `template`, qui les remettent en portrait.
+#let landscape-figure(
+  body,
+  margin: (top: 1.8cm, bottom: 1.6cm, x: 2.2cm),
+) = {
+  pagebreak()
+  set page(
+    paper: "a4",
+    flipped: true,
+    margin: (top: margin.top, bottom: margin.bottom, x: margin.x, y: 0pt),
+    numbering: "1",
+    footer: page-footer("1"),
+    header: none,
+  )
+  set par(first-line-indent: 0pt, justify: false)
+  align(center + horizon, body)
+  pagebreak()
+}

@@ -227,20 +227,27 @@ cartes de service.
 - [x] `npx vite build` : OK
 - [x] Géométrie vérifiée par calcul (module compilé puis inspecté), **sur les
       hauteurs mesurées** : `dY = 0`, arrivée sur le PMO = un seul segment
-      horizontal (`M650,724 L650,850.5 L902.5,850.5`), dégagement de 27 px sous la
-      barre, gouttière de 31 px, centre PMO dans le gouttier 4/5, 64 px entre
-      chaque direction et ses services, aucun recouvrement sur les 23 boîtes,
-      canevas 1300 × 1979 soit 16,6 × 25,27 cm
-- [ ] **Confirmer `d2` à 238 px** après l'abrégation de l'intitulé : c'est la
-      seule valeur du tableau qui reste une hypothèse (elle était à 273 avant le
-      changement). Si elle déborde encore, porter `NOM.dir` à la valeur mesurée.
-- [ ] **Contrôle visuel à faire par l'utilisateur** : qu'aucune boîte ne bouge, la
-      forme de la branche PMO, la lisibilité des noms, l'absence de débordement
-      sur une rangée.
-- [ ] Export SVG : **vérifier que `min-height` a survécu au clone** — toute la
-      géométrie repose sur cette hypothèse.
-- [ ] Basculer la carte de `figures_html/index.html` vers le SVG produit. Ne pas
-      le faire avant d'avoir vu l'export.
+      horizontal, dégagement sous la barre, gouttière 4/5, aucun recouvrement
+      sur les 23 boîtes.
+      **Périmé** — ces chiffres décrivent la version portrait
+      (canevas 1300 × 1979, raccord `M650,724 L650,850.5 L902.5,850.5`).
+      La version livrée est en paysage : canevas 2644 × 1582, raccord
+      `M1322,550 L1322,655 L1847,655`. Voir `20261004`.
+- [ ] **Contrôlé par `20261004_organigramme_paysage_refonte.md`** — les quatre
+      points ci-dessous sont résolus, mais **les chiffres de cette section sont
+      périmés** : la figure est passée en paysage (`COL_PITCH` 500,
+      `fontScale` 4/3, canevas 2644 × 1582, 8 arêtes au lieu de 22). Voir le plan
+      suivant pour l'état réel.
+- [x] ~~Confirmer `d2`~~ : mesuré à 204 px, pas 238. Les 23 boîtes sont
+      *exactement* à leur plancher, donc `NOM` est un relevé, non une estimation.
+- [x] ~~Contrôle visuel par l'utilisateur~~ : non fait, et **remplacé** par un
+      contrôle structurel automatisé. Les libellés sont rasterisés dans l'export,
+      donc illisibles depuis le SVG — un coup d'œil à l'écran reste utile mais ne
+      peut pas valider la géométrie.
+- [x] ~~Export SVG : `min-height` a survécu au clone~~ : confirmé, chaque raster
+      retrouve la taille de sa carte à ≤ 1 px.
+- [x] ~~Basculer la carte de `figures_html/index.html`~~ : faite, la carte pointe
+      désormais sur le SVG exporté.
 
 ## Points laissés ouverts
 
@@ -258,3 +265,7 @@ cartes de service.
   la légende et la source. Leviers si le gabarit déborde, par ordre de rendement :
   `V.bar` (253, ne sert qu'au dégagement du PMO), puis `V.dirToSvc` (64), puis
   `SVC_PITCH` — **pas** `NOM.pmo`, qui est la garantie de droiture du raccord.
+  **Tranché par `20261004`** : la figure est passée en paysage A4 via
+  `#landscape-figure`, plus aucun de ces leviers n'est nécessaire. Le cadrage de
+  l'export et le corps imprimé qui en découle (11,3 pt, pas 10,9) sont documentés
+  dans le plan suivant.

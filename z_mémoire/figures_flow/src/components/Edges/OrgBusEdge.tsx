@@ -142,10 +142,9 @@ export default function OrgBusEdge({
     // la première passe tombe avant la mesure, d'où la boucle.
     let frame = 0
     let tries = 0
-    // L'effet est présent dans les 22 arêtes de la figure : une seule boucle par
-    // figure, les autres s'en dispensent. Le journal est déjà dédupliqué par
-    // signature, mais 22 boucles de frames pour le même `getNodes()` serait du
-    // travail jeté.
+    // L'effet est présent dans les 8 arêtes de la figure, mais le journal est
+    // déjà dédupliqué par signature : une seule boucle par figure suffit. En
+    // dessous, 8 boucles de frames reliraient le même `getNodes()` pour rien.
     const pollKey = diagramId || '?'
     if (polling.has(pollKey)) return
     polling.add(pollKey)
