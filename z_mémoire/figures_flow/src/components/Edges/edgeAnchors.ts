@@ -14,7 +14,7 @@ export interface EdgeAnchorItem {
 }
 
 const SOURCE_HANDLES = ['right', 'left', 'top', 'bottom']
-const TARGET_HANDLES = ['left', 'right', 'top', 'bottom']
+const TARGET_HANDLES = ['left', 'right', 'top', 'bottom', 'right-low']
 
 /**
  * Une figure verticale se lit de haut en bas : le bas est l'ancrage par défaut

@@ -202,20 +202,18 @@ export const cycleEtape: DiagramDefinition = {
       stroke: GREEN,
       marker: GREEN,
     }),
-    edge('e-fail', 'in-progress', 'failed', 'top', 'top', {
+    edge('e-fail', 'in-progress', 'failed', 'right', 'left', {
       label: 'échec',
       stroke: RED,
       marker: RED,
     }),
     edge('e-skip', 'pending', 'skipped', 'left', 'top', { label: 'saut autorisé', dashed: true }),
-    // Réouverture par le BAS d’IN_PROGRESS (`right→bottom`) : l’arrivée par
-    // `right` partageait le point d’ancrage du départ `échec` (même y) — les
-    // handles sont toujours au centre du bord, seul un autre ancrage sépare
-    // vraiment (~200 px d’écart). Diagonale vérifiée vide (au-dessus de
-    // `e-next`, à gauche de FAILED). Départ partagé avec `accepté` (fourche
-    // ±14 : l’un monte, l’autre descend). Vaut pour tout état résolu — voir
-    // légende FAILED.
-    edge('e-reopen', 'completed', 'in-progress', 'right', 'bottom', {
+    // Réouverture par l’ancre basse du flanc droit (`right→right-low`) :
+    // `échec` sort au centre, `réouverture` arrive ~37 px plus bas — même
+    // côté, points distincts. Le `smoothstep` colle à `source.x`, seul un
+    // autre point d’ancrage sépare vraiment. Vaut pour tout état résolu —
+    // voir légende FAILED.
+    edge('e-reopen', 'completed', 'in-progress', 'right', 'right-low', {
       label: 'réouverture',
       dashed: true,
       stroke: REOPEN,

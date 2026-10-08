@@ -73,7 +73,9 @@
   tons inchangés.
 - Micro-décalages : SKIPPED `y` 430 → **280 (haut**, la voie `inactivité` file à
   gauche à `y≈505), fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).
-- **Rollback par le bas + `échec` par le haut** : les deux ancres `right`
-  partageaient le même point — le rollback arrive en `bottom` (~200 px
-  d’écart), `échec` sort par `top` (grand ∩ au-dessus, même gris = continuité
-  invisible). Nouveau handle `top` source sur `Active`.
+- **Ancres étagées `right`/`right-low`** : `échec` sort au centre, `réouverture`
+  arrive à `top: 75%` (~37 px plus bas) — même côté, points distincts (RF
+  mesure les positions réelles, le style inline bat la feuille de
+  positionnement ; `right-low` en fin de `TARGET_HANDLES`, défauts inchangés).
+  Abandon des diagonales `right→bottom` / ∩ `top→top` (collisions reportées
+  sur `activation` et `validation`). Vérifié à l’écran.

@@ -132,13 +132,20 @@ function Active({ data }: { data: EntityNodeData }) {
       {/* Toutes les arêtes de la figure déclarent leurs handles — pas d’entrée
         dans les familles verticales d’`edgeAnchors.ts`. `left`/`right` dans
         les DEUX types : une arête n’est pas rendue si son handle cible manque.
+        `right-low` : deuxième ancre cible du flanc droit, étagée sous `right`
+        (`échec` sort au centre, `réouverture` arrive en bas — RF mesure les
+        positions réelles, le style inline bat la feuille de positionnement).
         Handles inutilisés invisibles (boîte nulle, figure rigide). */}
       <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="target" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
-      <Handle id="bottom" type="target" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
-      {/* `top` aussi en source (sortie `échec` par le haut) : même raison. */}
-      <Handle id="top" type="source" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle
+        id="right-low"
+        type="target"
+        position={Position.Right}
+        className="nodrag nopan"
+        style={{ ...HANDLE_STYLE, top: '75%' }}
+      />
       <Handle id="bottom" type="source" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="left" type="source" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="source" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
