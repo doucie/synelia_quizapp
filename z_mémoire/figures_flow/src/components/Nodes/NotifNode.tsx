@@ -58,6 +58,10 @@ function Event({ data }: { data: EntityNodeData }) {
       <span className="leading-snug font-semibold text-foreground" style={px(EVENT_SIZE)}>
         {data.label}
       </span>
+      {/* Trois colonnes : chaque événement sort des deux côtés (email à
+        gauche, in-app à droite) — les deux traits ne partagent aucun ancrage,
+        donc aucun offset, chacun part pile de l’axe de sa boîte. */}
+      <Handle id="left" type="source" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="right" type="source" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
     </div>
   )
@@ -94,6 +98,7 @@ function Channel({ data }: { data: EntityNodeData }) {
         {data.label}
       </span>
       <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="right" type="target" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
     </div>
   )
 }

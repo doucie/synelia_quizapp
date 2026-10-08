@@ -30,10 +30,17 @@ figure — visibilité/filtrage, pas une relation de correspondance.
 - [x] Tous handles déclarés (`right` → `left`), `traitement` muettes sauf
       l’exception ; rigide, `fontScale: 4/3`, fonte épinglée.
 
-## Géométrie (9 nœuds / 11 arêtes)
+## Géométrie (9 nœuds / 11 arêtes, 3 colonnes — zéro croisement)
 
-- [x] Événements 440 px (`x` 40, pas 130 dès `y` 40) ; canaux 480 px
-      (`x` 720, email `y` 200, in-app `y` 500) ; légende `y` 830.
+- [x] Email 420 px (`x` 40) à gauche, événements 400 px (`x` 620, pas 130),
+      in-app 420 px (`x` 1200) à droite ; canaux `y` 330 (symétrie).
+- [x] Chaque événement sort à gauche vers l’email (`left` → `right`) et à
+      droite vers l’in-app (`right` → `left`). `Event`/`Channel` portent leurs
+      deux handles — les 2 traits d’un même événement ne partagent aucun
+      ancrage, chacun part pile de l’axe. Légende `y` 830.
+- [x] Texte imprimé ~25 % plus petit qu’en 2 colonnes (prix assumé du
+      zéro-croisement) ; pastille ~160 px dans gouttière de 160, sans
+      repli `labelPx` (vérifié à l’écran).
 - [x] Relever écrans : `minHeight` événements/canaux, pastille dégagée.
 - [x] Contrôle visuel : pointillé + pastille intacts parmi les courbes.
 

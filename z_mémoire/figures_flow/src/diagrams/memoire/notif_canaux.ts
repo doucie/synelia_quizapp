@@ -26,11 +26,17 @@ import type { DiagramDefinition } from '../../types'
 const INAPP = 'hsl(210, 100%, 40%)'
 const EMAIL = 'hsl(330, 100%, 40%)'
 
-const EVT_W = 440
-const EVT_X = 40
+// Trois colonnes (email à gauche, événements au milieu, in-app à droite) :
+// chaque événement part à gauche vers l’email et à droite vers l’in-app —
+// aucun trait n’en croise un autre (en deux colonnes, le haut-gauche vers le
+// bas-droit croisait toujours le bas-gauche vers le haut-droit).
+const EVT_W = 400
+const EVT_X = 620
 const EVT_MIN = 96
-const CH_W = 480
-const CH_X = 720
+const CH_W = 420
+const MAIL_X = 40
+const INAPP_X = 1200
+const CH_Y = 330
 const CH_MIN = 150
 
 const event = (id: string, y: number, label: string) => ({
@@ -50,14 +56,14 @@ const event = (id: string, y: number, label: string) => ({
 
 const channel = (
   id: string,
-  y: number,
   label: string,
   notifIcon: 'bell' | 'mail',
   notifColor: string,
+  x: number,
 ) => ({
   id,
   type: 'entity' as const,
-  position: { x: CH_X, y },
+  position: { x, y: CH_Y },
   style: { width: CH_W },
   data: {
     label,
@@ -71,12 +77,19 @@ const channel = (
   },
 })
 
-const edge = (id: string, source: string, target: string, data = {}) => ({
+const edge = (
+  id: string,
+  source: string,
+  target: string,
+  sourceHandle: 'left' | 'right',
+  targetHandle: 'left' | 'right',
+  data = {},
+) => ({
   id,
   source,
   target,
-  sourceHandle: 'right',
-  targetHandle: 'left',
+  sourceHandle,
+  targetHandle,
   type: 'traitement' as const,
   data: { curved: true as const, ...data },
 })
@@ -93,8 +106,8 @@ export const notifCanaux: DiagramDefinition = {
     event('e4', 430, 'Réponse du candidat reçue'),
     event('e5', 560, 'Décision rendue'),
     event('e6', 690, 'Défaut de configuration critique'),
-    channel('ch-mail', 200, 'Email transactionnel', 'mail', EMAIL),
-    channel('ch-inapp', 500, 'Notification interne (in-app)', 'bell', INAPP),
+    channel('ch-mail', 'Email transactionnel', 'mail', EMAIL, MAIL_X),
+    channel('ch-inapp', 'Notification interne (in-app)', 'bell', INAPP, INAPP_X),
     {
       id: 'caption',
       type: 'entity' as const,
@@ -111,19 +124,19 @@ export const notifCanaux: DiagramDefinition = {
     },
   ],
   edges: [
-    edge('e-e1-mail', 'e1', 'ch-mail'),
-    edge('e-e1-inapp', 'e1', 'ch-inapp'),
-    edge('e-e2-mail', 'e2', 'ch-mail'),
-    edge('e-e2-inapp', 'e2', 'ch-inapp'),
-    edge('e-e3-mail', 'e3', 'ch-mail'),
-    edge('e-e3-inapp', 'e3', 'ch-inapp'),
-    edge('e-e4-mail', 'e4', 'ch-mail'),
-    edge('e-e4-inapp', 'e4', 'ch-inapp'),
-    edge('e-e5-mail', 'e5', 'ch-mail'),
-    edge('e-e5-inapp', 'e5', 'ch-inapp'),
+    edge('e-e1-mail', 'e1', 'ch-mail', 'left', 'right'),
+    edge('e-e1-inapp', 'e1', 'ch-inapp', 'right', 'left'),
+    edge('e-e2-mail', 'e2', 'ch-mail', 'left', 'right'),
+    edge('e-e2-inapp', 'e2', 'ch-inapp', 'right', 'left'),
+    edge('e-e3-mail', 'e3', 'ch-mail', 'left', 'right'),
+    edge('e-e3-inapp', 'e3', 'ch-inapp', 'right', 'left'),
+    edge('e-e4-mail', 'e4', 'ch-mail', 'left', 'right'),
+    edge('e-e4-inapp', 'e4', 'ch-inapp', 'right', 'left'),
+    edge('e-e5-mail', 'e5', 'ch-mail', 'left', 'right'),
+    edge('e-e5-inapp', 'e5', 'ch-inapp', 'right', 'left'),
     // Exception : le défaut de configuration ne sort qu’en interne, en
     // pointillés, avec pastille bordure assortie (précédent fig. 7).
-    edge('e-e6-inapp', 'e6', 'ch-inapp', {
+    edge('e-e6-inapp', 'e6', 'ch-inapp', 'right', 'left', {
       isDashed: true as const,
       label: 'interne uniquement',
       labelPx: 12,
