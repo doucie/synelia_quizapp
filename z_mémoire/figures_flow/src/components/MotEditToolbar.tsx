@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import ConfirmDialog from './ConfirmDialog'
+
 const MOT_COLOR = 'hsl(15, 100%, 40%)'
 
 interface MotEditToolbarProps {
@@ -5,10 +8,13 @@ interface MotEditToolbarProps {
   isEditing: boolean
   onEdit: () => void
   onDone: () => void
+  /** Remplace les positions du traitement affiché par celles de sa figure source. */
   onReset: () => void
 }
 
 export default function MotEditToolbar({ mctLabel, isEditing, onEdit, onDone, onReset }: MotEditToolbarProps) {
+  const [confirmReset, setConfirmReset] = useState(false)
+
   return (
     <div
       style={{
@@ -66,7 +72,7 @@ export default function MotEditToolbar({ mctLabel, isEditing, onEdit, onDone, on
         </button>
       )}
       <button
-        onClick={onReset}
+        onClick={() => setConfirmReset(true)}
         style={{
           padding: '3px 10px',
           borderRadius: 6,
@@ -77,8 +83,23 @@ export default function MotEditToolbar({ mctLabel, isEditing, onEdit, onDone, on
           cursor: 'pointer',
         }}
       >
-        ↺ Reset
+        ↺ Réinitialiser
       </button>
+
+      {/* Rendue sous `body` : cette barre est posée dans le pane React Flow, dont le
+          viewport porte un `transform` — un `fixed` déclaré ici serait centré sur
+          le viewport et mis à l'échelle par le zoom. */}
+      <ConfirmDialog
+        open={confirmReset}
+        title="Réinitialiser le traitement"
+        message="Les positions du traitement affiché reviendront à celles de sa figure d'origine."
+        confirmLabel="Réinitialiser"
+        onConfirm={() => {
+          setConfirmReset(false)
+          onReset()
+        }}
+        onCancel={() => setConfirmReset(false)}
+      />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { MotTableConfig } from '../types'
 import { DEFAULT_MOT_TABLE_CONFIG } from '../types'
+import ConfirmDialog from './ConfirmDialog'
 
 const MOT_COLOR = 'hsl(15, 100%, 40%)'
 
@@ -12,6 +13,7 @@ interface MotTableToolbarProps {
 export default function MotTableToolbar({ config, onChange }: MotTableToolbarProps) {
   const [mode, setMode] = useState<'group' | 'detail'>('group')
   const [expanded, setExpanded] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
 
   const c = config.colWidths
   const r = config.rowHeights
@@ -50,6 +52,14 @@ export default function MotTableToolbar({ config, onChange }: MotTableToolbarPro
     onChange({ ...config, rowHeights: r.map(() => value) })
   }
 
+  /**
+   * Restaure la configuration par défaut. Passe par une confirmation parce que
+   * ce panneau est le seul endroit où ces réglages existent : les curseurs sont
+   * continus, aucun historique n'est conservé, et `onChange` est écrit dès chaque
+   * glissement. Un clic sur « Réinitialiser » — le seul bouton du panneau, placé
+   * sous tous les curseurs — efface donc la totalité des largeurs de colonnes, des
+   * hauteurs de lignes et des échelles typographiques, sans retour possible.
+   */
   const reset = () => onChange(DEFAULT_MOT_TABLE_CONFIG)
 
   const totalWidth = c.temps + c.recruteur + c.candidat + c.systeme + c.type
@@ -194,7 +204,7 @@ export default function MotTableToolbar({ config, onChange }: MotTableToolbarPro
           )}
 
           <button
-            onClick={reset}
+            onClick={() => setConfirmReset(true)}
             style={{
               width: '100%',
               marginTop: 8,
@@ -209,6 +219,18 @@ export default function MotTableToolbar({ config, onChange }: MotTableToolbarPro
           >
             ↺ Réinitialiser
           </button>
+
+          <ConfirmDialog
+            open={confirmReset}
+            title="Réinitialiser le tableau"
+            message="Toutes les largeurs de colonnes, hauteurs de lignes et échelles de texte reviendront à leurs valeurs par défaut."
+            confirmLabel="Réinitialiser"
+            onConfirm={() => {
+              setConfirmReset(false)
+              reset()
+            }}
+            onCancel={() => setConfirmReset(false)}
+          />
         </div>
       )}
     </div>

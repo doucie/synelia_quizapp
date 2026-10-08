@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import ThemeToggle from './ThemeToggle'
 import FontSelector from './FontSelector'
+import ConfirmDialog from './ConfirmDialog'
 import { useEdgeDebugEnabled, setEdgeDebugEnabled } from '../utils/edgeDebug'
 
 interface ToolbarProps {
@@ -11,6 +13,12 @@ interface ToolbarProps {
   onToggleBackground: () => void
   onExportSvg: () => void
   onExportPositions: () => void
+  /**
+   * Relance la page après avoir effacé l'entrée `figures_flow:diagram:<id>` — c'est
+   * la seule action destructrice de l'application, d'où la confirmation. Le
+   * rechargement rend toute confirmation « c'est fait » impossible : le dialogue
+   * n'a pas d'état de sortie, seulement une décision.
+   */
   onResetPositions: () => void
   /**
    * Figure au placement imposé (`rigidLayout`) : « Export » et « ↺ » portent sur
@@ -31,6 +39,7 @@ export default function Toolbar({
 }: ToolbarProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const edgeDebug = useEdgeDebugEnabled()
+  const [confirmReset, setConfirmReset] = useState(false)
 
   return (
     <div className="relative z-20 flex items-center gap-1.5 border-b border-border bg-background/80 px-4 py-2 backdrop-blur">
@@ -86,7 +95,7 @@ export default function Toolbar({
             Export
           </button>
           <button
-            onClick={onResetPositions}
+            onClick={() => setConfirmReset(true)}
             className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
             title="Réinitialiser les positions"
           >
@@ -113,6 +122,21 @@ export default function Toolbar({
       </button>
       <FontSelector />
       <ThemeToggle />
+
+      {/* Rendue dans la barre, mais portée sous `body` : sa position dans l'arbre
+          n'a aucun effet sur l'affichage. La déclarer ici plutôt qu'après le
+          `div` évite de fragmenter la barre en deux. */}
+      <ConfirmDialog
+        open={confirmReset}
+        title="Réinitialiser les positions"
+        message="Les positions enregistrées pour cette figure seront perdues et la figure retrouvera son agencement d'origine."
+        confirmLabel="Réinitialiser"
+        onConfirm={() => {
+          setConfirmReset(false)
+          onResetPositions()
+        }}
+        onCancel={() => setConfirmReset(false)}
+      />
     </div>
   )
 }
