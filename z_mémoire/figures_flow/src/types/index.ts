@@ -96,8 +96,8 @@ export interface EntityNodeData {
   authIcon?: 'key' | 'shield' | 'users' | 'lock' | 'link' | 'mail' | 'hash' | 'usercheck'
   /** Teinte SAFE_HUES de la branche d’une étape ou d’un bandeau de fourche. */
   authColor?: string
-  /** Rôle d’un nœud de correspondance notifications : événement, canal ou légende. */
-  notifKind?: 'event' | 'channel' | 'caption'
+  /** Rôle d’un nœud de correspondance notifications : événement ou canal. */
+  notifKind?: 'event' | 'channel'
   /** Icône Feather d’un canal de notification (jeu partagé `Nodes/icons.tsx`). */
   notifIcon?: 'bell' | 'mail'
   /** Accent SAFE_HUES d’un canal de notification (nom + médaillon). */

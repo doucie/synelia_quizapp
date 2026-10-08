@@ -19,8 +19,9 @@ import type { DiagramDefinition } from '../../types'
  * distingue les deux traits issus d’un même événement, et l’étalement en Y
  * sépare les arrivées sur chaque canal. Tous les handles sont déclarés
  * (`right` → `left`) : pas d’entrée dans les familles verticales
- * d’`edgeAnchors.ts`. Arêtes `type: 'traitement'`, muettes sauf l’exception
- * (pastille + légende).
+ * d’`edgeAnchors.ts`. Arêtes `type: 'traitement'`, toutes muettes : l’exception
+ * se lit au pointillé seul, son explication est dans le caption du mémoire
+ * (pastille et légende supprimées — illisibles à cette échelle).
  */
 
 const INAPP = 'hsl(210, 100%, 40%)'
@@ -108,20 +109,6 @@ export const notifCanaux: DiagramDefinition = {
     event('e6', 690, 'Défaut de configuration critique'),
     channel('ch-mail', 'Email transactionnel', 'mail', EMAIL, MAIL_X),
     channel('ch-inapp', 'Notification interne (in-app)', 'bell', INAPP, INAPP_X),
-    {
-      id: 'caption',
-      type: 'entity' as const,
-      position: { x: EVT_X, y: 830 },
-      style: { width: EVT_W },
-      data: {
-        label:
-          'Interne uniquement — alerte technique, pas destinée au candidat.',
-        variant: 'notif' as const,
-        notifKind: 'caption' as const,
-        // Toujours égal à `EVT_W` (cf. `exportWidth`).
-        exportWidth: EVT_W,
-      },
-    },
   ],
   edges: [
     edge('e-e1-mail', 'e1', 'ch-mail', 'left', 'right'),
@@ -135,12 +122,11 @@ export const notifCanaux: DiagramDefinition = {
     edge('e-e5-mail', 'e5', 'ch-mail', 'left', 'right'),
     edge('e-e5-inapp', 'e5', 'ch-inapp', 'right', 'left'),
     // Exception : le défaut de configuration ne sort qu’en interne, en
-    // pointillés, avec pastille bordure assortie (précédent fig. 7).
+    // pointillés — sans pastille ni légende : à cette échelle elles sortaient
+    // illisibles, et l’agrandir créait des collisions. L’explication est
+    // portée par le caption du mémoire.
     edge('e-e6-inapp', 'e6', 'ch-inapp', 'right', 'left', {
       isDashed: true as const,
-      label: 'interne uniquement',
-      labelPx: 12,
-      labelBorder: INAPP,
     }),
   ],
   rigidLayout: true,

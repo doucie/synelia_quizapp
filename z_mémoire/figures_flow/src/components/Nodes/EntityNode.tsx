@@ -69,7 +69,7 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
     return <AuthNode data={data as EntityNodeData} />
   }
 
-  // Correspondance notifications : événements, canaux, légende.
+  // Correspondance notifications : événements et canaux.
   // Même délégation.
   if (variant === 'notif') {
     return <NotifNode data={data as EntityNodeData} />

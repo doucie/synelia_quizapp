@@ -30,7 +30,7 @@ figure — visibilité/filtrage, pas une relation de correspondance.
 - [x] Tous handles déclarés (`right` → `left`), `traitement` muettes sauf
       l’exception ; rigide, `fontScale: 4/3`, fonte épinglée.
 
-## Géométrie (9 nœuds / 11 arêtes, 3 colonnes — zéro croisement)
+## Géométrie (8 nœuds / 11 arêtes, 3 colonnes — zéro croisement)
 
 - [x] Email 420 px (`x` 40) à gauche, événements 400 px (`x` 620, pas 130),
       in-app 420 px (`x` 1200) à droite ; canaux `y` 330 (symétrie).
@@ -38,9 +38,11 @@ figure — visibilité/filtrage, pas une relation de correspondance.
       droite vers l’in-app (`right` → `left`). `Event`/`Channel` portent leurs
       deux handles — les 2 traits d’un même événement ne partagent aucun
       ancrage, chacun part pile de l’axe. Légende `y` 830.
-- [x] Texte imprimé ~25 % plus petit qu’en 2 colonnes (prix assumé du
-      zéro-croisement) ; pastille ~160 px dans gouttière de 160, sans
-      repli `labelPx` (vérifié à l’écran).
+- [x] Pastille + légende **supprimées** (retour demandeur) : à cette échelle
+      elles sortaient illisibles (~5 pt), et l’agrandir créait des collisions.
+      L’exception se lit au pointillé seul ; son explication déménage dans le
+      caption Typst (taille normale). `Caption` retiré de `NotifNode` et
+      `'caption'` de `notifKind` — pas de code mort. 8 nœuds / 11 arêtes.
 - [x] Relever écrans : `minHeight` événements/canaux, pastille dégagée.
 - [x] Contrôle visuel : pointillé + pastille intacts parmi les courbes.
 

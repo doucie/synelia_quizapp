@@ -12,9 +12,9 @@ import { FeatherIcon } from './icons'
  * Composant générique et réutilisable : le modèle fournit le rôle
  * (`notifKind`), l’icône du canal (`notifIcon`, jeu partagé `icons.tsx`) et
  * son accent (`notifColor`, in-app `210` / email `330`, cohérent fig. 8).
- * L’exception (défaut de configuration critique → in-app seul, pointillé +
- * pastille) est portée par l’arête, pas par le nœud : les 6 événements
- * restent visuellement identiques.
+ * L’exception (défaut de configuration critique → in-app seul, pointillé) est
+ * portée par l’arête, pas par le nœud : les 6 événements restent visuellement
+ * identiques, et son explication vit dans le caption du mémoire.
  *
  * `<Handle>` invisibles en `style` inline (même contournement que `OrgNode` /
  * `DecisionNode`). Toutes les arêtes de la figure déclarent leurs handles —
@@ -23,7 +23,6 @@ import { FeatherIcon } from './icons'
 
 const EVENT_SIZE = 20
 const CHANNEL_NAME_SIZE = 26
-const CAPTION_SIZE = 18
 const MEDALLION = 56
 const ICON = 28
 
@@ -103,24 +102,7 @@ function Channel({ data }: { data: EntityNodeData }) {
   )
 }
 
-function Caption({ data }: { data: EntityNodeData }) {
-  return (
-    <div data-export-root className="w-full" style={{ width: data.exportWidth }}>
-      <span className="leading-snug text-foreground/85 italic" style={px(CAPTION_SIZE)}>
-        {data.label}
-      </span>
-    </div>
-  )
-}
-
 export default function NotifNode({ data }: { data: EntityNodeData }) {
-  switch (data.notifKind) {
-    case 'channel':
-      return <Channel data={data} />
-    case 'caption':
-      return <Caption data={data} />
-    case 'event':
-    default:
-      return <Event data={data} />
-  }
+  if (data.notifKind === 'channel') return <Channel data={data} />
+  return <Event data={data} />
 }

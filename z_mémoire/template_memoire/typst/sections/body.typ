@@ -441,7 +441,7 @@
 
   #figure(
     image("../captures/8-figures-memoire/memoire-notif-canaux.svg", width: 100%),
-    caption: [Notifications — chaque événement métier alimente ses canaux, sauf le défaut critique, interne uniquement.],
+    caption: [Notifications — chaque événement métier alimente ses canaux, sauf le défaut critique, interne uniquement (pointillés).],
   )
 
   Parallèlement, le dashboard doit fournir des vues synthétiques permettant de suivre l'activité, de filtrer les dossiers, d'identifier les actions en attente et de faciliter le pilotage quotidien par les équipes. Le système doit ainsi rendre visibles les éléments réellement utiles à la décision, sans noyer l'utilisateur dans une masse d'informations non contextualisées.
