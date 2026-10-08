@@ -66,7 +66,10 @@
   SKIPPED `30` (ambre), FAILED `0` — bordure 2 px + nom coloré + fond `0.08`
   (`stateTone`: `pending`/`active`/`done`/`skipped`, même langage que MySQL).
 - Rollback en tirets **bleus `240`** (couleur de sa destination) vs lectures
-  grises : les trois voies gauches se distinguent par la couleur + pastilles
-  disjointes (vérifié à l’écran).
+  grises ; **couloir propre** (`completed right` → `in-progress right`,
+  `x≈1026` vérifié vide — à gauche les voies partageaient `x≈560`) ;
+  pastilles disjointes vérifiées à l’écran.
 - Dossier : tirets `1.5 → 2.5 px` (illisibles à l’échelle d’impression avant),
   tons inchangés.
+- Micro-décalages : SKIPPED `y` 430 → 560 (chute `inactivité` frôlée),
+  fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).

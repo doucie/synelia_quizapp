@@ -158,11 +158,13 @@ export const cycleEtape: DiagramDefinition = {
     active('in-progress', COL_X, 430, COL_WIDTH, 'IN_PROGRESS', 'Une seule active à la fois : quiz, entretien, décision…', 'active'),
     active('completed', COL_X, 720, COL_WIDTH, 'COMPLETED', 'Score ≥ seuil ou validation manuelle.', 'done'),
     terminal('failed', TERM_X, 430, TERM_WIDTH, 'FAILED', 'rejected'),
-    terminal('skipped', SIDE_X, 430, SIDE_WIDTH, 'SKIPPED', 'skipped'),
+    // y=560 (pas 430) : la chute `inactivité` frôlait le coin bas-droit.
+    terminal('skipped', SIDE_X, 560, SIDE_WIDTH, 'SKIPPED', 'skipped'),
     {
       id: 'etape-suivante',
       type: 'entity' as const,
-      position: { x: 600, y: 1010 },
+      // y=1080 (pas 1010) : le coude `accepté` et sa pastille passent au-dessus.
+      position: { x: 600, y: 1080 },
       style: { width: 400 },
       data: {
         label: 'ÉTAPE SUIVANTE — même cycle',
@@ -205,18 +207,21 @@ export const cycleEtape: DiagramDefinition = {
       marker: RED,
     }),
     edge('e-skip', 'pending', 'skipped', 'left', 'top', { label: 'saut autorisé', dashed: true }),
-    // Seule réouverture dessinée (depuis COMPLETED) : `rollbackStage` vaut
-    // pour tout état résolu — voir légende body pour FAILED.
-    edge('e-reopen', 'completed', 'in-progress', 'left', 'left', {
+    // Réouverture par le couloir DROIT (`right→right`, x≈1026) : à gauche elle
+    // partageait le couloir des lectures (`x≈560`, indissociables même en
+    // couleurs) — le `smoothstep` colle toujours à `source.x`, seul un autre
+    // ancrage sépare vraiment. Couloir vérifié vide ; `accepté` partage le
+    // départ (fourche ±14 déterministe) mais diverge aussitôt (bleu vs gris,
+    // pastilles à ~400 px). Vaut pour tout état résolu — voir légende FAILED.
+    edge('e-reopen', 'completed', 'in-progress', 'right', 'right', {
       label: 'réouverture',
       dashed: true,
       stroke: REOPEN,
       marker: REOPEN,
     }),
     // Lectures dossier : tirets fins gris, flèche neutre, pastille-condition.
-    // Les trois voies de gauche courent parallèles (±14) mais se distinguent
-    // par la couleur (rollback bleu, lectures grises) et des pastilles
-    // disjointes (640 / ~890, écartées de ~180 px à ~110 px de large).
+    // Les deux voies de gauche courent parallèles (±14) mais se distinguent
+    // par leurs pastilles disjointes ; le rollback a son couloir à droite.
     edge('e-l-rejete', 'failed', 'd-rejete', 'bottom', 'top', { label: 'si éliminatoire', dashed: true }),
     edge('e-l-accepte', 'completed', 'd-accepte', 'right', 'top', { label: 'si DECISION', dashed: true }),
     edge('e-l-abandon', 'in-progress', 'd-abandonnee', 'left', 'top', { label: 'inactivité', dashed: true }),
