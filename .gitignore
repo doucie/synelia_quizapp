@@ -2,3 +2,5 @@ z-synelia-tasks/
 z_mémoire/bibliographie
 z_mémoire/ensit
 z_mémoire/synelia
+# PDF compilé du mémoire : régénéré à chaque figure, ne pas versionner.
+z_mémoire/template_memoire/typst/memoire.pdf
