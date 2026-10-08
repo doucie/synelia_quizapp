@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -90,6 +90,12 @@ export interface EntityNodeData {
   stateDesc?: string
   /** Ton d’un état : terminaux (vert, rouge, gris) ou occurrence (bleus, vert, ambre). */
   stateTone?: 'kept' | 'rejected' | 'muted' | 'pending' | 'active' | 'done' | 'skipped'
+  /** Rôle d’un nœud de fourche d’authentification : départ, bandeau de branche, étape ou convergence. */
+  authKind?: 'start' | 'band' | 'step' | 'merge'
+  /** Icône Feather d’une étape de fourche (jeux partagé `Nodes/icons.tsx`). */
+  authIcon?: 'key' | 'shield' | 'users' | 'lock' | 'link' | 'mail' | 'hash' | 'usercheck'
+  /** Teinte SAFE_HUES de la branche d’une étape ou d’un bandeau de fourche. */
+  authColor?: string
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *

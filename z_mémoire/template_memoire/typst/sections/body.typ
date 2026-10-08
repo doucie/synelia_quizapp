@@ -392,6 +392,11 @@
 
   Pour les parcours publics, le besoin est différent : le candidat ne doit pas disposer d'un accès interne classique, mais d'un ensemble de points d'entrée sécurisés, restreints à sa propre candidature. Cela implique des mécanismes dédiés de vérification d'email, de codes de suivi et de liens contextualisés, distincts du modèle d'authentification des utilisateurs internes.
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-auth-fourche.svg", width: 100%),
+    caption: [Authentification — deux mécanismes distincts, un seul accès contrôlé.],
+  )
+
   === Gestion des données de référence
   Le projet nécessite un socle de données de référence administrables, sans lequel le recrutement ne peut pas être structuré durablement. Cela inclut notamment les départements, les spécialités, les questions de quiz, les réponses attendues, les formulaires, les groupes métier et plusieurs référentiels transverses nécessaires au fonctionnement métier et aux écrans d'administration.
 

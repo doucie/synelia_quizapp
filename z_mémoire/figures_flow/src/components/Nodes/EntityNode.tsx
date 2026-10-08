@@ -11,6 +11,7 @@ import DecisionNode from './DecisionNode'
 import StackNode from './StackNode'
 import PersonaNode from './PersonaNode'
 import StateNode from './StateNode'
+import AuthNode from './AuthNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -59,6 +60,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Machine à états : départ, états actifs, états terminaux. Même délégation.
   if (variant === 'state') {
     return <StateNode data={data as EntityNodeData} />
+  }
+
+  // Fourche d'authentification : départ, bandeaux, étapes, convergence.
+  // Même délégation.
+  if (variant === 'auth') {
+    return <AuthNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
