@@ -205,7 +205,14 @@ function ensureBottomBorder(canvas: HTMLCanvasElement, target: HTMLElement) {
   // à coins arrondis **aplatirait la pointe**, et la sonde de boîte (dernière
   // rangée opaque au centre) tombe sur la bande horizontale, pas sur la pointe.
   // On laisse donc la bordure du raster telle quelle.
+  // Bordure en tirets (dossier et fantôme du cycle, figure 4.3.3) : le ring
+  // repeint est PLEIN par construction — il transformerait les pointillés en
+  // trait continu. On garde le raster tel quel (quitte à conserver un éventuel
+  // rognage d’1 px sur ces cartes, vérifié absent à la mesure).
+  // Seules les bordures pleines sont repeintes.
   if (!borderColor || !info.bordered || info.clipped) return info
+  const borderStyle = cs.borderTopStyle
+  if (borderStyle === 'dashed' || borderStyle === 'dotted') return info
 
   // Boutons de calage (px phys), valables pendant les tests :
   const radiusDelta = 0 // +N => coins grossis (si le bg arrondit plus que nous)
@@ -567,9 +574,21 @@ export async function exportSvg(filename = 'diagram.svg') {
             safe = `m${markerIds.size}`
             markerIds.set(id, safe)
             const marker = markerDefs.find((m) => m.getAttribute('id') === id)
-            // `outerHTML` échappe `&` en `&amp;` : on ne peut pas remplacer
-            // `id="..."` par égalité de chaîne — on réécrit le premier attribut.
-            if (marker) edgeParts.unshift(marker.outerHTML.replace(/ id="[^"]*"/, ` id="${safe}"`))
+            if (marker) {
+              // Def clonée + style calculé réécrit : `outerHTML` brut conserve
+              // les `var()` non résolus (ex. `muted-foreground`), morts hors
+              // du DOM — la def exportée doit être autonome. `setAttribute`
+              // plutôt que replace (l’échappement `&amp;` casse l’égalité).
+              const def = marker.cloneNode(true) as Element
+              const liveSym = marker.querySelector('polyline, path, line, circle')
+              const sym = def.querySelector('polyline, path, line, circle')
+              if (liveSym && sym) {
+                const scs = getComputedStyle(liveSym)
+                sym.setAttribute('style', `stroke-width: 1; stroke: ${scs.stroke}; fill: ${scs.fill};`)
+              }
+              def.setAttribute('id', safe)
+              edgeParts.unshift(def.outerHTML)
+            }
           }
           markerHref = ` marker-end="url(#${safe})"`
         }

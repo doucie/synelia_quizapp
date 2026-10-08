@@ -84,7 +84,15 @@
   `hsl(var(--muted-foreground))` (~47 % vs ~72 % du défaut — marqueurs OK car
   RF passe la couleur en `style`, pas en attribut).
 - Micro-décalages : SKIPPED `y` 430 → **280 (haut**, la voie `inactivité` file à
-  gauche à `y≈505), fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).
+  gauche à `y≈505), fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée),
+  FAILED `y` 430 → 350.
+- **Tirets préservés à l’export** : `ensureBottomBorder` (plan C) repeignait les
+  bordures en anneau plein — il ignore désormais `dashed`/`dotted` (tirets du
+  raster conservés, rognage éventuel vérifié absent).
+- **Defs markers autonomes** : la def est clonée puis réécrite avec le style
+  calculé (`getComputedStyle` du symbole live) — `outerHTML` brut gardait les
+  `var()` non résolus, morts hors DOM. `setAttribute('id')` plutôt que replace
+  (`&amp;` casse l’égalité de chaîne). Vérifié : 6 defs, 0 `var()`.
 - **Ancres étagées `right`/`right-low`** : `échec` sort au centre, `réouverture`
   arrive à `top: 75%` (~37 px plus bas) — même côté, points distincts (RF
   mesure les positions réelles, le style inline bat la feuille de

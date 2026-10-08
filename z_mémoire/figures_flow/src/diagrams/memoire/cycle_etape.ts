@@ -163,7 +163,7 @@ export const cycleEtape: DiagramDefinition = {
     active('pending', COL_X, 140, COL_WIDTH, 'PENDING', 'Occurrence créée à l’init, en attente d’activation.', 'pending'),
     active('in-progress', COL_X, 430, COL_WIDTH, 'IN_PROGRESS', 'Une seule active à la fois : quiz, entretien, décision…', 'active'),
     active('completed', COL_X, 720, COL_WIDTH, 'COMPLETED', 'Score ≥ seuil ou validation manuelle.', 'done'),
-    terminal('failed', TERM_X, 430, TERM_WIDTH, 'FAILED', 'rejected'),
+    terminal('failed', TERM_X, 350, TERM_WIDTH, 'FAILED', 'rejected'),
     // y=280 (haut) : la voie `inactivité` file à gauche à y≈505 puis descend
     // — en bas elle croisait la boîte ; en haut la bande est vide.
     terminal('skipped', SIDE_X, 280, SIDE_WIDTH, 'SKIPPED', 'skipped'),
