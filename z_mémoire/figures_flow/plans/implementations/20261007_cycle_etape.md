@@ -76,6 +76,10 @@
   pastilles `labelPx` 24 + `whiteSpace: nowrap` (fini les retours ligne) ;
   `data.labelBorder` opt-in (bordure pastille assortie à la cible : rouge
   vers REJETÉ, vert vers ACCEPTÉ — défaut `border-border` inchangé).
+- **Ambre + gris foncé** : `saut autorisé` en ambre `30` (couleur de SKIPPED,
+  trait + flèche + pastille) ; lectures `inactivité`/`retrait` en
+  `hsl(var(--muted-foreground))` (~47 % vs ~72 % du défaut — marqueurs OK car
+  RF passe la couleur en `style`, pas en attribut).
 - Micro-décalages : SKIPPED `y` 430 → **280 (haut**, la voie `inactivité` file à
   gauche à `y≈505), fantôme `y` 1010 → 1080 (pastille `si DECISION` chevauchée).
 - **Ancres étagées `right`/`right-low`** : `échec` sort au centre, `réouverture`

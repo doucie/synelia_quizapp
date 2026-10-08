@@ -42,6 +42,10 @@ const TAG_Y = 1220
 
 const GREEN = 'hsl(128, 100%, 40%)'
 const RED = 'hsl(0, 100%, 40%)'
+// Ambre de SKIPPED (saut) ; gris `muted` (lectures — nettement plus présent
+// que le défaut `#b1b1b7`, sans introduire de teinte).
+const AMBER = 'hsl(30, 100%, 40%)'
+const DARK_GRAY = 'hsl(var(--muted-foreground))'
 // Rollback bleu : couleur de IN_PROGRESS, là où il retourne — distinct des
 // lectures grises qui partagent son couloir vertical.
 const REOPEN = 'hsl(240, 100%, 40%)'
@@ -209,7 +213,13 @@ export const cycleEtape: DiagramDefinition = {
       stroke: RED,
       marker: RED,
     }),
-    edge('e-skip', 'pending', 'skipped', 'left', 'top', { label: 'saut autorisé', dashed: true }),
+    edge('e-skip', 'pending', 'skipped', 'left', 'top', {
+      label: 'saut autorisé',
+      dashed: true,
+      stroke: AMBER,
+      marker: AMBER,
+      border: AMBER,
+    }),
     // Réouverture par l’ancre basse du flanc droit (`right→right-low`) :
     // `échec` sort au centre, `réouverture` arrive ~37 px plus bas — même
     // côté, points distincts. Le `smoothstep` colle à `source.x`, seul un
@@ -237,8 +247,20 @@ export const cycleEtape: DiagramDefinition = {
       marker: GREEN,
       border: GREEN,
     }),
-    edge('e-l-abandon', 'in-progress', 'd-abandonnee', 'left', 'top', { label: 'inactivité', dashed: true }),
-    edge('e-l-retrait', 'in-progress', 'd-retiree', 'left', 'top', { label: 'retrait', dashed: true }),
+    edge('e-l-abandon', 'in-progress', 'd-abandonnee', 'left', 'top', {
+      label: 'inactivité',
+      dashed: true,
+      stroke: DARK_GRAY,
+      marker: DARK_GRAY,
+      border: DARK_GRAY,
+    }),
+    edge('e-l-retrait', 'in-progress', 'd-retiree', 'left', 'top', {
+      label: 'retrait',
+      dashed: true,
+      stroke: DARK_GRAY,
+      marker: DARK_GRAY,
+      border: DARK_GRAY,
+    }),
   ],
   rigidLayout: true,
   fontScale: 4 / 3,
