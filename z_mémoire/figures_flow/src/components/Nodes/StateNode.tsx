@@ -62,6 +62,29 @@ const TONE: Record<NonNullable<EntityNodeData['stateTone']>, { border: string; b
     bg: 'hsl(var(--muted))',
     text: 'hsl(var(--muted-foreground))',
   },
+  // Occurrences : PENDING bleu 210, IN_PROGRESS bleu-violet 240, COMPLETED
+  // vert 128, SKIPPED ambre 30 — bordure 2 px + nom coloré + fond teinté 0.08
+  // (même langage que la carte MySQL de la figure 4).
+  pending: {
+    border: 'hsl(210, 100%, 40%)',
+    bg: 'hsla(210, 100%, 50%, 0.08)',
+    text: 'hsl(210, 100%, 40%)',
+  },
+  active: {
+    border: 'hsl(240, 100%, 40%)',
+    bg: 'hsla(240, 100%, 50%, 0.08)',
+    text: 'hsl(240, 100%, 40%)',
+  },
+  done: {
+    border: 'hsl(128, 100%, 40%)',
+    bg: 'rgba(0, 204, 27, 0.094)',
+    text: 'hsl(128, 100%, 40%)',
+  },
+  skipped: {
+    border: 'hsl(30, 100%, 40%)',
+    bg: 'hsla(30, 100%, 50%, 0.08)',
+    text: 'hsl(30, 100%, 40%)',
+  },
 }
 
 function Start({ data }: { data: EntityNodeData }) {
@@ -81,14 +104,24 @@ function Start({ data }: { data: EntityNodeData }) {
 }
 
 function Active({ data }: { data: EntityNodeData }) {
+  const tone = data.stateTone ? TONE[data.stateTone] : null
   return (
     <div
       data-export-root
-      className="w-full rounded-lg bg-background"
+      className="w-full rounded-lg"
       // `exportWidth`, pas `w-full` seul : voir le contrat sur `EntityNodeData`.
-      style={{ padding: '20px 24px', width: data.exportWidth, border: '1px solid hsl(var(--border))' }}
+      // Occurrences teintées (ton `pending`/`active`/`done`) ou neutres.
+      style={{
+        padding: '20px 24px',
+        width: data.exportWidth,
+        border: tone ? `2px solid ${tone.border}` : '1px solid hsl(var(--border))',
+        backgroundColor: tone ? tone.bg : 'hsl(var(--background))',
+      }}
     >
-      <div className="text-center leading-tight font-bold text-foreground" style={px(STATE_NAME_SIZE)}>
+      <div
+        className="text-center leading-tight font-bold"
+        style={{ ...px(STATE_NAME_SIZE), color: tone?.text ?? 'hsl(var(--foreground))' }}
+      >
         {data.label}
       </div>
       {data.stateDesc && (
@@ -181,13 +214,15 @@ function Dossier({ data }: { data: EntityNodeData }) {
       style={{
         padding: '12px 20px',
         width: data.exportWidth,
-        border: `1.5px dashed ${tone.border}`,
+        // Tirets 2.5 px : à 1.5 ils se perdaient à l’échelle d’impression.
+        border: `2.5px dashed ${tone.border}`,
       }}
     >
       <div className="text-center leading-tight font-bold" style={{ ...px(SMALL_NAME_SIZE), color: tone.text }}>
         {data.label}
       </div>
       <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+      <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
     </div>
   )
 }

@@ -42,6 +42,9 @@ const TAG_Y = 1220
 
 const GREEN = 'hsl(128, 100%, 40%)'
 const RED = 'hsl(0, 100%, 40%)'
+// Rollback bleu : couleur de IN_PROGRESS, là où il retourne — distinct des
+// lectures grises qui partagent son couloir vertical.
+const REOPEN = 'hsl(240, 100%, 40%)'
 
 const arrow = (color?: string) => ({ type: MarkerType.ArrowClosed as const, ...(color ? { color } : {}) })
 
@@ -67,7 +70,15 @@ const edge = (
   },
 })
 
-const active = (id: string, x: number, y: number, w: number, label: string, stateDesc: string) => ({
+const active = (
+  id: string,
+  x: number,
+  y: number,
+  w: number,
+  label: string,
+  stateDesc: string,
+  stateTone: 'pending' | 'active' | 'done',
+) => ({
   id,
   type: 'entity' as const,
   position: { x, y },
@@ -77,6 +88,7 @@ const active = (id: string, x: number, y: number, w: number, label: string, stat
     variant: 'state' as const,
     stateKind: 'active' as const,
     stateDesc,
+    stateTone,
     // Toujours égal à la largeur posée (cf. `exportWidth`).
     exportWidth: w,
   },
@@ -88,7 +100,7 @@ const terminal = (
   y: number,
   w: number,
   label: string,
-  stateTone: 'kept' | 'rejected' | 'muted',
+  stateTone: 'kept' | 'rejected' | 'muted' | 'skipped',
 ) => ({
   id,
   type: 'entity' as const,
@@ -142,11 +154,11 @@ export const cycleEtape: DiagramDefinition = {
         exportWidth: 24,
       },
     },
-    active('pending', COL_X, 140, COL_WIDTH, 'PENDING', 'Occurrence créée à l’init, en attente d’activation.'),
-    active('in-progress', COL_X, 430, COL_WIDTH, 'IN_PROGRESS', 'Une seule active à la fois : quiz, entretien, décision…'),
-    active('completed', COL_X, 720, COL_WIDTH, 'COMPLETED', 'Score ≥ seuil ou validation manuelle.'),
+    active('pending', COL_X, 140, COL_WIDTH, 'PENDING', 'Occurrence créée à l’init, en attente d’activation.', 'pending'),
+    active('in-progress', COL_X, 430, COL_WIDTH, 'IN_PROGRESS', 'Une seule active à la fois : quiz, entretien, décision…', 'active'),
+    active('completed', COL_X, 720, COL_WIDTH, 'COMPLETED', 'Score ≥ seuil ou validation manuelle.', 'done'),
     terminal('failed', TERM_X, 430, TERM_WIDTH, 'FAILED', 'rejected'),
-    terminal('skipped', SIDE_X, 430, SIDE_WIDTH, 'SKIPPED', 'muted'),
+    terminal('skipped', SIDE_X, 430, SIDE_WIDTH, 'SKIPPED', 'skipped'),
     {
       id: 'etape-suivante',
       type: 'entity' as const,
@@ -195,8 +207,16 @@ export const cycleEtape: DiagramDefinition = {
     edge('e-skip', 'pending', 'skipped', 'left', 'top', { label: 'saut autorisé', dashed: true }),
     // Seule réouverture dessinée (depuis COMPLETED) : `rollbackStage` vaut
     // pour tout état résolu — voir légende body pour FAILED.
-    edge('e-reopen', 'completed', 'in-progress', 'left', 'left', { label: 'réouverture', dashed: true }),
-    // Lectures dossier : tirets fins, flèche neutre, pastille-condition.
+    edge('e-reopen', 'completed', 'in-progress', 'left', 'left', {
+      label: 'réouverture',
+      dashed: true,
+      stroke: REOPEN,
+      marker: REOPEN,
+    }),
+    // Lectures dossier : tirets fins gris, flèche neutre, pastille-condition.
+    // Les trois voies de gauche courent parallèles (±14) mais se distinguent
+    // par la couleur (rollback bleu, lectures grises) et des pastilles
+    // disjointes (640 / ~890, écartées de ~180 px à ~110 px de large).
     edge('e-l-rejete', 'failed', 'd-rejete', 'bottom', 'top', { label: 'si éliminatoire', dashed: true }),
     edge('e-l-accepte', 'completed', 'd-accepte', 'right', 'top', { label: 'si DECISION', dashed: true }),
     edge('e-l-abandon', 'in-progress', 'd-abandonnee', 'left', 'top', { label: 'inactivité', dashed: true }),

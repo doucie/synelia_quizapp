@@ -44,7 +44,29 @@
   `bottom` source ; `Active` a tous les handles des deux types.
 - Export 1600×1380 : 12 rasters exacts + surcouche 11 pastilles + 3 defs.
 
-## Pièges (inchangés, cf. première version du plan)
+## Pièges résolus (3, tous documentés dans le code)
 
-- Handle cible manquant = arête non rendue ; `minHeight` pour la pastille ;
-  ids de markers réécrits en `m0…` (détails § Pièges résolus).
+1. **Boucle invisible** : elle ciblait un handle `left` de type source —
+   React Flow ne rend pas une arête dont le handle cible manque. `Active`
+   porte `left`/`right` dans les DEUX types (invisibles, figure rigide).
+2. **Pastille vide** : `clone.style.height = 'auto'` écrasait la hauteur posée
+   du départ (aucun contenu) → `minHeight`, pas `height` (longhand distinct).
+3. **Markers absents de l’export** (le gros morceau) : RF émet `url('#id')`
+   (quotes AVANT le hash) et ses ids portent des `hsl(…)` — l’ancien regex
+   `url\(#…` ne matchait jamais (chemin mort) ; de plus `querySelector`
+   lève sur ces ids et `url(#…(…)…)` serait tronqué par le parseur SVG.
+   Réécriture `m0/m1/…` des deux côtés (def via `outerHTML` + regex sur le
+   premier attribut — `&amp;` interdit l’égalité de chaîne) ; `TraitementEdge`
+   retransmet `markerEnd` (calcul `EdgeWrapper`, defs globales RF).
+   Couleur explicite par arête (héritage par défaut incertain).
+
+## Couleurs d’états + séparation rollback/lectures (réglages)
+
+- Occurrences teintées : PENDING `210`, IN_PROGRESS `240`, COMPLETED `128`,
+  SKIPPED `30` (ambre), FAILED `0` — bordure 2 px + nom coloré + fond `0.08`
+  (`stateTone`: `pending`/`active`/`done`/`skipped`, même langage que MySQL).
+- Rollback en tirets **bleus `240`** (couleur de sa destination) vs lectures
+  grises : les trois voies gauches se distinguent par la couleur + pastilles
+  disjointes (vérifié à l’écran).
+- Dossier : tirets `1.5 → 2.5 px` (illisibles à l’échelle d’impression avant),
+  tons inchangés.

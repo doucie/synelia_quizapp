@@ -88,8 +88,8 @@ export interface EntityNodeData {
   stateKind?: 'start' | 'active' | 'terminal' | 'ghost' | 'dossier' | 'tag'
   /** Précision sous le nom d’un état actif (rôle de l’étape dans le cycle). */
   stateDesc?: string
-  /** Ton d’un état terminal : vert (retenu), rouge (rejeté) ou gris (neutre). */
-  stateTone?: 'kept' | 'rejected' | 'muted'
+  /** Ton d’un état : terminaux (vert, rouge, gris) ou occurrence (bleus, vert, ambre). */
+  stateTone?: 'kept' | 'rejected' | 'muted' | 'pending' | 'active' | 'done' | 'skipped'
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
