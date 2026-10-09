@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -116,6 +116,8 @@ export interface EntityNodeData {
   hubTitle?: string
   /** Rayons du hub (variante `hub`, ordre horaire depuis le haut). */
   spokes?: HubSpoke[]
+  /** Colonnes du kanban des règles de gestion (variante `rg`). */
+  rgCols?: RgColumn[]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -213,6 +215,22 @@ export interface HubSpoke {
   name: string
   icon: 'zap' | 'shield' | 'checkcircle' | 'eye' | 'tool' | 'search' | 'award'
   criterion: string
+}
+
+/** Une carte règle→effet d’une colonne de règles de gestion. */
+export interface RgCard {
+  id: string
+  name: string
+  rule: string
+  effect: string
+}
+
+/** Une colonne du kanban des règles de gestion : bandeau + cartes. */
+export interface RgColumn {
+  title: string
+  icon: 'lock' | 'database' | 'sliders' | 'search'
+  color: string
+  cards: RgCard[]
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

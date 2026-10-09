@@ -591,6 +591,13 @@
     [RG-09], [Audit], [Les décisions critiques et certaines modifications doivent pouvoir être justifiées a posteriori.], [Le modèle doit conserver suffisamment d'informations pour soutenir la traçabilité et la conformité.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-rg-kanban.svg", width: 100%),
+    caption: [Règles de gestion — chaque règle entraîne son effet système.],
+  )
+
+  #pagebreak()
+
   #pagebreak()
   = Conception de la solution
 

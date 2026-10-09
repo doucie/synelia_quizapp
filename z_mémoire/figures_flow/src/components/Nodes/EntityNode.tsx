@@ -16,6 +16,7 @@ import NotifNode from './NotifNode'
 import BfNode from './BfNode'
 import RingsNode from './RingsNode'
 import HubNode from './HubNode'
+import RgNode from './RgNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -93,6 +94,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'hub') {
     return <HubNode data={data as EntityNodeData} />
+  }
+
+  // Kanban des règles de gestion : colonnes, cartes règle→effet.
+  // Même délégation.
+  if (variant === 'rg') {
+    return <RgNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à

@@ -41,6 +41,7 @@ import { notifCanaux as memoireNotifCanaux } from './memoire/notif_canaux'
 import { bfGrille as memoireBfGrille } from './memoire/bf_grille'
 import { anneauxActeurs as memoireAnneauxActeurs } from './memoire/anneaux_acteurs'
 import { hubNfr as memoireHubNfr } from './memoire/hub_nfr'
+import { rgKanban as memoireRgKanban } from './memoire/rg_kanban'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -132,7 +133,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (12) ---
+  // --- Mémoire (13) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -145,6 +146,7 @@ export const diagrams: DiagramDefinition[] = [
   memoireBfGrille,
   memoireAnneauxActeurs,
   memoireHubNfr,
+  memoireRgKanban,
 
   // --- Palette (1) ---
   colorPalette,
