@@ -462,6 +462,11 @@
     [BF-08], [Pilotage], [Donner de la visibilité aux équipes RH.], [Tableaux de bord, listes filtrables, statistiques utiles et vues consolidées par campagne, dossier et intervenant.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-bf-grille.svg", width: 100%),
+    caption: [Besoins fonctionnels — un socle, un parcours séquentiel, une couche transverse.],
+  )
+
   === Matrice acteurs et responsabilités
   La matrice suivante synthétise la place de chaque acteur dans le système. Elle complète la vision purement fonctionnelle par une lecture centrée sur la responsabilité, indispensable dans une application gouvernée par les droits d'accès.
 

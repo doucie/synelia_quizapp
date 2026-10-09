@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -102,6 +102,14 @@ export interface EntityNodeData {
   notifIcon?: 'bell' | 'mail'
   /** Accent SAFE_HUES d’un canal de notification (nom + médaillon). */
   notifColor?: string
+  /** Identifiant d’une carte de besoins fonctionnels (`BF-01`…`BF-08`). */
+  bfId?: string
+  /** Icône d’une carte de besoins fonctionnels (jeu partagé `Nodes/icons.tsx`). */
+  bfIcon?: 'lock' | 'layers' | 'megaphone' | 'inbox' | 'checksquare' | 'calendar' | 'bell' | 'grid'
+  /** Teinte de famille d’une carte de besoins fonctionnels (socle / parcours / transverse). */
+  bfColor?: string
+  /** Phrase-attente d’une carte de besoins fonctionnels (verbatim matrice, raccourcie sans changer le sens). */
+  bfDesc?: string
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *

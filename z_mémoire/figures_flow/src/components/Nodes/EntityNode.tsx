@@ -13,6 +13,7 @@ import PersonaNode from './PersonaNode'
 import StateNode from './StateNode'
 import AuthNode from './AuthNode'
 import NotifNode from './NotifNode'
+import BfNode from './BfNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -73,6 +74,11 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'notif') {
     return <NotifNode data={data as EntityNodeData} />
+  }
+
+  // Besoins fonctionnels : cartes à pictogrammes en grille. Même délégation.
+  if (variant === 'bf') {
+    return <BfNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
