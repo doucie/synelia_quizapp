@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -118,6 +118,10 @@ export interface EntityNodeData {
   spokes?: HubSpoke[]
   /** Colonnes du kanban des règles de gestion (variante `rg`). */
   rgCols?: RgColumn[]
+  /** Lignes d’arbitrage Merise/UML (variante `versus`). */
+  versusRows?: VersusRow[]
+  /** Verdict en deux parties (Merise, UML) du bandeau de synthèse (variante `versus`). */
+  versusVerdict?: [string, string]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -231,6 +235,17 @@ export interface RgColumn {
   icon: 'lock' | 'database' | 'sliders' | 'search'
   color: string
   cards: RgCard[]
+}
+
+/** Une ligne d’arbitrage Merise/UML : critère, deux camps, gagnant, intensité. */
+export interface VersusRow {
+  criterion: string
+  left: string
+  right: string
+  /** Camp qui l’emporte (`null` = ligne neutre, aucun surlignage). */
+  winner: 'left' | 'right' | null
+  /** Ligne « nette » (surlignage fort) ou « légère ». Inutilisé si neutre. */
+  strong: boolean
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

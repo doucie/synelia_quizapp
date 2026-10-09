@@ -642,6 +642,11 @@
     [Compatibilité avec le projet], [Excellente : permet de structurer l'analyse autour de la base, qui est ici le pivot du système.], [Pertinente en complément pour décrire certains flux applicatifs.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-merise-uml.svg", width: 100%),
+    caption: [Merise contre UML — un arbitrage nuancé, pas un vainqueur unique.],
+  )
+
   À l'issue de cette comparaison, la méthode #strong[Merise] a été retenue comme méthode principale de conception, conformément aux principes fondateurs posés par H. Tardieu, A. Rochfeld et R. Colletti dans *La méthode Merise : Principes et outils* (2003), aux guides pratiques de J. Gabay dans *Merise et UML : Guide pratique* (2008) et aux outils conceptuels et organisationnels détaillés par J. P. Matheron dans *Comprendre Merise* (2005). Trois raisons justifient ce choix. D'abord, le domaine de SyneliaQuizApp est fortement orienté données : campagnes, pipelines, formulaires versionnés, candidatures, étapes, entretiens, évaluations et décisions s'organisent par des relations stables, qui se prêtent naturellement à une modélisation MCD/MLD/MPD. Ensuite, la séparation explicite entre données et traitements (MCD/MCT) permet d'aligner la documentation du mémoire sur le raisonnement réel suivi durant le projet : analyse du modèle de données d'abord, puis raisonnement sur les flux. Enfin, la chaîne Merise produit des artefacts visibles et hiérarchisés qui renforcent la lisibilité académique du chapitre de conception.
 
   UML n'est pas pour autant écarté. Il est positionné comme un #emph[complément] mobilisé ponctuellement pour illustrer certains comportements dynamiques que Merise exprime moins finement, notamment les diagrammes de cas d'utilisation pour cartographier les acteurs et les diagrammes de séquence pour expliciter les échanges techniques entre frontend, backend et services auxiliaires. Cette articulation Merise-first / UML-complémentaire permet de cumuler les forces des deux approches sans diluer la cohérence méthodologique du mémoire.
