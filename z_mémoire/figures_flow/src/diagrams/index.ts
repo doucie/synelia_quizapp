@@ -39,6 +39,7 @@ import { cycleEtape as memoireCycleEtape } from './memoire/cycle_etape'
 import { authFourche as memoireAuthFourche } from './memoire/auth_fourche'
 import { notifCanaux as memoireNotifCanaux } from './memoire/notif_canaux'
 import { bfGrille as memoireBfGrille } from './memoire/bf_grille'
+import { anneauxActeurs as memoireAnneauxActeurs } from './memoire/anneaux_acteurs'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -130,7 +131,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (10) ---
+  // --- Mémoire (11) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -141,6 +142,7 @@ export const diagrams: DiagramDefinition[] = [
   memoireAuthFourche,
   memoireNotifCanaux,
   memoireBfGrille,
+  memoireAnneauxActeurs,
 
   // --- Palette (1) ---
   colorPalette,

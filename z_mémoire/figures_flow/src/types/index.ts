@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -110,6 +110,8 @@ export interface EntityNodeData {
   bfColor?: string
   /** Phrase-attente d’une carte de besoins fonctionnels (verbatim matrice, raccourcie sans changer le sens). */
   bfDesc?: string
+  /** Anneau d’acteur d’une figure concentrique (variante `rings`, du centre vers l’extérieur). */
+  rings?: RingData[]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -191,6 +193,16 @@ export interface SqlLegendItem {
   kind: SqlTokenKind
   label: string
   sample: string
+}
+
+/** Un anneau d’acteur : rôle, niveau de contrôle, teinte, initiale et contenu du callout. */
+export interface RingData {
+  role: string
+  control: string
+  color: string
+  initial: string
+  ops: string[]
+  items: string[]
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

@@ -479,6 +479,11 @@
     [Super administrateur], [Superviser la plateforme, les réglages globaux et la gouvernance de sécurité.], [Configuration globale, paramètres techniques, rôles système, supervision transverse.], [Contrôle maximal et structurant.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-anneaux-acteurs.svg", width: 100%),
+    caption: [Périmètres de contrôle — chaque anneau contient le précédent, jusqu'au super administrateur.],
+  )
+
   La responsabilité générale de chaque acteur doit cependant être complétée par une lecture plus opérationnelle des droits. La matrice suivante synthétise les permissions nominales, avant prise en compte des droits contextualisés sur campagne ou sur entité.
 
   #document-table(
