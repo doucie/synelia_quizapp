@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import type { EntityNodeData, RingData } from '../../types'
 import { hsla } from '../../utils/color'
 
@@ -23,11 +22,10 @@ const CY = 470
 const RADII = [140, 230, 320, 410]
 const ALPHAS = [0.26, 0.19, 0.13, 0.08]
 const W = 1500
-const H = 1100
+const H = 940
 
 const ROLE_SIZE = 22
 const CALLOUT_ROLE_SIZE = 20
-const MICRO_SIZE = 14
 const ITEM_SIZE = 18
 const PASTILLE = 36
 
@@ -59,32 +57,20 @@ const LABEL_Y = [CY, CY + 185, CY + 275, CY + 365]
 /** Callouts : gauche (Candidat bas, Recruteur haut), droite (Admin haut,
  * Super admin bas). `ty` = point d’ancrage (bord intérieur de la boîte). */
 const CALLOUTS = [
-  { side: 'left' as const, top: 680, ty: 710 },
+  { side: 'left' as const, top: 510, ty: 625 },
   { side: 'left' as const, top: 230, ty: 320 },
   { side: 'right' as const, top: 230, ty: 320 },
-  { side: 'right' as const, top: 680, ty: 710 },
+  { side: 'right' as const, top: 510, ty: 625 },
 ]
-const CALLOUT_X = { left: 20, right: 1140 }
-const CALLOUT_W = 340
-
-function Block({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <p className="leading-snug" style={{ margin: 0 }}>
-      <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(MICRO_SIZE)}>
-        {label} :{' '}
-      </span>
-      <span className="text-foreground/85" style={px(ITEM_SIZE)}>
-        {children}
-      </span>
-    </p>
-  )
-}
+const CALLOUT_X = { left: 20, right: 1180 }
+const CALLOUT_W = 300
 
 function Callout({ ring, slot }: { ring: RingData; slot: number }) {
   const cfg = CALLOUTS[slot]
   const x = CALLOUT_X[cfg.side]
   return (
     <div
+      data-callout={ring.role}
       className="absolute flex flex-col rounded-xl border border-solid bg-background"
       style={{
         left: x,
@@ -98,11 +84,9 @@ function Callout({ ring, slot }: { ring: RingData; slot: number }) {
       <span className="font-bold" style={{ ...px(CALLOUT_ROLE_SIZE), color: ring.color }}>
         {ring.role}
       </span>
-      <Block label="Opérations">{ring.ops.join(', ')}.</Block>
-      <Block label="Données">{ring.items.join(', ')}.</Block>
-      <Block label="Niveau de contrôle">
-        <span className="italic">{ring.control}</span>
-      </Block>
+      <span className="leading-snug text-foreground/85" style={px(ITEM_SIZE)}>
+        {ring.summary}
+      </span>
     </div>
   )
 }

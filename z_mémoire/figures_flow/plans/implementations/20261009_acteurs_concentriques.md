@@ -25,10 +25,12 @@ tableau Oui/Non/Partiel qui suit (déjà traité en matrice à pastilles).
       Niveau verbatim déménagé en 3ᵉ mini-bloc des callouts (`NIVEAU DE
       CONTRÔLE`, même langage que `OPÉRATIONS`/`DONNÉES`). `control`
       conservé dans `RingData`, aucun changement `types/`.
-- [x] Callouts élargis 300→340, labels **inline** (`Opérations : …` — 3 lignes
-      récupérées), corps 15→**18** (~7,3 pt imprimés). Bas descendus 620→680
-      (collision Relevée au harness, 24 px), `H` 940→1100 (la hauteur ne
-      change pas l’échelle d’impression — repli sans coût).
+- [x] Callouts **compacts** (retour demandeur) : 300 px restaurés (le 340
+      mordait le rond de ~14 px), **une phrase résumé** par acteur (rôle +
+      texte, 18 px conservés) au lieu des 3 blocs — `Block`/`MICRO_SIZE`
+      supprimés, `RingData` réduit à `{role,color,initial,summary}`. Bas
+      remontés 680→510 (boîtes ~215-250 px mesurées), `H` 1100→940, `ty`
+      recalés (320 hauts / 625 bas). `data-callout` sur les boîtes (mesure).
 - [x] 4 callouts combinés (voté) : gauche Candidat/R, droite A/SA —
       pastille-initiale fig. 1 **au point de contact sur l’anneau**, mini-blocs
       Opérations/Données. Lignes calculées (`C + r·d̂`), pas mesurées.

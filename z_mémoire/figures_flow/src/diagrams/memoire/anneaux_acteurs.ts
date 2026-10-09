@@ -38,35 +38,31 @@ export const anneauxActeurs: DiagramDefinition = {
         rings: [
           {
             role: 'Candidat',
-            control: 'Contrôle limité à son parcours personnel.',
             color: 'hsl(330, 100%, 40%)',
             initial: 'C',
-            ops: ['postuler', 'vérifier son email', 'passer un quiz', 'suivre sa candidature'],
-            items: ['son propre dossier', 'ses réponses', 'ses statuts publics'],
+            summary:
+              'Postule, passe son quiz et suit son dossier ; contrôle strictement limité à son parcours personnel.',
           },
           {
             role: 'Recruteur',
-            control: 'Contrôle opérationnel contextualisé par campagne et par entité.',
             color: 'hsl(285, 100%, 40%)',
             initial: 'R',
-            ops: ['créer une campagne', 'planifier un entretien', 'évaluer', 'décider'],
-            items: ['campagnes assignées', 'candidatures', 'évaluations', 'décisions'],
+            summary:
+              'Crée campagnes, planifie, évalue et décide ; contrôle opérationnel contextualisé par campagne et par entité.',
           },
           {
             role: 'Administrateur',
-            control: 'Contrôle d’administration métier.',
             color: 'hsl(240, 100%, 40%)',
             initial: 'A',
-            ops: ['gérer utilisateurs', 'référentiels', 'permissions'],
-            items: ['utilisateurs', 'groupes métier', 'référentiels', 'paramètres'],
+            summary:
+              'Gère utilisateurs, référentiels et permissions ; contrôle d’administration métier.',
           },
           {
             role: 'Super administrateur',
-            control: 'Contrôle maximal et structurant.',
             color: 'hsl(210, 100%, 40%)',
             initial: 'SA',
-            ops: ['superviser la plateforme', 'réglages globaux', 'gouvernance de sécurité'],
-            items: ['configuration globale', 'rôles système', 'supervision transverse'],
+            summary:
+              'Supervise plateforme, réglages globaux et sécurité ; contrôle maximal et structurant.',
           },
         ],
       },

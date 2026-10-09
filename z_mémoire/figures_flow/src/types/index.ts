@@ -195,14 +195,12 @@ export interface SqlLegendItem {
   sample: string
 }
 
-/** Un anneau d’acteur : rôle, niveau de contrôle, teinte, initiale et contenu du callout. */
+/** Un anneau d’acteur : rôle, teinte, initiale et phrase résumé du callout. */
 export interface RingData {
   role: string
-  control: string
   color: string
   initial: string
-  ops: string[]
-  items: string[]
+  summary: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
