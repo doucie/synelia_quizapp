@@ -25,7 +25,6 @@ const W = 1500
 const H = 940
 
 const ROLE_SIZE = 22
-const CONTROL_SIZE = 16
 const CALLOUT_ROLE_SIZE = 20
 const MICRO_SIZE = 13
 const ITEM_SIZE = 15
@@ -48,12 +47,13 @@ function touch(r: number, tx: number, ty: number) {
 /** Largeur max du texte d’anneau (corde de la bande, voir plan). */
 const LABEL_W = [230, 270, 340, 400]
 /**
- * Ordonnée du bloc rôle + niveau : disque centré, Recruteur EN HAUT de sa
- * bande (le bas est trop dense à trois blocs pour 90 px d’entraxe), les deux
- * externes en bas de la leur. Le haut du centre est vide (callouts sur les
- * côtés), aucune collision relevée à l’écran.
+ * Ordonnée du rôle seul : milieux radiaux (disque centré, bandes 185/275/365).
+ * Le niveau de contrôle a déménagé dans les callouts (retour demandeur) : un
+ * texte à cheval sur deux anneaux disait l’inverse du message de contenance.
+ * Règle uniforme pour les quatre — le cas spécial « R en haut » a disparu
+ * avec sa cause.
  */
-const LABEL_Y = [CY, CY - 185, CY + 275, CY + 365]
+const LABEL_Y = [CY, CY + 185, CY + 275, CY + 365]
 
 /** Callouts : gauche (Candidat bas, Recruteur haut), droite (Admin haut,
  * Super admin bas). `ty` = point d’ancrage (bord intérieur de la boîte). */
@@ -95,6 +95,12 @@ function Callout({ ring, slot }: { ring: RingData; slot: number }) {
       </span>
       <span className="leading-snug text-foreground/85" style={px(ITEM_SIZE)}>
         {ring.items.join(', ')}.
+      </span>
+      <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(MICRO_SIZE)}>
+        Niveau de contrôle
+      </span>
+      <span className="leading-snug text-foreground/85 italic" style={px(ITEM_SIZE)}>
+        {ring.control}
       </span>
     </div>
   )
@@ -164,23 +170,20 @@ export default function RingsNode({ data }: { data: EntityNodeData }) {
           </span>
         )
       })}
-      {/* Textes d’anneaux : rôle + niveau (bas de bande, disque centré). */}
+      {/* Rôles seuls, centrés au milieu radial (voir `LABEL_Y`). */}
       {rings.map((ring, i) => (
         <div
           key={`t-${ring.role}`}
           className="absolute flex flex-col items-center"
           style={{
             left: CX - LABEL_W[i] / 2,
-            top: i === 0 ? LABEL_Y[0] - 34 : LABEL_Y[i] - 34,
+            top: LABEL_Y[i] - 15,
             width: LABEL_W[i],
             textAlign: 'center',
           }}
         >
           <span className="font-bold text-foreground" style={px(ROLE_SIZE)}>
             {ring.role}
-          </span>
-          <span className="leading-snug text-foreground/85 italic" style={px(CONTROL_SIZE)}>
-            {ring.control}
           </span>
         </div>
       ))}

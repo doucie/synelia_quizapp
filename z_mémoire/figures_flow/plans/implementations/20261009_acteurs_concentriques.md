@@ -19,9 +19,12 @@ tableau Oui/Non/Partiel qui suit (déjà traité en matrice à pastilles).
       (précédent `ScopeNode`/fig. 6/10) — 4 disques SVG (`r` 140/230/320/410,
       alpha 0.26→0.08 + contour 2 px) + labels HTML absolus + 4 callouts +
       lignes de fuite SVG. Aucune `<Handle>`, aucun ancrage à régler.
-- [x] Texte sur anneau : rôle gras 22 + niveau italique 16, **Recruteur en
-      haut** de sa bande (le bas à trois blocs collides à 90 px d’entraxe),
-      disque centré, A/SA en bas. `maxWidth` 230/270/340/400 (cordes).
+- [x] Texte sur anneau : **rôle seul** (retour demandeur — un niveau à cheval
+      sur deux anneaux disait l’inverse du message de contenance), centré au
+      milieu radial (0/185/275/365, règle uniforme, `maxWidth` = cordes).
+      Niveau verbatim déménagé en 3ᵉ mini-bloc des callouts (`NIVEAU DE
+      CONTRÔLE`, même langage que `OPÉRATIONS`/`DONNÉES`). `control`
+      conservé dans `RingData`, aucun changement `types/`.
 - [x] 4 callouts combinés (voté) : gauche Candidat/R, droite A/SA —
       pastille-initiale fig. 1 **au point de contact sur l’anneau**, mini-blocs
       Opérations/Données. Lignes calculées (`C + r·d̂`), pas mesurées.
