@@ -21,14 +21,17 @@ import { FeatherIcon } from './icons'
 
 const COL_W = 380
 const COL_GAP = 40
-const BAND_TITLE_SIZE = 22
-const BADGE_SIZE = 15
-const CARD_NAME_SIZE = 18
-const MICRO_SIZE = 13
-const RULE_SIZE = 16
-const EFFECT_SIZE = 15
-const MEDALLION = 44
-const ICON = 22
+// Échelle ×11/8 (retour demandeur) : à 1720 px de canevas, les corps
+// sortaient à ~5-6 pt imprimés, illisibles. Tout grossit uniformément —
+// hiérarchie inchangée, corps à ~7,5-10,5 pt.
+const BAND_TITLE_SIZE = 30
+const BADGE_SIZE = 20
+const CARD_NAME_SIZE = 24
+const MICRO_SIZE = 18
+const RULE_SIZE = 22
+const EFFECT_SIZE = 20
+const MEDALLION = 60
+const ICON = 30
 
 /** Même convention que les autres figures d’impression : `--org-font-scale`
  * est déjà recopiée pendant l’export SVG. */
@@ -37,14 +40,18 @@ function px(value: number) {
 }
 
 function Arrow() {
+  // Flèche VERTICALE (amendement au brief) : à 22 px, les deux zones
+  // côte à côte tombaient à ~10 caractères/ligne (escalier mot-à-mot).
+  // RÈGLE en haut, ↓, EFFET en bas : pleine largeur (~25 car./ligne),
+  // relation cause→conséquence intacte, juste pivotée.
   return (
     <svg
-      width={44}
-      height={24}
-      viewBox="0 0 44 24"
+      width={32}
+      height={44}
+      viewBox="0 0 32 44"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={2.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       role="img"
@@ -52,8 +59,8 @@ function Arrow() {
       className="text-muted-foreground"
       style={{ flexShrink: 0, alignSelf: 'center' }}
     >
-      <line x1="2" y1="12" x2="32" y2="12" />
-      <polyline points="26,5 34,12 26,19" />
+      <line x1="16" y1="3" x2="16" y2="32" />
+      <polyline points="8,25 16,33 24,25" />
     </svg>
   )
 }
@@ -80,8 +87,8 @@ function RgCardView({ card, color }: { card: RgCard; color: string }) {
           {card.name}
         </span>
       </div>
-      <div className="flex" style={{ gap: 12 }}>
-        <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 4 }}>
+      <div className="flex flex-col" style={{ gap: 10 }}>
+        <div className="flex min-w-0 flex-col" style={{ gap: 4 }}>
           <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(MICRO_SIZE)}>
             Règle
           </span>
@@ -90,7 +97,7 @@ function RgCardView({ card, color }: { card: RgCard; color: string }) {
           </span>
         </div>
         <Arrow />
-        <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 4 }}>
+        <div className="flex min-w-0 flex-col" style={{ gap: 4 }}>
           <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(MICRO_SIZE)}>
             Effet système
           </span>
