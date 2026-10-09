@@ -167,7 +167,7 @@ export default function RingsNode({ data }: { data: EntityNodeData }) {
             textAlign: 'center',
           }}
         >
-          <span className="font-bold text-foreground" style={px(ROLE_SIZE)}>
+          <span className="font-bold" style={{ ...px(ROLE_SIZE), color: ring.color }}>
             {ring.role}
           </span>
         </div>

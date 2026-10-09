@@ -48,21 +48,21 @@ export const anneauxActeurs: DiagramDefinition = {
             color: 'hsl(285, 100%, 40%)',
             initial: 'R',
             summary:
-              'Crée campagnes, planifie, évalue et décide ; contrôle opérationnel contextualisé par campagne et par entité.',
+              'Crée les campagnes, planifie et évalue ; contrôle opérationnel contextualisé par campagne et par entité.',
           },
           {
             role: 'Administrateur',
             color: 'hsl(240, 100%, 40%)',
             initial: 'A',
             summary:
-              'Gère utilisateurs, référentiels et permissions ; contrôle d’administration métier.',
+              'Gère les utilisateurs, les référentiels et les permissions ; contrôle d’administration métier.',
           },
           {
             role: 'Super administrateur',
             color: 'hsl(210, 100%, 40%)',
             initial: 'SA',
             summary:
-              'Supervise plateforme, réglages globaux et sécurité ; contrôle maximal et structurant.',
+              'Supervise la plateforme, les réglages globaux et la sécurité ; contrôle maximal et structurant.',
           },
         ],
       },

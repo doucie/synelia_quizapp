@@ -31,6 +31,9 @@ tableau Oui/Non/Partiel qui suit (déjà traité en matrice à pastilles).
       supprimés, `RingData` réduit à `{role,color,initial,summary}`. Bas
       remontés 680→510 (boîtes ~215-250 px mesurées), `H` 1100→940, `ty`
       recalés (320 hauts / 625 bas). `data-callout` sur les boîtes (mesure).
+- [x] Rôles **teintés** sur anneaux (retour demandeur, `ring.color` — gras 22,
+      précédent fig. 8) ; 3 résumés repris mot pour mot (articles ajoutés,
+      « décider » saute côté Recruteur — signalé, à réintégrer sur demande).
 - [x] 4 callouts combinés (voté) : gauche Candidat/R, droite A/SA —
       pastille-initiale fig. 1 **au point de contact sur l’anneau**, mini-blocs
       Opérations/Données. Lignes calculées (`C + r·d̂`), pas mesurées.
