@@ -26,7 +26,7 @@ const HUB_R = 130
 const ORBIT = 340
 const MED_R = 85
 
-const HUB_SIZE = 26
+const HUB_SIZE = 24
 const ICON = 38
 const NAME_SIZE = 20
 const ID_SIZE = 14
@@ -49,13 +49,6 @@ function spokePos(i: number, n: number) {
   const dx = Math.cos(a)
   const dy = Math.sin(a)
   return { x: CX + ORBIT * dx, y: CY + ORBIT * dy, dx, dy }
-}
-
-/** Titre du hub en deux lignes équilibrées (mots). */
-function hubLines(title: string): [string, string] {
-  const words = title.split(' ')
-  const mid = Math.ceil(words.length / 2)
-  return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
 }
 
 function Medallion({ spoke, index, total }: { spoke: HubSpoke; index: number; total: number }) {
@@ -95,7 +88,6 @@ function Medallion({ spoke, index, total }: { spoke: HubSpoke; index: number; to
 
 export default function HubNode({ data }: { data: EntityNodeData }) {
   const spokes = data.spokes ?? []
-  const [hubL1, hubL2] = hubLines(data.hubTitle ?? '')
   return (
     <div data-export-root className="relative w-full" style={{ width: data.exportWidth, height: H }}>
       <svg
@@ -140,10 +132,8 @@ export default function HubNode({ data }: { data: EntityNodeData }) {
         className="absolute flex flex-col items-center justify-center"
         style={{ left: CX - HUB_R, top: CY - HUB_R, width: HUB_R * 2, height: HUB_R * 2, textAlign: 'center' }}
       >
-        <span className="font-bold leading-snug" style={{ ...px(HUB_SIZE), color: '#ffffff' }}>
-          {hubL1}
-          <br />
-          {hubL2}
+        <span className="font-bold leading-snug whitespace-nowrap" style={{ ...px(HUB_SIZE), color: '#ffffff' }}>
+          {data.hubTitle}
         </span>
       </div>
       {spokes.map((spoke, i) => (

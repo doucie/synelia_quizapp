@@ -30,7 +30,7 @@ export const hubNfr: DiagramDefinition = {
         variant: 'hub' as const,
         // Toujours égal à `W` (cf. `exportWidth`).
         exportWidth: W,
-        hubTitle: 'Qualité du système SyneliaQuizApp',
+        hubTitle: 'Qualité du système',
         spokes: [
           { id: 'BNF-01', name: 'Performance', icon: 'zap', criterion: 'Navigation fluide sur les parcours courants.' },
           { id: 'BNF-02', name: 'Sécurité', icon: 'shield', criterion: 'Authentification fiable, permissions vérifiées côté backend.' },
