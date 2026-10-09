@@ -26,6 +26,12 @@ export type FeatherIconKind =
   | 'calendar'
   | 'grid'
   | 'megaphone'
+  | 'zap'
+  | 'eye'
+  | 'tool'
+  | 'search'
+  | 'checkcircle'
+  | 'award'
 
 function Body({ kind }: { kind: FeatherIconKind }) {
   switch (kind) {
@@ -135,6 +141,44 @@ function Body({ kind }: { kind: FeatherIconKind }) {
       // natif Heroicons 1.5) pour rester cohérent avec le reste du jeu.
       return (
         <path d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46" />
+      )
+    case 'zap':
+      return <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    case 'eye':
+      return (
+        <>
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      )
+    case 'tool':
+      return (
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      )
+    case 'search':
+      return (
+        <>
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </>
+      )
+    case 'checkcircle':
+      // Fiabilité : pas de check-shield chez Feather — le cercle coché, même
+      // langage que la validation, sans importer un second jeu.
+      return (
+        <>
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </>
+      )
+    case 'award':
+      // Conformité : pas de balance chez Feather — la rosette, même langage
+      // que la certification.
+      return (
+        <>
+          <circle cx="12" cy="8" r="7" />
+          <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+        </>
       )
   }
 }

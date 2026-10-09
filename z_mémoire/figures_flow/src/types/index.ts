@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -112,6 +112,10 @@ export interface EntityNodeData {
   bfDesc?: string
   /** Anneau d’acteur d’une figure concentrique (variante `rings`, du centre vers l’extérieur). */
   rings?: RingData[]
+  /** Titre du hub central d’une figure en étoile (variante `hub`). */
+  hubTitle?: string
+  /** Rayons du hub (variante `hub`, ordre horaire depuis le haut). */
+  spokes?: HubSpoke[]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -201,6 +205,14 @@ export interface RingData {
   color: string
   initial: string
   summary: string
+}
+
+/** Un rayon du hub qualité : identifiant, nom, icône et critère du médaillon. */
+export interface HubSpoke {
+  id: string
+  name: string
+  icon: 'zap' | 'shield' | 'checkcircle' | 'eye' | 'tool' | 'search' | 'award'
+  criterion: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

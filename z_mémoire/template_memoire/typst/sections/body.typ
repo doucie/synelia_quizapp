@@ -519,6 +519,13 @@
     [BNF-07], [Conformité], [Encadrer la manipulation des données personnelles et leur conservation.], [Données strictement nécessaires, droits d'accès limités, justification des décisions sensibles et audit possible.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-hub-nfr.svg", width: 100%),
+    caption: [Exigences qualité — sept pairs autour d'un seul hub, sans hiérarchie.],
+  )
+
+  == Diagrammes des cas d'utilisation
+
   == Diagrammes des cas d'utilisation
   Les diagrammes de cas d'utilisation permettent de représenter les interactions entre les acteurs et le système en se concentrant sur la valeur métier produite. Dans ce mémoire, ils servent à montrer la frontière entre la surface publique candidate et la surface interne de pilotage, ainsi que la spécialisation progressive des usages entre recruteur, administrateur et super administrateur.
 
