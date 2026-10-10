@@ -22,10 +22,14 @@ Le trait plein/pointillé porte le sens, pas le fond.
       210) ; badge EXTERNE neutre ; hôte encre pleine 2 px, Compose tirets
       2 px `muted` + baleine 28.
 - [x] Routage : angular `right`→spring `left` (pastille proxy) ; spring
-      `bottom`→mysql/redis `top` (éventail ±14 X) ; spring `right`→minio
-      `left` (verticale à gauche de Redis). Tous handles déclarés, pas
-      d’entrée `edgeAnchors.ts`. `smoothstep`, `isStrong`, `markerEnd`
-      (pattern fig. 7).
+      `bottom`→mysql `top` (éventail X avec minio) ; spring `left`→redis
+      `left` (descente x≈620) ; spring `bottom`→minio `left` (descente x≈764).
+      Swap redis/minio demandé : **un croisement assumé** en (620, 450),
+      verticale redis × horizontale MySQL, en zone vide.
+- [x] `DeployNode` rend les **8 handles** (4 source + 4 target) : React Flow
+      **ne monte pas** une arête dont l’ancre source/cible n’existe pas
+      (e-sp-redis `left→left` invisible tant que `left` source manquait —
+      piège relevé au harness, 3 arêtes au lieu de 4, zéro erreur console).
 - [x] Logos : `redis` + `minio` Simple Icons CC0 rapatriés (`LOGO_BRAND`
       documentés) ; angular/spring/mysql/docker existants.
 - [x] `ensureBottomBorder` ignore déjà `dashed` (fix fig. 7) — le pointillé

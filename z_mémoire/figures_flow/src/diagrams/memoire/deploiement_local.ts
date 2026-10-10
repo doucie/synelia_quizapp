@@ -123,8 +123,8 @@ export const deploiementLocal: DiagramDefinition = {
   edges: [
     edge('e-ng-sp', 'svc-ng', 'svc-spring', 'right', 'left', 'proxy /api/**'),
     edge('e-sp-mysql', 'svc-spring', 'svc-mysql', 'bottom', 'top'),
-    edge('e-sp-redis', 'svc-spring', 'svc-redis', 'bottom', 'top'),
-    edge('e-sp-minio', 'svc-spring', 'svc-minio', 'right', 'left'),
+    edge('e-sp-redis', 'svc-spring', 'svc-redis', 'left', 'left'),
+    edge('e-sp-minio', 'svc-spring', 'svc-minio', 'bottom', 'left'),
   ],
   rigidLayout: true,
   fontScale: 4 / 3,
