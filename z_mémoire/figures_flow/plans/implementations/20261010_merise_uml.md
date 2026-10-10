@@ -1,33 +1,36 @@
-# Figure 14 — `memoire-merise-uml` (4.2.1 Démarche Merise retenue)
+# Figure 14 — `memoire-merise-uml` (4.2.1) : REFONTE en inventaires équilibrés
 
-Arbitrage NUANCÉ sur 6 critères : Merise 4 lignes (2 nettes), UML 1 nette,
-1 neutre. L’intensité du surlignage porte la nuance — net ≠ léger ≠ neutre.
+Deux panneaux Atouts/Limites (4+4), sans gagnant, sans chevron. Le verdict
+est une ligne de choix contextuel. La grille à surlignages plaidait pour
+Merise — `VersusRow`, chevrons et intensités supprimés avec elle.
 
-## Contenu (brief = versions courtes de la table `body.typ:637-642`)
+## Contenu (Claude/Gemini + table 4.2.1, raccourci sans changer le sens)
 
-- [x] 6 lignes : Nature (neutre) / Découpage (Merise léger) / Données
-      (**Merise net**) / Dynamique (**UML net**) / Pédagogie (Merise léger) /
-      Compatibilité (**Merise net**), textes verbatim du brief.
-- [x] Bandeau verdict verbatim (« Merise » navy, « UML » bleu, spans inline).
-- [x] Insert `body.typ` après la table (:643), avant « À l’issue… » (:645).
+- [x] Merise 4+4, UML 4+4 (voir figure) ; verdict neutre « Données
+      relationnelles → Merise ; objet, agile, comportements → UML ».
+- [x] Ligne « Maîtrise pédagogique » non reprise (l’aspect francophone vit
+      dans le texte + atout enseignement/administration francophones).
+- [x] Insert `body.typ` après la table (:643), avant « À l’issue… » (:645) —
+      inchangé (même fichier SVG).
 
-## Décisions
+## Décisions (refonte)
 
-- [x] Variante `versus` (`versusRows?: VersusRow[]`, `versusVerdict?:
-      [string, string]`) → `VersusNode` monolithe (précédent `RingsNode`) :
-      grille 460/260/460, en-têtes, 6 rangées, verdict pleine largeur. Zéro
-      arête RF, aucune `<Handle>`.
-- [x] Navy `hsl(222, 65%, 30%)` / bleu pâle `210 @ 0.08` (brief impose
-      navy/bleu clair — exception documentée, hors SAFE_HUES). Net : bordure
-      2 px + teinte `0.12` ; léger : 1 px + `0.06` ; neutre : rien.
-- [x] Chevrons SVG inline (pas de `▸` texte, fonte-dépendant) : cellule
-      gagnante, côté extérieur, vers le camp ; plein en net, 50 % en léger.
-- [x] Corps 20, critères 19 gras, en-têtes 24, verdict 20 ; rigide,
-      `fontScale: 4/3`, fonte épinglée, canevas ~1400 px.
+- [x] Variante `versus` : `versusRows`/`VersusRow` supprimés →
+      `versusPanels?: VersusPanel[]` (`title/color/solid/strengths/
+      weaknesses`) ; `versusVerdict` conservé, réorienté neutre.
+- [x] `VersusNode` réécrit : 2 colonnes (~640 px, canevas 1400) — bandeau
+      plein (navy solid/texte blanc vs bleu `210` solid/texte blanc) + groupes
+      `ATOUTS`/`LIMITES` (micro-labels, items 18 px, marqueurs SVG `+`/`−`
+      teinte du camp). Verdict blanc bordure navy, spans navy/bleu = camps.
+- [x] Navy/bleu pleins imposés par le brief (exception hors SAFE_HUES).
+      Zéro arête RF, aucune `<Handle>` ; rigide, `fontScale: 4/3`, fonte
+      épinglée.
 
-## Vérification
+## Vérification (refonte)
 
 - [x] `tsc.cmd` (baseline 76), `vite build`.
-- [x] Harness 1/0 : 6 rangées, surlignages 4M/1U, chevrons 3◂/1▸, verdict.
-- [x] Visuel : net > léger > neutre.
-- [x] Export (1 raster, 0 `var()`), Typst, commit `feat(memoire)`, `AGENTS.md`.
+- [x] Harness 1/0 : 2 panneaux, 8+8 items, 16 marqueurs, **0 chevron**,
+      verdict.
+- [x] Visuel : équilibre, aucun camp avantagé.
+- [x] Re-export (1 raster, 0 `var()`), Typst, commit `feat(memoire)`,
+      `AGENTS.md`.

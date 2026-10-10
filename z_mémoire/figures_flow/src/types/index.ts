@@ -118,9 +118,9 @@ export interface EntityNodeData {
   spokes?: HubSpoke[]
   /** Colonnes du kanban des règles de gestion (variante `rg`). */
   rgCols?: RgColumn[]
-  /** Lignes d’arbitrage Merise/UML (variante `versus`). */
-  versusRows?: VersusRow[]
-  /** Verdict en deux parties (Merise, UML) du bandeau de synthèse (variante `versus`). */
+  /** Panneaux Atouts/Limites des deux camps (variante `versus`). */
+  versusPanels?: VersusPanel[]
+  /** Verdict en deux parties (contexte Merise, contexte UML) du bandeau de synthèse (variante `versus`). */
   versusVerdict?: [string, string]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
@@ -237,15 +237,14 @@ export interface RgColumn {
   cards: RgCard[]
 }
 
-/** Une ligne d’arbitrage Merise/UML : critère, deux camps, gagnant, intensité. */
-export interface VersusRow {
-  criterion: string
-  left: string
-  right: string
-  /** Camp qui l’emporte (`null` = ligne neutre, aucun surlignage). */
-  winner: 'left' | 'right' | null
-  /** Ligne « nette » (surlignage fort) ou « légère ». Inutilisé si neutre. */
-  strong: boolean
+/** Un panneau Atouts/Limites d’un camp (variante `versus`, inventaire équilibré, sans gagnant). */
+export interface VersusPanel {
+  title: string
+  color: string
+  /** Bandeau plein teinte du camp (texte blanc) ou pâle (texte teinte). */
+  solid: boolean
+  strengths: string[]
+  weaknesses: string[]
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

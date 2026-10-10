@@ -1,23 +1,31 @@
 import type { DiagramDefinition } from '../../types'
 
 /**
- * Merise vs UML — arbitrage nuancé (4.2.1 Démarche Merise retenue).
+ * Merise et UML — inventaires équilibrés (4.2.1 Démarche Merise retenue).
  *
- * PAS un vainqueur unique : Merise 4 lignes (2 nettes), UML 1 nette, 1
- * neutre. L’intensité du surlignage porte la nuance — si les 6 lignes avaient
- * l’air également tranchées, le schéma mentirait.
+ * PAS de vainqueur : deux panneaux Atouts/Limites (4+4 chacun), sans
+ * surlignage de camp, sans chevron. Le verdict est une ligne de choix
+ * contextuel (données relationnelles → Merise ; objet, agile, comportements
+ * → UML) — « on verra ce que ça donne », sans avantager Merise a priori.
  *
- * Libellés sourcés du brief (versions courtes de la table 4.2.1). Nœud
- * composite unique, zéro arête (voir `VersusNode`) : Merise navy à gauche,
- * UML bleu clair à droite, critère au centre ; chevrons vers le camp gagnant ;
- * verdict en bandeau (Merise = colonne vertébrale, UML = complément flux).
+ * Contenu sourcé des analyses croisées (Claude/Gemini) et de la table 4.2.1 :
+ * formulations courtes, même sens. La ligne « Maîtrise pédagogique » de la
+ * table n’est pas reprise (retour demandeur : l’aspect francophone vit dans
+ * le texte du mémoire, via l’atout « enseignement/administration
+ * francophones »).
+ *
+ * Nœud composite unique, zéro arête (voir `VersusNode`) : Merise navy à
+ * gauche, UML bleu à droite, verdict neutre en bandeau.
  */
 
-const W = 1320
+const NAVY = 'hsl(222, 65%, 30%)'
+const BLUE = 'hsl(210, 100%, 40%)'
+
+const W = 1400
 
 export const meriseUml: DiagramDefinition = {
   id: 'memoire-merise-uml',
-  title: 'Merise vs UML — arbitrage nuancé',
+  title: 'Merise et UML — atouts et limites',
   category: 'memoire',
   domain: '4.2.1 — Démarche Merise retenue',
   nodes: [
@@ -27,21 +35,49 @@ export const meriseUml: DiagramDefinition = {
       position: { x: 0, y: 0 },
       style: { width: W },
       data: {
-        label: 'Arbitrage Merise / UML par critère',
+        label: 'Atouts et limites de Merise et UML',
         variant: 'versus' as const,
         // Toujours égal à `W` (cf. `exportWidth`).
         exportWidth: W,
-        versusRows: [
-          { criterion: 'Nature de la méthode', left: 'Méthode systémique orientée SI', right: 'Langage orienté objet, indépendant d’une méthode', winner: null, strong: false },
-          { criterion: 'Découpage proposé', left: 'Séparation données/traitements, 3 niveaux', right: 'Diagrammes sans démarche imposée', winner: 'left', strong: false },
-          { criterion: 'Domaines riches en données', left: 'Très forte (MCD/MLD/MPD rigoureux)', right: 'Possible mais sans rigueur des cardinalités', winner: 'left', strong: true },
-          { criterion: 'Comportements dynamiques', left: 'Couverte mais formalisme peu répandu', right: 'Très riche (séquences, états, UC)', winner: 'right', strong: true },
-          { criterion: 'Maîtrise pédagogique', left: 'Largement enseignée en école ivoirienne', right: 'Maîtrisée mais usage dispersé', winner: 'left', strong: false },
-          { criterion: 'Compatibilité projet', left: 'Excellente — structure autour de la base, pivot du système', right: 'Pertinente en complément pour les flux', winner: 'left', strong: true },
+        versusPanels: [
+          {
+            title: 'Merise',
+            color: NAVY,
+            solid: true,
+            strengths: [
+              'MCD → MLD → SQL quasi mécanique, sans redondance.',
+              'Cardinalités et normalisation : garde-fous des règles de gestion.',
+              'Accessible aux équipes métier et décideurs non techniques.',
+              'Vivante dans l’enseignement et l’administration francophones.',
+            ],
+            weaknesses: [
+              'Pas d’objet : ni héritage, ni méthodes, ni polymorphisme.',
+              'Cycle en V rigide, mal à l’aise avec l’agilité.',
+              'Quasi inconnue hors francophonie : outils et ressources rares.',
+              'MCT/MOT peu pratiqués sur le terrain.',
+            ],
+          },
+          {
+            title: 'UML',
+            color: BLUE,
+            solid: true,
+            strengths: [
+              'Standard international (OMG), compris par toute équipe.',
+              'Pensé objet : classes, héritage, interfaces, méthodes.',
+              'Besoins → architecture (UC, séquence, composants, déploiement).',
+              'Outillé (génération de code) et compatible agile.',
+            ],
+            weaknesses: [
+              'Bavard : facile de produire des diagrammes sans valeur.',
+              'Classes ≠ MPD : mapping objet-relationnel à trancher.',
+              'Pas de normalisation intégrée : moins de garde-fous données.',
+              'Large et flexible : usages dispersés sans conventions.',
+            ],
+          },
         ],
         versusVerdict: [
-          'Merise = colonne vertébrale de la conception (MCD/MLD/MPD)',
-          'UML = complément pour les flux et comportements dynamiques (séquences, cas d’utilisation)',
+          'Données relationnelles → Merise',
+          'objet, agile, comportements → UML',
         ],
       },
     },

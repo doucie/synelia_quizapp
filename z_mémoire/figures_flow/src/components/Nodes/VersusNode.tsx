@@ -1,35 +1,25 @@
-import type { EntityNodeData, VersusRow } from '../../types'
+import type { EntityNodeData, VersusPanel } from '../../types'
 
 /**
- * Face-à-face Merise/UML (figure du mémoire, 4.2.1) : arbitrage NUANCÉ sur 6
- * critères — Merise 4 lignes (2 nettes), UML 1 nette, 1 neutre. L’intensité
- * du surlignage porte la nuance : net (bordure 2 px + teinte `0.12`) ≠ léger
- * (1 px + `0.06`) ≠ neutre (rien).
+ * Merise/UML — inventaires équilibrés (figure du mémoire, 4.2.1) : deux
+ * panneaux Atouts/Limites (4+4 chacun), SANS gagnant, sans chevron. Le verdict
+ * est une ligne de choix contextuel, pas un camp proclamé.
  *
- * Nœud composite unique, zéro arête React Flow (précédent `RingsNode`) :
- * grille CSS 460/260/460 (hauteurs égales par ligne via `stretch`), en-têtes,
- * 6 rangées, bandeau verdict pleine largeur. Aucune `<Handle>`.
+ * Refonte (retour demandeur) : la grille à surlignages plaidait pour Merise
+ * (4-1 + « colonne vertébrale »). `VersusRow`, les chevrons et les intensités
+ * net/léger ont été supprimés avec elle — pas de code mort.
  *
- * Navy `hsl(222, 65%, 30%)` / bleu pâle imposés par le brief (exception
- * documentée, hors SAFE_HUES) : colonne Merise blanche à texte navy, colonne
- * UML en bleu pâle. Teintes alpha en syntaxe `hsl(…, …, …, a)` directe (le
- * helper `hsla()` force 100 %/40 %, inutilisable pour le navy).
+ * Nœud composite unique, zéro arête React Flow : 2 colonnes (bandeau plein
+ * teinte du camp + groupes micro-labellisés + items 18 px + marqueurs SVG
+ * `+`/`−` teinte du camp), verdict pleine largeur. Aucune `<Handle>`.
  *
- * Chevrons SVG inline (pas de `▸` texte, fonte-dépendant à l’export) : sur
- * la cellule gagnante, côté extérieur, vers le camp — plein en net, 50 % en
- * léger. Le verdict colore « Merise » en navy et « UML » en bleu (spans).
+ * Navy/bleu imposés par le brief (exception hors SAFE_HUES) : les teintes
+ * identifient les camps, sans les classer.
  */
 
-const NAVY = 'hsl(222, 65%, 30%)'
-const NAVY_NET = 'hsl(222, 65%, 30%, 0.12)'
-const NAVY_SOFT = 'hsl(222, 65%, 30%, 0.06)'
-const UML_BG = 'hsl(210, 100%, 40%, 0.08)'
-const UML_NET = 'hsl(210, 100%, 40%, 0.14)'
-const UML_BLUE = 'hsl(210, 100%, 40%)'
-
 const HEAD_SIZE = 24
-const CRIT_SIZE = 19
-const CELL_SIZE = 20
+const MICRO_SIZE = 14
+const ITEM_SIZE = 18
 const VERDICT_SIZE = 20
 
 /** Même convention que les autres figures d’impression : `--org-font-scale`
@@ -38,111 +28,100 @@ function px(value: number) {
   return { fontSize: `calc(var(--org-font-scale, 1) * ${value}px)` }
 }
 
-function Chevron({ dir, strong, color }: { dir: 'left' | 'right'; strong: boolean; color: string }) {
+function Mark({ plus, color }: { plus: boolean; color: string }) {
   return (
     <svg
       width={20}
       height={20}
-      viewBox="0 0 24 24"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke={color}
+      strokeWidth={2.5}
+      strokeLinecap="round"
       role="img"
-      aria-label={dir === 'left' ? 'Merise l’emporte' : 'UML l’emporte'}
-      style={{ flexShrink: 0, opacity: strong ? 1 : 0.5 }}
+      aria-label={plus ? 'atout' : 'limite'}
+      style={{ flexShrink: 0, marginTop: 3 }}
     >
-      <polygon
-        points={dir === 'left' ? '18,4 6,12 18,20' : '6,4 18,12 6,20'}
-        fill={color}
-      />
+      <line x1="10" y1="4" x2="10" y2="16" />
+      {plus && <line x1="4" y1="10" x2="16" y2="10" />}
     </svg>
   )
 }
 
-function Cell({
-  text,
-  navy,
-  winner,
-  strong,
-  dir,
-}: {
-  text: string
-  navy: boolean
-  winner: boolean
-  strong: boolean
-  dir: 'left' | 'right'
-}) {
-  const base = navy ? { backgroundColor: 'hsl(var(--background))', color: NAVY } : { backgroundColor: UML_BG }
-  const hl = !winner
-    ? {}
-    : strong
-      ? { borderWidth: 2, borderColor: navy ? NAVY : UML_BLUE, backgroundColor: navy ? NAVY_NET : UML_NET }
-      : { borderWidth: 1, borderColor: navy ? NAVY : UML_BLUE, backgroundColor: navy ? NAVY_SOFT : UML_BG }
+function Item({ text, plus, color }: { text: string; plus: boolean; color: string }) {
   return (
-    <div
-      data-cell={winner ? (navy ? 'merise' : 'uml') : 'none'}
-      data-strong={winner && strong ? 'net' : 'faible'}
-      className="flex items-center rounded-xl border-solid"
-      style={{ padding: '16px 20px', gap: 12, ...base, ...hl }}
-    >
-      {winner && dir === 'left' && <Chevron dir="left" strong={strong} color={navy ? NAVY : UML_BLUE} />}
-      <span className="leading-snug" style={{ ...px(CELL_SIZE), ...(winner ? { fontWeight: 600 } : {}) }}>
+    <div data-item={plus ? 'plus' : 'moins'} className="flex" style={{ gap: 10 }}>
+      <Mark plus={plus} color={color} />
+      <span className="leading-snug text-foreground" style={px(ITEM_SIZE)}>
         {text}
       </span>
-      {winner && dir === 'right' && <Chevron dir="right" strong={strong} color={navy ? NAVY : UML_BLUE} />}
     </div>
   )
 }
 
-function Row({ row }: { row: VersusRow }) {
-  const winLeft = row.winner === 'left'
-  const winRight = row.winner === 'right'
+function Panel({ panel }: { panel: VersusPanel }) {
   return (
-    <>
-      <Cell text={row.left} navy winner={winLeft} strong={row.strong} dir="left" />
-      <div className="flex items-center justify-center rounded-xl bg-muted" style={{ padding: '16px 12px' }}>
-        <span className="text-center font-bold text-foreground" style={px(CRIT_SIZE)}>
-          {row.criterion}
+    <div data-panel={panel.title} className="flex min-w-0 flex-1 flex-col" style={{ gap: 20 }}>
+      <div
+        className="w-full rounded-xl"
+        style={{
+          padding: '16px 24px',
+          textAlign: 'center',
+          backgroundColor: panel.solid ? panel.color : undefined,
+        }}
+      >
+        <span
+          className="font-bold"
+          style={{ ...px(HEAD_SIZE), color: panel.solid ? '#ffffff' : panel.color }}
+        >
+          {panel.title}
         </span>
       </div>
-      <Cell text={row.right} navy={false} winner={winRight} strong={row.strong} dir="right" />
-    </>
+      <div className="flex flex-col" style={{ gap: 8 }}>
+        <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(MICRO_SIZE)}>
+          Atouts
+        </span>
+        <div className="flex flex-col" style={{ gap: 10 }}>
+          {panel.strengths.map((s) => (
+            <Item key={s} text={s} plus color={panel.color} />
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col" style={{ gap: 8 }}>
+        <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(MICRO_SIZE)}>
+          Limites
+        </span>
+        <div className="flex flex-col" style={{ gap: 10 }}>
+          {panel.weaknesses.map((s) => (
+            <Item key={s} text={s} plus={false} color={panel.color} />
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
 export default function VersusNode({ data }: { data: EntityNodeData }) {
-  const rows = data.versusRows ?? []
+  const panels = data.versusPanels ?? []
   const [verdictM, verdictU] = data.versusVerdict ?? ['', '']
+  const merise = panels[0]?.color ?? '#000'
+  const uml = panels[1]?.color ?? '#000'
   return (
-    <div data-export-root className="flex w-full flex-col" style={{ width: data.exportWidth, gap: 16 }}>
-      <div className="grid w-full" style={{ gridTemplateColumns: '460px 260px 460px', gap: '0 30px' }}>
-        <div className="rounded-xl" style={{ padding: '14px 20px', backgroundColor: NAVY, textAlign: 'center' }}>
-          <span className="font-bold" style={{ ...px(HEAD_SIZE), color: '#ffffff' }}>
-            Merise
-          </span>
-        </div>
-        <div className="flex items-center justify-center">
-          <span className="font-bold tracking-wide text-muted-foreground uppercase" style={px(16)}>
-            Critère
-          </span>
-        </div>
-        <div className="rounded-xl" style={{ padding: '14px 20px', backgroundColor: UML_NET, textAlign: 'center' }}>
-          <span className="font-bold" style={{ ...px(HEAD_SIZE), color: NAVY }}>
-            UML
-          </span>
-        </div>
-      </div>
-      <div className="grid w-full" style={{ gridTemplateColumns: '460px 260px 460px', gap: '16px 30px' }}>
-        {rows.map((row) => (
-          <Row key={row.criterion} row={row} />
+    <div data-export-root className="flex w-full flex-col" style={{ width: data.exportWidth, gap: 24 }}>
+      <div className="flex w-full" style={{ gap: 48 }}>
+        {panels.map((panel) => (
+          <Panel key={panel.title} panel={panel} />
         ))}
       </div>
       <div
         data-verdict
         className="w-full rounded-xl border-solid bg-background"
-        style={{ padding: '20px 28px', borderWidth: 2, borderColor: NAVY, textAlign: 'center' }}
+        style={{ padding: '20px 28px', borderWidth: 2, borderColor: merise, textAlign: 'center' }}
       >
         <span className="leading-snug text-foreground" style={px(VERDICT_SIZE)}>
-          Verdict : <span style={{ color: NAVY, fontWeight: 700 }}>{verdictM}</span>
+          <span style={{ color: merise, fontWeight: 700 }}>{verdictM}</span>
           {' — '}
-          <span style={{ color: UML_BLUE, fontWeight: 700 }}>{verdictU}</span>
+          <span style={{ color: uml, fontWeight: 700 }}>{verdictU}</span>
         </span>
       </div>
     </div>
