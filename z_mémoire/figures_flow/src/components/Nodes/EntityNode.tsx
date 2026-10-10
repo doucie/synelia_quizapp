@@ -19,6 +19,7 @@ import HubNode from './HubNode'
 import RgNode from './RgNode'
 import VersusNode from './VersusNode'
 import TreeNode from './TreeNode'
+import DeployNode from './DeployNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -113,6 +114,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'tree') {
     return <TreeNode data={data as EntityNodeData} />
+  }
+
+  // Topologie de déploiement : cadres hôte/Compose, services, ports.
+  // Même délégation.
+  if (variant === 'deploy') {
+    return <DeployNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à

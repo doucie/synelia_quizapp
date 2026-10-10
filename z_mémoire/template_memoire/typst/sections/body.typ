@@ -1278,6 +1278,11 @@
     [Angular dev-server], [4200], [Interface utilisateur servie en mode HMR, proxifiée vers l'API backend.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-deploiement-local.svg", width: 100%),
+    caption: [Exécution locale — natif sur l'hôte, conteneurisé dans Compose.],
+  )
+
   == Démarche qualité et boucle de validation continue
   La taille du dépôt — backend Spring Boot multi-packages, frontend Angular structuré en pages et composants, plus de cent migrations Flyway successives, ainsi que des dossiers volumineux de cartographie fonctionnelle et de notes techniques — impose une discipline de validation continue plutôt qu'une recette unique en fin de cycle. Trois pratiques structurantes ont été instituées tout au long du projet.
 

@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -126,6 +126,22 @@ export interface EntityNodeData {
   treeTitle?: string
   /** Branches de l’arborescence de dépôt (variante `tree`, ordre d’affichage). */
   treeBranches?: TreeBranch[]
+  /** Rôle d’un nœud de déploiement : cadre conteneur ou service (variante `deploy`). */
+  deployKind?: 'frame' | 'service'
+  /** Titre d’un cadre de déploiement (variante `deploy`, `frame`). */
+  deployTitle?: string
+  /** Cadre en tirets = conteneurisé (variante `deploy`, `frame`). */
+  deployDashed?: boolean
+  /** Logo d’un service ou d’un cadre (variante `deploy`, jeu `logos.tsx`). */
+  deployLogo?: DeployLogo
+  /** Port mis en évidence d’un service déployé (variante `deploy`, `service`). */
+  deployPort?: string
+  /** Précision sous le nom d’un service (variante `deploy`, `service`). */
+  deployNote?: string
+  /** Badge d’un service (ex. EXTERNE) (variante `deploy`, `service`). */
+  deployBadge?: string
+  /** Accent SAFE_HUES d’un service ou d’un logo (variante `deploy`). */
+  deployAccent?: string
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -260,6 +276,9 @@ export interface TreeBranch {
   color: string
   desc: string
 }
+
+/** Logo d’un service déployé ou d’un cadre conteneurisé (variante `deploy`). */
+export type DeployLogo = 'angular' | 'springboot' | 'mysql' | 'redis' | 'minio' | 'docker'
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
 

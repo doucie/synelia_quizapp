@@ -44,6 +44,7 @@ import { hubNfr as memoireHubNfr } from './memoire/hub_nfr'
 import { rgKanban as memoireRgKanban } from './memoire/rg_kanban'
 import { meriseUml as memoireMeriseUml } from './memoire/merise_uml'
 import { arbreDepot as memoireArbreDepot } from './memoire/arbre_depot'
+import { deploiementLocal as memoireDeploiementLocal } from './memoire/deploiement_local'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -135,7 +136,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (15) ---
+  // --- Mémoire (16) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -151,6 +152,7 @@ export const diagrams: DiagramDefinition[] = [
   memoireRgKanban,
   memoireMeriseUml,
   memoireArbreDepot,
+  memoireDeploiementLocal,
 
   // --- Palette (1) ---
   colorPalette,
