@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -122,6 +122,10 @@ export interface EntityNodeData {
   versusRows?: VersusRow[]
   /** Verdict en deux parties (contexte Merise, contexte UML) du bandeau de synthèse (variante `versus`). */
   versusVerdict?: [string, string]
+  /** Titre racine de l’arborescence de dépôt (variante `tree`). */
+  treeTitle?: string
+  /** Branches de l’arborescence de dépôt (variante `tree`, ordre d’affichage). */
+  treeBranches?: TreeBranch[]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -246,6 +250,15 @@ export interface VersusRow {
   winner: 'left' | 'right' | null
   /** Point « net » (surlignage fort) ou « léger ». Inutilisé si neutre. */
   strong: boolean
+}
+
+/** Une branche de l’arborescence de dépôt : nom, sous-titre, logo, description. */
+export interface TreeBranch {
+  name: string
+  sub: string
+  logo: 'angular' | 'springboot' | 'docker'
+  color: string
+  desc: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>

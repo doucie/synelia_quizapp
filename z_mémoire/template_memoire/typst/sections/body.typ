@@ -1169,6 +1169,11 @@
     [docker-compose.yml], [Services d'infrastructure locale], [Décrit les dépendances techniques utiles au développement et aux validations locales.],
   )
 
+  #figure(
+    image("../captures/8-figures-memoire/memoire-arbre-depot.svg", width: 100%),
+    caption: [Dépôt SyneliaQuizApp — backend, frontend et infrastructure locale.],
+  )
+
   == Implémentation des modules fonctionnels
   L'implémentation fonctionnelle de SyneliaQuizApp ne s'est pas limitée à juxtaposer des écrans ou des endpoints isolés. Elle a consisté à faire converger plusieurs modules interdépendants autour d'un même objectif : rendre le processus de recrutement plus lisible, plus traçable et plus pilotable, depuis la publication d'une campagne jusqu'à la décision finale.
 

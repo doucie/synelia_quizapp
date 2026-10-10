@@ -18,6 +18,7 @@ import RingsNode from './RingsNode'
 import HubNode from './HubNode'
 import RgNode from './RgNode'
 import VersusNode from './VersusNode'
+import TreeNode from './TreeNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -106,6 +107,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Face-à-face Merise/UML : critères, camps, verdict. Même délégation.
   if (variant === 'versus') {
     return <VersusNode data={data as EntityNodeData} />
+  }
+
+  // Arborescence de dépôt : racine, branches, tronc et coudes.
+  // Même délégation.
+  if (variant === 'tree') {
+    return <TreeNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à
