@@ -34,3 +34,8 @@ simple répétition de texte). Verdict neutre, pas de ligne Pédagogie.
 - [x] Visuel : équilibre 3-3, aucun camp écrasé.
 - [x] Re-export (1 raster, 0 `var()`), Typst, commit `feat(memoire)`,
       `AGENTS.md`.
+- [x] v3 bis — réécriture en clair (retour demandeur : le raccourci faisait
+      du télégramme) : sujet + verbe partout, `UC`/MCT étendus, ≤ 2 lignes à
+      20 px. Aucune touche géométrie. Piège : deux serveurs dev concurrents,
+      le vieux servait du stale sur le 5199 — tuer les `node.exe` avant de
+      re-valider.

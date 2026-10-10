@@ -35,12 +35,12 @@ export const meriseUml: DiagramDefinition = {
         // Toujours égal à `W` (cf. `exportWidth`).
         exportWidth: W,
         versusRows: [
-          { criterion: 'Base relationnelle', left: 'MCD → MLD → SQL mécanique, sans redondance', right: 'Mapping objet-relationnel à trancher', winner: 'left', strong: true },
-          { criterion: 'Règles de gestion', left: 'Cardinalités et normalisation garde-fous', right: 'Pas de normalisation intégrée', winner: 'left', strong: true },
-          { criterion: 'Équipe métier', left: 'Accessible aux non-techniciens', right: 'Courbe d’apprentissage, jargon objet', winner: 'left', strong: false },
-          { criterion: 'Code objet', left: 'Pas d’héritage ni de méthodes', right: 'Java/Spring : classes, JPA, interfaces', winner: 'right', strong: true },
-          { criterion: 'Comportements dynamiques', left: 'MCT/MOT peu pratiqués', right: 'Séquences, UC, états, activités', winner: 'right', strong: true },
-          { criterion: 'Agilité et outillage', left: 'Cycle en V rigide', right: 'Génération de code, itérations courtes', winner: 'right', strong: false },
+          { criterion: 'Base relationnelle', left: 'MCD → MLD → SQL : passage quasi automatique.', right: 'Classes → tables : héritage et associations à trancher.', winner: 'left', strong: true },
+          { criterion: 'Règles de gestion', left: 'Les cardinalités cadrent les règles de gestion.', right: 'Aucune normalisation imposée : données moins cadrées.', winner: 'left', strong: true },
+          { criterion: 'Équipe métier', left: 'Accessible aux non-techniciens.', right: 'Jargon objet à apprendre, opaque pour les métiers.', winner: 'left', strong: false },
+          { criterion: 'Code objet', left: 'Pas d’héritage ni de méthodes.', right: 'Le code Java/Spring : classes, JPA, interfaces.', winner: 'right', strong: true },
+          { criterion: 'Comportements dynamiques', left: 'Traitements Merise (MCT/MOT) peu pratiqués.', right: 'Séquences, cas d’utilisation, états, activités.', winner: 'right', strong: true },
+          { criterion: 'Agilité et outillage', left: 'Impose un cycle en V rigide.', right: 'Génère du code, avance par itérations courtes.', winner: 'right', strong: false },
         ],
         versusVerdict: [
           'Base et règles → Merise',
