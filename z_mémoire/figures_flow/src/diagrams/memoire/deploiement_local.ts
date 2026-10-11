@@ -123,9 +123,11 @@ export const deploiementLocal: DiagramDefinition = {
   category: 'memoire',
   domain: '6.6 — Exécution locale et chaîne DevOps',
   nodes: [
-    // Cadres d’abord (z-order) : l’hôte EST le poste (coque + lunette +
-    // pied + tour), Compose pointillé + baleine + conteneurs.
-    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)', false, undefined, undefined, undefined, 'host-machine'),
+    // Cadres d’abord (z-order) : l’hôte EST le poste (écran 1000 + bande
+    // bureau : pied et tour HORS de l’écran), Compose pointillé + baleine
+    // + conteneurs. L’écran opaque est SOUS les arêtes (`data-edges-above`
+    // + `edgesAbove` à l’export), sinon les 4 traits disparaîtraient.
+    frame('frame-host', 20, 20, 1520, 1200, 'Machine hôte (développement local)', false, undefined, undefined, undefined, 'host-machine'),
     frame('frame-compose', 1050, 470, 450, 510, 'Docker Compose', true, 'docker', MINIO, undefined, 'containers', true),
     service('svc-ng', 90, 200, 380, 150, 'Angular dev-server', null, ANGULAR, ':4200', 'dev-server HMR', undefined, 'browser'),
     service('svc-spring', 640, 200, 380, 150, 'Spring Boot', 'springboot', SPRING, ':8080', 'API REST'),

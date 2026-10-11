@@ -26,7 +26,11 @@ export default function App() {
   const [fullscreen, setFullscreen] = useState(false)
 
   const handleExportSvg = useCallback(() => {
-    exportSvg(`${activeDiagram?.id ?? 'diagram'}.svg`)
+    // Figure 16 : miroir export du `data-edges-above` live — l’écran-hôte
+    // opaque recouvrirait les arêtes si elles restaient peintes en premier.
+    exportSvg(`${activeDiagram?.id ?? 'diagram'}.svg`, {
+      edgesAbove: activeDiagram?.id === 'memoire-deploiement-local',
+    })
   }, [activeDiagram])
 
   const handleExportPositions = useCallback(() => {

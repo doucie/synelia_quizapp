@@ -273,6 +273,16 @@ body {
   z-index: 100;
 }
 
+/* Figure 16 (`data-edges-above`, posé par `DiagramCanvas`) : l’écran-hôte
+   opaque recouvrirait les arêtes — les couches RF n’ont aucun z-index
+   (cf. `@xyflow/react/dist/style.css`), donc sans ceci l’ordre DOM peint
+   les nœuds par-dessus les arêtes. Scopé à la figure : rien ne change
+   ailleurs. Les pastilles restent au-dessus (z-index 100 ci-dessus). */
+[data-edges-above] .react-flow__edges {
+  position: relative;
+  z-index: 1;
+}
+
 .mot-mct-selected {
   outline: 2px solid hsl(15, 100%, 40%);
   outline-offset: 4px;

@@ -56,36 +56,49 @@ function Art({ kind }: { kind: 'browser' | 'containers' }) {
   return <ContainerStack />
 }
 
-/** Le cadre hôte EST le poste : coque écran (bordure encre 3 px, fond
- * écran uni), lunette haute avec le titre centré, pied étroit centré et
- * tour posée sur la bordure basse (ligne de bureau) en bas à gauche, sous
- * MySQL — zone vide relevée, sans touche aux services ni aux arêtes.
- * `minHeight: inherit` : le flux (lunette seule) est sous le plancher,
- * la coque mesure donc exactement `minHeight` (invariant n°2). */
+/** Le cadre hôte EST le poste, en scène verticale : l’ÉCRAN (coque bordure
+ * encre 3 px, fond uni, lunette haute avec le titre centré, menton) occupe
+ * le haut et contient les services ; la BANDE BUREAU (transparente) accueille
+ * la ligne de bureau, le col du pied (du menton au socle) et la tour posée
+ * sur la ligne — pied et tour HORS de l’écran, comme en vrai. Les services
+ * finissent à 960 locaux (Compose), le menton couvre 960→1000 : grandir le
+ * cadre (1000→1200) ne touche ni services ni arêtes, le cadre n’est qu’un fond.
+ *
+ * `minHeight: inherit` : le flux (écran seul, hauteur fixe INTERNE — admise,
+ * précédent `ScopeNode` fig. 2) reste sous le plancher, la scène mesure donc
+ * exactement `minHeight` (invariant n°2). Cotes relevées : aucune arête sous
+ * y≈1000 dans les x du pied (centre) et de la tour (gauche).
+ */
+const SCREEN_H = 1000
+const DESK_LINE_Y = 1190 // haut de la ligne de bureau (3 px)
+
 function HostMachine({ title }: { title?: string }) {
   return (
-    <div
-      className="relative w-full rounded-xl"
-      style={{
-        minHeight: 'inherit',
-        background: 'hsl(var(--muted))',
-        border: '3px solid hsl(var(--foreground))',
-      }}
-    >
+    <div className="relative w-full" style={{ minHeight: 'inherit' }}>
       <div
-        className="flex items-center justify-center"
-        style={{ height: 76, borderBottom: '2px solid hsl(var(--foreground))', padding: '0 24px' }}
+        className="w-full rounded-xl"
+        style={{
+          height: SCREEN_H,
+          background: 'hsl(var(--muted))',
+          border: '3px solid hsl(var(--foreground))',
+        }}
       >
-        <span className="font-bold text-foreground" style={{ ...px(TITLE_SIZE), whiteSpace: 'nowrap' }}>
-          {title}
-        </span>
+        <div
+          className="flex items-center justify-center"
+          style={{ height: 76, borderBottom: '2px solid hsl(var(--foreground))', padding: '0 24px' }}
+        >
+          <span className="font-bold text-foreground" style={{ ...px(TITLE_SIZE), whiteSpace: 'nowrap' }}>
+            {title}
+          </span>
+        </div>
       </div>
-      {/* Pied : col + socle, centré, étroit (x≈730-790 locaux) — à l’écart
-        du segment horizontal Spring→MinIO (y≈835, x≳830). */}
-      <div style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 24, height: 56, background: 'hsl(var(--muted-foreground))' }} />
-      <div style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 150, height: 14, borderRadius: 7, background: 'hsl(var(--foreground))' }} />
-      {/* Tour : bas-gauche, posée sur la bordure basse. */}
-      <div style={{ position: 'absolute', bottom: 3, left: 70 }}>
+      {/* Ligne de bureau. */}
+      <div style={{ position: 'absolute', top: DESK_LINE_Y, left: 40, right: 40, height: 3, borderRadius: 2, background: 'hsl(var(--foreground))' }} />
+      {/* Pied : col du menton jusqu’au socle posé sur la ligne. */}
+      <div style={{ position: 'absolute', top: SCREEN_H, left: '50%', transform: 'translateX(-50%)', width: 24, height: DESK_LINE_Y - 14 - SCREEN_H, background: 'hsl(var(--muted-foreground))' }} />
+      <div style={{ position: 'absolute', top: DESK_LINE_Y - 14, left: '50%', transform: 'translateX(-50%)', width: 150, height: 14, borderRadius: 7, background: 'hsl(var(--foreground))' }} />
+      {/* Tour posée sur la ligne, affleurant le bas de l’écran (zéro recouvrement). */}
+      <div style={{ position: 'absolute', top: DESK_LINE_Y - 190, left: 70 }}>
         <HostTower />
       </div>
     </div>

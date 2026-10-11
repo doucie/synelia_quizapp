@@ -521,7 +521,7 @@ async function captureNodePadded(
  * (`onlyRenderVisibleElements` est désactivé : nœuds et arêtes sont tous dans
  * le DOM). Conteneurs de `react-flow__background` et panneaux exclus comme avant.
  */
-export async function exportSvg(filename = 'diagram.svg') {
+export async function exportSvg(filename = 'diagram.svg', opts: { edgesAbove?: boolean } = {}) {
   const renderer = document.querySelector('.react-flow__renderer') as HTMLElement | null
   const viewport = renderer?.querySelector('.react-flow__viewport') as HTMLElement | null
   if (!renderer || !viewport) return
@@ -718,14 +718,25 @@ export async function exportSvg(filename = 'diagram.svg') {
   svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${ch}" viewBox="${ox} ${oy} ${cw} ${ch}">\n`
   svg += `  <rect x="${ox}" y="${oy}" width="${cw}" height="${ch}" fill="${bg}"/>\n`
 
-  // Arêtes sous tout le reste.
-  for (const e of edgeParts) {
-    svg += `  ${e}\n`
+  // Arêtes sous tout le reste — sauf figure 16 (`edgesAbove`, miroir du
+  // `data-edges-above` live) : l’écran-hôte opaque les recouvrirait, comme
+  // à l’écran où la couche des arêtes passe devant les nœuds.
+  const edgesFirst = !opts.edgesAbove
+  if (edgesFirst) {
+    for (const e of edgeParts) {
+      svg += `  ${e}\n`
+    }
   }
 
   // Nœuds (image raster du clone paddé, marge transparente recompensée).
   for (const nd of nodeImages) {
     svg += `  <image href="${nd.href}" x="${nd.x}" y="${nd.y}" width="${nd.w}" height="${nd.h}"/>\n`
+  }
+
+  if (!edgesFirst) {
+    for (const e of edgeParts) {
+      svg += `  ${e}\n`
+    }
   }
 
   // Étiquettes d'arêtes par-dessus (verbes, cardinalités, rôles).

@@ -671,6 +671,12 @@ export default function DiagramCanvas({ diagram, showBackground, fullscreen: _fu
     <div
       ref={ref}
       className="h-full w-full relative"
+      // Figure 16 : l’écran-hôte opaque recouvrirait les arêtes (les nœuds
+      // RF n’ont aucun z-index, l’ordre DOM peint les nœuds par-dessus les
+      // arêtes). Le flag fait passer la couche des arêtes devant — scopé à
+      // cette figure, rigide donc sans risque (nœuds ni sélectionnables ni
+      // déplaçables ; précédent : `straight` via `startsWith('mct')`).
+      data-edges-above={diagram.id === 'memoire-deploiement-local' || undefined}
       style={{
         '--mct-event-scale': motTableConfig.mctFontScales.event,
         '--mct-operation-scale': motTableConfig.mctFontScales.operation,
