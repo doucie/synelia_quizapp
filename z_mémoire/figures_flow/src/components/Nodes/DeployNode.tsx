@@ -191,7 +191,10 @@ function Service({ data }: { data: EntityNodeData }) {
           </span>
         )}
         {data.deployNote && (
-          <span className="text-muted-foreground" style={px(NOTE_SIZE)}>
+          // Texte secondaire : `muted-foreground` (~47 % en clair) illisible
+          // à 16 px — secondarité par la taille, jamais par la pâleur
+          // (règle fig. 1/2 : petit texte → `/85`).
+          <span className="text-foreground/85" style={px(NOTE_SIZE)}>
             {data.deployNote}
           </span>
         )}

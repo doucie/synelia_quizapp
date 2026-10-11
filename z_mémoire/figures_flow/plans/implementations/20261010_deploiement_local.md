@@ -66,6 +66,12 @@ Le trait plein/pointillé porte le sens, pas le fond.
       à gauche, colonne transparente au-dessus de la tour (x≈1555, centrée
       1520→1700) ; ligne de bureau étirée jusque sous la tour, pied toujours
       centré sous l’écran (760, pas au centre du cadre). Services intacts.
+- [x] **Lisibilité + routage Redis + pastille** (retours demandeur) : notes
+      `muted` → `foreground/85` (règle fig. 1/2) ; `e-sp-redis` départ
+      `bottom`→`right` (horizontal à y≈285 en zone vide, descente x≈1349
+      inchangée jusqu’au `top-right` intouché — ne frôle plus la bordure) ;
+      pastille proxy `labelPx` 18→**20** (~7,5 pt, tient dans le couloir
+      170 px, vérifié sans débordement). Seul MinIO reste en éventail X.
 - [x] **Cylindre BD sur MySQL + tirets bleus** (retours demandeur) : badge
       `EXTERNE` retiré, dauphin à gauche, texte au milieu, cylindre Feather
       `database` à droite (teinte accent, miroir du logo — `Service` sait

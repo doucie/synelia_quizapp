@@ -103,9 +103,9 @@ const edge = (
   sourceHandle: string,
   targetHandle: string,
   label?: string,
-  // Corps de la pastille : 18 sur le couloir Angular→Spring (170 px) —
-  // ~140 px de pastille pour ~6,8 pt imprimés ; à 20 le gros padding
-  // ferait ~170 px, zéro marge (voir plan).
+  // Corps de la pastille : 20 sur le couloir Angular→Spring (170 px) —
+  // ~150 px de pastille pour ~7,5 pt imprimés ; le padding large
+  // (`TraitementEdge`, ≥20) s’applique — à valider sans débordement.
   labelPx?: number,
 ) => ({
   id,
@@ -141,9 +141,12 @@ export const deploiementLocal: DiagramDefinition = {
     service('svc-minio', 1090, 765, 370, 140, 'MinIO', 'minio', MINIO, ':9000 / 9001', 'objets S3, console'),
   ],
   edges: [
-    edge('e-ng-sp', 'svc-ng', 'svc-spring', 'right', 'left', 'proxy /api/**', 18),
+    edge('e-ng-sp', 'svc-ng', 'svc-spring', 'right', 'left', 'proxy /api/**', 20),
     edge('e-sp-mysql', 'svc-spring', 'svc-mysql', 'bottom', 'top'),
-    edge('e-sp-redis', 'svc-spring', 'svc-redis', 'bottom', 'top-right'),
+    // Redis : départ `right` (et non `bottom`) — le segment horizontal à
+    // y≈464 frôlait la bordure du cadre ; à y≈285 la zone est vide, puis
+    // descente x≈1349 jusqu’au `top-right` intouché (retour demandeur).
+    edge('e-sp-redis', 'svc-spring', 'svc-redis', 'right', 'top-right'),
     edge('e-sp-minio', 'svc-spring', 'svc-minio', 'bottom', 'left'),
   ],
   rigidLayout: true,
