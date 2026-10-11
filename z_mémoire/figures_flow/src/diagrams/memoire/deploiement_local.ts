@@ -34,6 +34,7 @@ const frame = (
   deployDashed = false,
   deployLogo?: 'docker',
   deployAccent?: string,
+  deployIcon?: 'monitor',
 ) => ({
   id,
   type: 'entity' as const,
@@ -46,6 +47,7 @@ const frame = (
     deployTitle,
     deployDashed,
     ...(deployLogo ? { deployLogo, deployAccent } : {}),
+    ...(deployIcon ? { deployIcon } : {}),
     minHeight: h,
     // Toujours égal à `w` (cf. `exportWidth`).
     exportWidth: w,
@@ -91,6 +93,10 @@ const edge = (
   sourceHandle: string,
   targetHandle: string,
   label?: string,
+  // Corps de la pastille : 18 sur le couloir Angular→Spring (170 px) —
+  // ~140 px de pastille pour ~6,8 pt imprimés ; à 20 le gros padding
+  // ferait ~170 px, zéro marge (voir plan).
+  labelPx?: number,
 ) => ({
   id,
   source,
@@ -101,7 +107,7 @@ const edge = (
   markerEnd: arrow(),
   data: {
     isStrong: true as const,
-    ...(label ? { label, labelPx: 12 } : {}),
+    ...(label ? { label, labelPx: labelPx ?? 12 } : {}),
   },
 })
 
@@ -111,8 +117,8 @@ export const deploiementLocal: DiagramDefinition = {
   category: 'memoire',
   domain: '6.6 — Exécution locale et chaîne DevOps',
   nodes: [
-    // Cadres d’abord (z-order) : hôte plein, Compose pointillé + baleine.
-    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)'),
+    // Cadres d’abord (z-order) : hôte plein + moniteur, Compose pointillé + baleine.
+    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)', false, undefined, undefined, 'monitor'),
     frame('frame-compose', 1050, 470, 450, 510, 'Docker Compose', true, 'docker', MINIO),
     service('svc-ng', 90, 130, 380, 150, 'Angular dev-server', 'angular', ANGULAR, ':4200', 'dev-server HMR'),
     service('svc-spring', 640, 130, 380, 150, 'Spring Boot', 'springboot', SPRING, ':8080', 'API REST'),
@@ -121,7 +127,7 @@ export const deploiementLocal: DiagramDefinition = {
     service('svc-minio', 1090, 765, 370, 140, 'MinIO', 'minio', MINIO, ':9000 / 9001', 'objets S3, console'),
   ],
   edges: [
-    edge('e-ng-sp', 'svc-ng', 'svc-spring', 'right', 'left', 'proxy /api/**'),
+    edge('e-ng-sp', 'svc-ng', 'svc-spring', 'right', 'left', 'proxy /api/**', 18),
     edge('e-sp-mysql', 'svc-spring', 'svc-mysql', 'bottom', 'top'),
     edge('e-sp-redis', 'svc-spring', 'svc-redis', 'bottom', 'top-right'),
     edge('e-sp-minio', 'svc-spring', 'svc-minio', 'bottom', 'left'),

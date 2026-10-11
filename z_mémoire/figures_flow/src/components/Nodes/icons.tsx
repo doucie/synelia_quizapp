@@ -34,6 +34,7 @@ export type FeatherIconKind =
   | 'award'
   | 'database'
   | 'sliders'
+  | 'monitor'
 
 function Body({ kind }: { kind: FeatherIconKind }) {
   switch (kind) {
@@ -202,6 +203,16 @@ function Body({ kind }: { kind: FeatherIconKind }) {
           <line x1="1" y1="14" x2="7" y2="14" />
           <line x1="9" y1="8" x2="15" y2="8" />
           <line x1="17" y1="16" x2="23" y2="16" />
+        </>
+      )
+    case 'monitor':
+      // Machine hôte (fig. 16) : l’écran lit « machine », `hard-drive`
+      // lirait « stockage » (collision MinIO/S3).
+      return (
+        <>
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
         </>
       )
   }

@@ -2,6 +2,7 @@ import { Handle, Position } from '@xyflow/react'
 import type { EntityNodeData } from '../../types'
 import { hsla } from '../../utils/color'
 import { Logo } from './logos'
+import { FeatherIcon } from './icons'
 
 /**
  * Topologie de déploiement local (figure du mémoire, 6.6) : cadres hôte
@@ -65,6 +66,9 @@ function Frame({ data }: { data: EntityNodeData }) {
       <div className="flex items-center" style={{ padding: '20px 28px', gap: 12 }}>
         {data.deployLogo && (
           <Logo name={data.deployLogo} size={WHALE} fill={data.deployAccent ?? 'hsl(var(--foreground))'} />
+        )}
+        {data.deployIcon && (
+          <FeatherIcon kind={data.deployIcon} size={WHALE} color="hsl(var(--foreground))" />
         )}
         <span className="font-bold text-foreground" style={px(TITLE_SIZE)}>
           {data.deployTitle}

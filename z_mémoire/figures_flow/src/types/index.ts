@@ -134,6 +134,8 @@ export interface EntityNodeData {
   deployDashed?: boolean
   /** Logo d’un service ou d’un cadre (variante `deploy`, jeu `logos.tsx`). */
   deployLogo?: DeployLogo
+  /** Icône Feather d’un cadre (variante `deploy`, `frame`) : marques via `deployLogo`, symboles via `deployIcon`. */
+  deployIcon?: 'monitor'
   /** Port mis en évidence d’un service déployé (variante `deploy`, `service`). */
   deployPort?: string
   /** Précision sous le nom d’un service (variante `deploy`, `service`). */

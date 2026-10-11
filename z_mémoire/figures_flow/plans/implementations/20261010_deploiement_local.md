@@ -43,5 +43,13 @@ Le trait plein/pointillé porte le sens, pas le fond.
 - [x] Notes 1 ligne (relevé : 2 lignes débordaient les planchers) ; port 24
       (`:9000 / 9001` mono 26 passait à la ligne) ; MySQL élargi 460 (badge
       EXTERNE volait la largeur) ; minio `y` 765 (écart 5 px → 20 px).
+- [x] Pastille proxy `labelPx` 12→**18** (retour demandeur : 12 px ≈ 4,5 pt
+      imprimés) — ~140 px pour 170 px de couloir ; pas 20 (gros padding =
+      ~170 px, zéro marge). Helper `edge()` étendu (`labelPx` param).
+- [x] Icône **machine hôte** (retour demandeur) : `monitor` Feather (l’écran
+      lit « machine » ; `hard-drive` écarté — collision MinIO/S3 ; Lucide
+      `container` écarté — fret, contresens). Conteneur déjà couvert
+      (baleine), services déjà couverts (marques) : **une seule icône**.
+      `deployIcon?: 'monitor'` (symboles Feather) vs `deployLogo` (marques).
 - [x] Export (8 rasters + pastille, 0 `var()`), Typst, commit `feat(memoire)`,
       `AGENTS.md`.
