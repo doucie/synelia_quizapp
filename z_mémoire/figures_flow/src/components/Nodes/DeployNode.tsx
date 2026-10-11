@@ -131,6 +131,10 @@ function Service({ data }: { data: EntityNodeData }) {
       <Handle id="left" type="target" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="bottom" type="target" position={Position.Bottom} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="top" type="target" position={Position.Top} className="nodrag nopan" style={HANDLE_STYLE} />
+      {/* Ancre décalée : React Flow mesure la position DOM, l’ancre tombe à
+        70 % de la largeur — utilisée par l’arrivée redis (par le haut, à
+        droite du titre « Docker Compose »). Le popover ne la propose pas. */}
+      <Handle id="top-right" type="target" position={Position.Top} className="nodrag nopan" style={{ ...HANDLE_STYLE, left: '70%' }} />
     </div>
   )
 }

@@ -21,12 +21,11 @@ Le trait plein/pointillé porte le sens, pas le fond.
       `deployAccent`) → `DeployNode`. Ports mono 26 teintés (335/100/128/0/
       210) ; badge EXTERNE neutre ; hôte encre pleine 2 px, Compose tirets
       2 px `muted` + baleine 28.
-- [x] Routage final (correction demandeur : redis à DROITE) : angular
-      `right`→spring `left` (pastille proxy) ; spring `bottom`→mysql `top` +
-      minio `left` (éventail X) ; spring `right`→redis `left` (descente
-      x≈1060, à 30 px de Redis, traverse le haut de Compose). **Zéro
-      croisement** — le croisement (620, 450) du swap précédent a disparu
-      avec l’ancienne arête.
+- [x] Routage final : angular `right`→spring `left` (pastille proxy) ; spring
+      `bottom`→mysql `top` + minio `left` (éventail X) ; spring `bottom`→redis
+      `top-right` (descente x≈1349, **à droite du titre Compose**, entrée
+      verticale par le haut). **Zéro croisement.** Ancre `top-right`
+      (`left: 70%`, RF mesure le DOM — le popover ne la propose pas).
 - [x] `DeployNode` rend les **8 handles** (4 source + 4 target) : React Flow
       **ne monte pas** une arête dont l’ancre source/cible n’existe pas
       (e-sp-redis `left→left` invisible tant que `left` source manquait —
