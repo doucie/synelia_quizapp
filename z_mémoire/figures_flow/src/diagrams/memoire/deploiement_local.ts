@@ -35,6 +35,8 @@ const frame = (
   deployLogo?: 'docker',
   deployAccent?: string,
   deployIcon?: 'monitor',
+  deployArt?: 'workstation' | 'containers',
+  deployArtAfter?: boolean,
 ) => ({
   id,
   type: 'entity' as const,
@@ -48,6 +50,7 @@ const frame = (
     deployDashed,
     ...(deployLogo ? { deployLogo, deployAccent } : {}),
     ...(deployIcon ? { deployIcon } : {}),
+    ...(deployArt ? { deployArt, ...(deployArtAfter ? { deployArtAfter: true as const } : {}) } : {}),
     minHeight: h,
     // Toujours égal à `w` (cf. `exportWidth`).
     exportWidth: w,
@@ -61,11 +64,13 @@ const service = (
   w: number,
   h: number,
   label: string,
-  deployLogo: 'angular' | 'springboot' | 'mysql' | 'redis' | 'minio',
+  deployLogo: 'angular' | 'springboot' | 'mysql' | 'redis' | 'minio' | null,
   deployAccent: string,
   deployPort: string,
   deployNote?: string,
   deployBadge?: string,
+  // Illustration à la place du logo (fig. 16 : navigateur Angular).
+  deployArt?: 'browser',
 ) => ({
   id,
   type: 'entity' as const,
@@ -75,7 +80,8 @@ const service = (
     label,
     variant: 'deploy' as const,
     deployKind: 'service' as const,
-    deployLogo,
+    ...(deployLogo ? { deployLogo } : {}),
+    ...(deployArt ? { deployArt } : {}),
     deployAccent,
     deployPort,
     ...(deployNote ? { deployNote } : {}),
@@ -117,11 +123,13 @@ export const deploiementLocal: DiagramDefinition = {
   category: 'memoire',
   domain: '6.6 — Exécution locale et chaîne DevOps',
   nodes: [
-    // Cadres d’abord (z-order) : hôte plein + moniteur, Compose pointillé + baleine.
-    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)', false, undefined, undefined, 'monitor'),
-    frame('frame-compose', 1050, 470, 450, 510, 'Docker Compose', true, 'docker', MINIO),
-    service('svc-ng', 90, 130, 380, 150, 'Angular dev-server', 'angular', ANGULAR, ':4200', 'dev-server HMR'),
-    service('svc-spring', 640, 130, 380, 150, 'Spring Boot', 'springboot', SPRING, ':8080', 'API REST'),
+    // Cadres d’abord (z-order) : hôte plein + poste de travail (remplace
+    // l’icône moniteur, redondante avec la scène), Compose pointillé +
+    // baleine + conteneurs.
+    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)', false, undefined, undefined, undefined, 'workstation'),
+    frame('frame-compose', 1050, 470, 450, 510, 'Docker Compose', true, 'docker', MINIO, undefined, 'containers', true),
+    service('svc-ng', 90, 200, 380, 150, 'Angular dev-server', null, ANGULAR, ':4200', 'dev-server HMR', undefined, 'browser'),
+    service('svc-spring', 640, 200, 380, 150, 'Spring Boot', 'springboot', SPRING, ':8080', 'API REST'),
     service('svc-mysql', 90, 620, 460, 180, 'MySQL 8', 'mysql', MYSQL, ':3306', 'migrations Flyway', 'EXTERNE'),
     service('svc-redis', 1090, 570, 370, 140, 'Redis 7', 'redis', REDIS, ':6379', 'cache, sessions'),
     service('svc-minio', 1090, 765, 370, 140, 'MinIO', 'minio', MINIO, ':9000 / 9001', 'objets S3, console'),

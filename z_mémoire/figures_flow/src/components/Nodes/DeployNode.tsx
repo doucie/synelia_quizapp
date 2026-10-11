@@ -3,6 +3,7 @@ import type { EntityNodeData } from '../../types'
 import { hsla } from '../../utils/color'
 import { Logo } from './logos'
 import { FeatherIcon } from './icons'
+import { Workstation, Browser, ContainerStack } from './deployArt'
 
 /**
  * Topologie de déploiement local (figure du mémoire, 6.6) : cadres hôte
@@ -50,6 +51,12 @@ const HANDLE_STYLE = {
   background: 'transparent',
 } as const
 
+function Art({ kind }: { kind: 'workstation' | 'browser' | 'containers' }) {
+  if (kind === 'workstation') return <Workstation />
+  if (kind === 'browser') return <Browser />
+  return <ContainerStack />
+}
+
 function Frame({ data }: { data: EntityNodeData }) {
   const dashed = data.deployDashed === true
   return (
@@ -64,15 +71,21 @@ function Frame({ data }: { data: EntityNodeData }) {
       }}
     >
       <div className="flex items-center" style={{ padding: '20px 28px', gap: 12 }}>
+        {data.deployArt && !data.deployArtAfter && <Art kind={data.deployArt} />}
         {data.deployLogo && (
           <Logo name={data.deployLogo} size={WHALE} fill={data.deployAccent ?? 'hsl(var(--foreground))'} />
         )}
         {data.deployIcon && (
           <FeatherIcon kind={data.deployIcon} size={WHALE} color="hsl(var(--foreground))" />
         )}
-        <span className="font-bold text-foreground" style={px(TITLE_SIZE)}>
+        <span className="font-bold text-foreground" style={{ ...px(TITLE_SIZE), whiteSpace: 'nowrap', flexShrink: 0 }}>
           {data.deployTitle}
         </span>
+        {data.deployArt && data.deployArtAfter && (
+          <span style={{ marginLeft: 'auto' }}>
+            <Art kind={data.deployArt} />
+          </span>
+        )}
       </div>
     </div>
   )
@@ -94,7 +107,11 @@ function Service({ data }: { data: EntityNodeData }) {
         borderColor: hsla(data.deployAccent, 0.35),
       }}
     >
-      {data.deployLogo && <Logo name={data.deployLogo} size={LOGO} fill={accent} />}
+      {data.deployArt === 'browser' ? (
+        <Art kind="browser" />
+      ) : (
+        data.deployLogo && <Logo name={data.deployLogo} size={LOGO} fill={accent} />
+      )}
       <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 4 }}>
         <span className="font-bold text-foreground" style={px(NAME_SIZE)}>
           {data.label}

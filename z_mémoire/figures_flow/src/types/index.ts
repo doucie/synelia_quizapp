@@ -136,6 +136,10 @@ export interface EntityNodeData {
   deployLogo?: DeployLogo
   /** Icône Feather d’un cadre (variante `deploy`, `frame`) : marques via `deployLogo`, symboles via `deployIcon`. */
   deployIcon?: 'monitor'
+  /** Illustration d’un cadre ou d’un service (variante `deploy`, `deployArt.tsx`). */
+  deployArt?: 'workstation' | 'browser' | 'containers'
+  /** Illustration après le titre (variante `deploy`, `frame`) plutôt qu’avant. */
+  deployArtAfter?: boolean
   /** Port mis en évidence d’un service déployé (variante `deploy`, `service`). */
   deployPort?: string
   /** Précision sous le nom d’un service (variante `deploy`, `service`). */

@@ -51,5 +51,11 @@ Le trait plein/pointillé porte le sens, pas le fond.
       `container` écarté — fret, contresens). Conteneur déjà couvert
       (baleine), services déjà couverts (marques) : **une seule icône**.
       `deployIcon?: 'monitor'` (symboles Feather) vs `deployLogo` (marques).
+- [x] **3 illustrations plates faites main** (retour demandeur : pas des
+      miniatures) — `Nodes/deployArt.tsx` (co-loc, usage unique) : poste de
+      travail au bandeau hôte (remplace le moniteur, redondant), navigateur
+      à la place du logo Angular, stack de conteneurs au bandeau Compose
+      (120 px — 140 débordait du cadre). Sans touche layout (titres nowrap,
+      rangée haute descendue 130→200 : la scène débordait sur Angular).
 - [x] Export (8 rasters + pastille, 0 `var()`), Typst, commit `feat(memoire)`,
       `AGENTS.md`.
