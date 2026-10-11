@@ -3,7 +3,7 @@ import type { EntityNodeData } from '../../types'
 import { hsla } from '../../utils/color'
 import { Logo } from './logos'
 import { FeatherIcon } from './icons'
-import { Workstation, Browser, ContainerStack } from './deployArt'
+import { HostTower, Browser, ContainerStack } from './deployArt'
 
 /**
  * Topologie de déploiement local (figure du mémoire, 6.6) : cadres hôte
@@ -51,13 +51,55 @@ const HANDLE_STYLE = {
   background: 'transparent',
 } as const
 
-function Art({ kind }: { kind: 'workstation' | 'browser' | 'containers' }) {
-  if (kind === 'workstation') return <Workstation />
+function Art({ kind }: { kind: 'browser' | 'containers' }) {
   if (kind === 'browser') return <Browser />
   return <ContainerStack />
 }
 
+/** Le cadre hôte EST le poste : coque écran (bordure encre 3 px, fond
+ * écran uni), lunette haute avec le titre centré, pied étroit centré et
+ * tour posée sur la bordure basse (ligne de bureau) en bas à gauche, sous
+ * MySQL — zone vide relevée, sans touche aux services ni aux arêtes.
+ * `minHeight: inherit` : le flux (lunette seule) est sous le plancher,
+ * la coque mesure donc exactement `minHeight` (invariant n°2). */
+function HostMachine({ title }: { title?: string }) {
+  return (
+    <div
+      className="relative w-full rounded-xl"
+      style={{
+        minHeight: 'inherit',
+        background: 'hsl(var(--muted))',
+        border: '3px solid hsl(var(--foreground))',
+      }}
+    >
+      <div
+        className="flex items-center justify-center"
+        style={{ height: 76, borderBottom: '2px solid hsl(var(--foreground))', padding: '0 24px' }}
+      >
+        <span className="font-bold text-foreground" style={{ ...px(TITLE_SIZE), whiteSpace: 'nowrap' }}>
+          {title}
+        </span>
+      </div>
+      {/* Pied : col + socle, centré, étroit (x≈730-790 locaux) — à l’écart
+        du segment horizontal Spring→MinIO (y≈835, x≳830). */}
+      <div style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 24, height: 56, background: 'hsl(var(--muted-foreground))' }} />
+      <div style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 150, height: 14, borderRadius: 7, background: 'hsl(var(--foreground))' }} />
+      {/* Tour : bas-gauche, posée sur la bordure basse. */}
+      <div style={{ position: 'absolute', bottom: 3, left: 70 }}>
+        <HostTower />
+      </div>
+    </div>
+  )
+}
+
 function Frame({ data }: { data: EntityNodeData }) {
+  if (data.deployArt === 'host-machine') {
+    return (
+      <div data-export-root className="w-full" style={{ minHeight: data.minHeight }}>
+        <HostMachine title={data.deployTitle} />
+      </div>
+    )
+  }
   const dashed = data.deployDashed === true
   return (
     <div

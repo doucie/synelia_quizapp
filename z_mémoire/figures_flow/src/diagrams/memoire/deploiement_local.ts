@@ -35,7 +35,7 @@ const frame = (
   deployLogo?: 'docker',
   deployAccent?: string,
   deployIcon?: 'monitor',
-  deployArt?: 'workstation' | 'containers',
+  deployArt?: 'host-machine' | 'containers',
   deployArtAfter?: boolean,
 ) => ({
   id,
@@ -123,10 +123,9 @@ export const deploiementLocal: DiagramDefinition = {
   category: 'memoire',
   domain: '6.6 — Exécution locale et chaîne DevOps',
   nodes: [
-    // Cadres d’abord (z-order) : hôte plein + poste de travail (remplace
-    // l’icône moniteur, redondante avec la scène), Compose pointillé +
-    // baleine + conteneurs.
-    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)', false, undefined, undefined, undefined, 'workstation'),
+    // Cadres d’abord (z-order) : l’hôte EST le poste (coque + lunette +
+    // pied + tour), Compose pointillé + baleine + conteneurs.
+    frame('frame-host', 20, 20, 1520, 1000, 'Machine hôte (développement local)', false, undefined, undefined, undefined, 'host-machine'),
     frame('frame-compose', 1050, 470, 450, 510, 'Docker Compose', true, 'docker', MINIO, undefined, 'containers', true),
     service('svc-ng', 90, 200, 380, 150, 'Angular dev-server', null, ANGULAR, ':4200', 'dev-server HMR', undefined, 'browser'),
     service('svc-spring', 640, 200, 380, 150, 'Spring Boot', 'springboot', SPRING, ':8080', 'API REST'),

@@ -51,11 +51,15 @@ Le trait plein/pointillé porte le sens, pas le fond.
       `container` écarté — fret, contresens). Conteneur déjà couvert
       (baleine), services déjà couverts (marques) : **une seule icône**.
       `deployIcon?: 'monitor'` (symboles Feather) vs `deployLogo` (marques).
-- [x] **3 illustrations plates faites main** (retour demandeur : pas des
-      miniatures) — `Nodes/deployArt.tsx` (co-loc, usage unique) : poste de
-      travail au bandeau hôte (remplace le moniteur, redondant), navigateur
-      à la place du logo Angular, stack de conteneurs au bandeau Compose
-      (120 px — 140 débordait du cadre). Sans touche layout (titres nowrap,
-      rangée haute descendue 130→200 : la scène débordait sur Angular).
+- [x] **L’hôte EST le poste** (retour demandeur : la vignette *dans* le
+      cadre ne suffisait pas) — `deployArt: 'host-machine'` : coque écran
+      (bordure encre 3 px, fond écran `muted` uni), titre centré en lunette
+      haute (76 px), pied étroit centré + tour `HostTower` posée sur la
+      bordure basse (ligne de bureau) en bas à gauche, sous MySQL (zone
+      vide relevée, sans touche services/arêtes — RF impose une liste de
+      nœuds plate, le « dedans » est visuel). `minHeight: inherit` : le
+      flux (lunette seule) reste sous le plancher → coque = `minHeight`
+      exact. `Workstation` supprimée (seul usage disparu, pas de code
+      mort) ; navigateur + stack conservés.
 - [x] Export (8 rasters + pastille, 0 `var()`), Typst, commit `feat(memoire)`,
       `AGENTS.md`.

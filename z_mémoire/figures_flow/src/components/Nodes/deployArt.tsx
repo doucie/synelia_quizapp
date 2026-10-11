@@ -1,6 +1,7 @@
 /**
  * Illustrations plates de la topologie de déploiement (fig. 16) : poste de
- * travail (hôte), fenêtre navigateur (Angular), stack de conteneurs (Docker).
+ * travail (écran du cadre hôte), fenêtre navigateur (Angular), stack de
+ * conteneurs (Docker) + tour du poste-hôte.
  *
  * Dessinées main dans le langage des figures (aplats, 2-3 formes, palette
  * existante) — pas d’images téléchargées : zéro licence, net à l’impression,
@@ -13,18 +14,18 @@ const MUTED = 'hsl(var(--muted-foreground))'
 const PAPER = 'hsl(var(--background))'
 const WASH = 'hsl(var(--muted))'
 
-/** Poste de travail : écran + tour (bandeau du cadre hôte, ~150×110). */
-export function Workstation() {
+/** Tour du poste-hôte (~110×190) : posée sur la bordure basse du cadre
+ * (qui fait office de ligne de bureau), en bas à gauche sous MySQL —
+ * zone vide relevée (aucune arête sous y≈800 à x<530). LED verte 128. */
+export function HostTower() {
   return (
-    <svg width={150} height={110} viewBox="0 0 150 110" role="img" aria-label="poste de travail" style={{ flexShrink: 0 }}>
-      <rect x="112" y="26" width="28" height="64" rx="4" fill={PAPER} stroke={INK} strokeWidth={3} />
-      <circle cx="126" cy="38" r="3" fill="hsl(128, 100%, 40%)" />
-      <line x1="118" y1="52" x2="134" y2="52" stroke={MUTED} strokeWidth={2} strokeLinecap="round" />
-      <line x1="118" y1="60" x2="134" y2="60" stroke={MUTED} strokeWidth={2} strokeLinecap="round" />
-      <rect x="18" y="6" width="86" height="60" rx="6" fill={PAPER} stroke={INK} strokeWidth={3} />
-      <rect x="26" y="14" width="70" height="36" rx="3" fill={WASH} />
-      <rect x="52" y="66" width="18" height="16" fill={MUTED} />
-      <rect x="38" y="82" width="46" height="8" rx="4" fill={INK} />
+    <svg width={110} height={190} viewBox="0 0 110 190" role="img" aria-label="tour du poste hôte" style={{ flexShrink: 0, display: 'block' }}>
+      <rect x="6" y="6" width="98" height="178" rx="6" fill={PAPER} stroke={INK} strokeWidth={4} />
+      <circle cx="53" cy="28" r="5" fill="hsl(128, 100%, 40%)" />
+      <line x1="30" y1="58" x2="80" y2="58" stroke={MUTED} strokeWidth={3} strokeLinecap="round" />
+      <line x1="30" y1="72" x2="80" y2="72" stroke={MUTED} strokeWidth={3} strokeLinecap="round" />
+      <line x1="30" y1="86" x2="80" y2="86" stroke={MUTED} strokeWidth={3} strokeLinecap="round" />
+      <rect x="30" y="120" width="50" height="12" rx="6" fill={WASH} stroke={MUTED} strokeWidth={2} />
     </svg>
   )
 }
