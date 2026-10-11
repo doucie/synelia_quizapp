@@ -60,6 +60,12 @@ Le trait plein/pointillé porte le sens, pas le fond.
       ligne, affleurant le bas de l’écran). `frame-host` 1000→1200 : le
       cadre n’est qu’un fond, services et routage intacts. `Workstation`
       supprimée (seul usage disparu) ; navigateur + stack conservés.
+- [x] **Tour À CÔTÉ de l’écran** (retour demandeur : « pourquoi en petit en
+      bas plutôt qu’à côté ? » — c’était mon choix « zéro touche layout »,
+      pas une nécessité) : `frame-host` 1520→1700, écran fixe à 1520 aligné
+      à gauche, colonne transparente au-dessus de la tour (x≈1555, centrée
+      1520→1700) ; ligne de bureau étirée jusque sous la tour, pied toujours
+      centré sous l’écran (760, pas au centre du cadre). Services intacts.
 - [x] **Arêtes par-dessus l’écran** (retour demandeur : traits disparus) —
       cause : RF ne met aucun `z-index` (l’ordre DOM peint les nœuds
       devant), et `exportSvg` peignait « arêtes sous tout le reste » : l’écran

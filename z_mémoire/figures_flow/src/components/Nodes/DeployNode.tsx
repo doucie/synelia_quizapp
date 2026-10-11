@@ -62,7 +62,8 @@ function Art({ kind }: { kind: 'browser' | 'containers' }) {
  * la ligne de bureau, le col du pied (du menton au socle) et la tour posée
  * sur la ligne — pied et tour HORS de l’écran, comme en vrai. Les services
  * finissent à 960 locaux (Compose), le menton couvre 960→1000 : grandir le
- * cadre (1000→1200) ne touche ni services ni arêtes, le cadre n’est qu’un fond.
+ * cadre (1000→1200, 1520→1700 pour la colonne-tour à droite) ne touche ni
+ * services ni arêtes, le cadre n’est qu’un fond.
  *
  * `minHeight: inherit` : le flux (écran seul, hauteur fixe INTERNE — admise,
  * précédent `ScopeNode` fig. 2) reste sous le plancher, la scène mesure donc
@@ -75,9 +76,13 @@ const DESK_LINE_Y = 1190 // haut de la ligne de bureau (3 px)
 function HostMachine({ title }: { title?: string }) {
   return (
     <div className="relative w-full" style={{ minHeight: 'inherit' }}>
+      {/* Écran : 1520 fixe, aligné à gauche — la colonne-tour (1520→1700)
+        reste transparente au-dessus de la tour : la tour est À CÔTÉ de
+        l’écran, pas dessous. Largeur fixe INTERNE admise (cf. commentaire). */}
       <div
-        className="w-full rounded-xl"
+        className="rounded-xl"
         style={{
+          width: 1520,
           height: SCREEN_H,
           background: 'hsl(var(--muted))',
           border: '3px solid hsl(var(--foreground))',
@@ -92,13 +97,17 @@ function HostMachine({ title }: { title?: string }) {
           </span>
         </div>
       </div>
-      {/* Ligne de bureau. */}
-      <div style={{ position: 'absolute', top: DESK_LINE_Y, left: 40, right: 40, height: 3, borderRadius: 2, background: 'hsl(var(--foreground))' }} />
-      {/* Pied : col du menton jusqu’au socle posé sur la ligne. */}
-      <div style={{ position: 'absolute', top: SCREEN_H, left: '50%', transform: 'translateX(-50%)', width: 24, height: DESK_LINE_Y - 14 - SCREEN_H, background: 'hsl(var(--muted-foreground))' }} />
-      <div style={{ position: 'absolute', top: DESK_LINE_Y - 14, left: '50%', transform: 'translateX(-50%)', width: 150, height: 14, borderRadius: 7, background: 'hsl(var(--foreground))' }} />
-      {/* Tour posée sur la ligne, affleurant le bas de l’écran (zéro recouvrement). */}
-      <div style={{ position: 'absolute', top: DESK_LINE_Y - 190, left: 70 }}>
+      {/* Ligne de bureau : jusqu’à la colonne-tour, à droite de l’écran. */}
+      <div style={{ position: 'absolute', top: DESK_LINE_Y, left: 40, right: 20, height: 3, borderRadius: 2, background: 'hsl(var(--foreground))' }} />
+      {/* Pied : col du menton jusqu’au socle posé sur la ligne — centré
+        SOUS L’ÉCRAN (760), pas au centre du cadre (la colonne-tour
+        décentrerait le moniteur de son pied). */}
+      <div style={{ position: 'absolute', top: SCREEN_H, left: 760, transform: 'translateX(-50%)', width: 24, height: DESK_LINE_Y - 14 - SCREEN_H, background: 'hsl(var(--muted-foreground))' }} />
+      <div style={{ position: 'absolute', top: DESK_LINE_Y - 14, left: 760, transform: 'translateX(-50%)', width: 150, height: 14, borderRadius: 7, background: 'hsl(var(--foreground))' }} />
+      {/* Tour À CÔTÉ de l’écran (colonne 1520→1700), posée sur la ligne,
+        affleurant le bas de l’écran (zéro recouvrement). Descente Redis
+        (x≈1349) et MinIO à l’écart, relevé au plan. */}
+      <div style={{ position: 'absolute', top: DESK_LINE_Y - 190, left: 1555 }}>
         <HostTower />
       </div>
     </div>
