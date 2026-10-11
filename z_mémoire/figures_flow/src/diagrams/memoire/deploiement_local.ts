@@ -71,6 +71,9 @@ const service = (
   deployBadge?: string,
   // Illustration à la place du logo (fig. 16 : navigateur Angular).
   deployArt?: 'browser',
+  // Icône Feather à droite du texte (fig. 16 : cylindre BD sur MySQL,
+  // badge EXTERNE retiré — retour demandeur).
+  deployIcon?: 'database',
 ) => ({
   id,
   type: 'entity' as const,
@@ -86,6 +89,7 @@ const service = (
     deployPort,
     ...(deployNote ? { deployNote } : {}),
     ...(deployBadge ? { deployBadge } : {}),
+    ...(deployIcon ? { deployIcon } : {}),
     minHeight: h,
     // Toujours égal à `w` (cf. `exportWidth`).
     exportWidth: w,
@@ -132,7 +136,7 @@ export const deploiementLocal: DiagramDefinition = {
     frame('frame-compose', 1050, 470, 450, 510, 'Docker Compose', true, 'docker', MINIO, undefined, 'containers', true),
     service('svc-ng', 90, 200, 380, 150, 'Angular dev-server', null, ANGULAR, ':4200', 'dev-server HMR', undefined, 'browser'),
     service('svc-spring', 640, 200, 380, 150, 'Spring Boot', 'springboot', SPRING, ':8080', 'API REST'),
-    service('svc-mysql', 90, 620, 460, 180, 'MySQL 8', 'mysql', MYSQL, ':3306', 'migrations Flyway', 'EXTERNE'),
+    service('svc-mysql', 90, 620, 460, 180, 'MySQL 8', 'mysql', MYSQL, ':3306', 'migrations Flyway', undefined, undefined, 'database'),
     service('svc-redis', 1090, 570, 370, 140, 'Redis 7', 'redis', REDIS, ':6379', 'cache, sessions'),
     service('svc-minio', 1090, 765, 370, 140, 'MinIO', 'minio', MINIO, ':9000 / 9001', 'objets S3, console'),
   ],

@@ -66,6 +66,12 @@ Le trait plein/pointillé porte le sens, pas le fond.
       à gauche, colonne transparente au-dessus de la tour (x≈1555, centrée
       1520→1700) ; ligne de bureau étirée jusque sous la tour, pied toujours
       centré sous l’écran (760, pas au centre du cadre). Services intacts.
+- [x] **Cylindre BD sur MySQL + tirets bleus** (retours demandeur) : badge
+      `EXTERNE` retiré, dauphin à gauche, texte au milieu, cylindre Feather
+      `database` à droite (teinte accent, miroir du logo — `Service` sait
+      rendre `deployIcon`, `types` élargi à `'monitor' | 'database'`) ;
+      bordure du cadre pointillé sur `deployAccent` (bleu baleine exact
+      pour Compose, seul cadre en tirets — aucun effet ailleurs).
 - [x] **Arêtes par-dessus l’écran** (retour demandeur : traits disparus) —
       cause : RF ne met aucun `z-index` (l’ordre DOM peint les nœuds
       devant), et `exportSvg` peignait « arêtes sous tout le reste » : l’écran

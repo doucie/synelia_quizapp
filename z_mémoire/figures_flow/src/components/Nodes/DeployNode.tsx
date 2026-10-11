@@ -123,6 +123,11 @@ function Frame({ data }: { data: EntityNodeData }) {
     )
   }
   const dashed = data.deployDashed === true
+  // Tirets = conteneurisé : bordure sur l’accent du cadre (bleu baleine
+  // exact pour Compose — retour demandeur), pas un gris neutre.
+  const borderColor = dashed
+    ? (data.deployAccent ?? 'hsl(var(--muted-foreground))')
+    : 'hsl(var(--foreground))'
   return (
     <div
       data-export-root
@@ -131,7 +136,7 @@ function Frame({ data }: { data: EntityNodeData }) {
         minHeight: data.minHeight,
         borderWidth: 2,
         borderStyle: dashed ? 'dashed' : 'solid',
-        borderColor: dashed ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))',
+        borderColor,
       }}
     >
       <div className="flex items-center" style={{ padding: '20px 28px', gap: 12 }}>
@@ -207,6 +212,12 @@ function Service({ data }: { data: EntityNodeData }) {
         >
           {data.deployBadge}
         </span>
+      )}
+      {/* Cylindre BD à droite du texte (MySQL : dauphin à gauche, texte au
+        milieu, cylindre à droite — retour demandeur, badge EXTERNE retiré).
+        Teinte accent de la carte, taille miroir du logo. */}
+      {data.deployIcon && (
+        <FeatherIcon kind={data.deployIcon} size={LOGO} color={accent} />
       )}
       <Handle id="right" type="source" position={Position.Right} className="nodrag nopan" style={HANDLE_STYLE} />
       <Handle id="left" type="source" position={Position.Left} className="nodrag nopan" style={HANDLE_STYLE} />
