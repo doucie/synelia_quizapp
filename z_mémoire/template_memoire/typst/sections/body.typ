@@ -1314,8 +1314,8 @@
   Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation.
 
   #figure(
-    image("../captures/8-figures-memoire/pyramide_tests.png", width: 100%),
-    caption: [Pyramide des tests — Stratégie de validation multi-niveaux de SyneliaQuizApp.],
+    image("../captures/8-figures-memoire/memoire-niveaux-tests.svg", width: 100%),
+    caption: [Trois niveaux de validation — unitaires, intégration, fonctionnel : objectifs, outils et exemples.],
   )
 
   Le premier niveau vérifie la stabilité technique du code par la compilation, les builds et les tests unitaires ciblés. Le deuxième niveau sécurise les interactions entre couches, notamment via des tests de contrôleurs, des validations de contrats JSON et des scénarios API rejoués avec Postman. Le troisième niveau correspond aux validations fonctionnelles menées sur l'interface et sur le parcours public, afin de s'assurer que les enchaînements réels restent cohérents du point de vue utilisateur.
@@ -1407,6 +1407,11 @@
     [Entretiens], [Élevé], [Planification, réponse candidat, reprogrammation, archivage et suivi par occurrence.],
     [Évaluations et décisions], [Élevé], [Critères détaillés, agrégats d'évaluation, décisions intermédiaires et finales avec notifications associées.],
     [Administration transverse], [Moyen à élevé], [Permissions, configuration applicative, emails, SMTP, référentiels et vues techniques de supervision.],
+  )
+
+  #figure(
+    image("../captures/8-figures-memoire/memoire-jauges-modules.svg", width: 100%),
+    caption: [Couverture fonctionnelle par module — niveaux et synthèses.],
   )
 
   Cette couverture montre que le projet dépasse largement le stade d'un prototype d'interface. La plateforme prend en charge le cœur du processus de recrutement, avec une densité fonctionnelle suffisante pour soutenir un usage réel, même si certaines zones restent perfectibles ou méritent une industrialisation plus poussée.
