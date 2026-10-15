@@ -1,11 +1,11 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { SqlTokenKind } from '../utils/sqlTokens'
 
-export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot' | 'organigramme' | 'memoire'
+export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'archive' | 'palette' | 'mot' | 'organigramme' | 'memoire' | 'uml'
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'claude' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -153,6 +153,13 @@ export interface EntityNodeData {
   testLevels?: TestLevel[]
   /** Lignes de jauges de couverture par module (variante `gauge`, ordre du tableau § 8.2). */
   gaugeRows?: GaugeRow[]
+  /**
+   * SVG brut d’une figure dessinée par Claude (variante `claude`, import
+   * `?raw`) : rendu tel quel après `recolorClaudeSvg` (palette + fonte).
+   */
+  claudeSvg?: string
+  /** Surcharges `couleur Claude → couleur mémoire` (variante `claude`, après `DEFAULT_CLAUDE_MAP`). */
+  claudeColors?: Record<string, string>
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *

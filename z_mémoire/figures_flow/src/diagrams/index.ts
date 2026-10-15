@@ -28,6 +28,9 @@ import { mctParcours1, mctParcours2, mctParcours3, mctParcours4 } from './traite
 // === MOT ===
 import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
 
+// === UML (livraisons Claude) ===
+import { umlClaudeFigures } from './uml/claude'
+
 // === Mémoire ===
 import { acteursSysteme as memoireActeurs } from './memoire/acteurs_systeme'
 import { perimetreProjet as memoirePerimetre } from './memoire/perimetre_projet'
@@ -134,6 +137,9 @@ export const diagrams: DiagramDefinition[] = [
 
   // --- MOT (1) ---
   motOrganisationnelV2,
+
+  // --- UML Claude (15) ---
+  ...umlClaudeFigures,
 
   // --- Organigramme (1) ---
   syneliaAvecAg,

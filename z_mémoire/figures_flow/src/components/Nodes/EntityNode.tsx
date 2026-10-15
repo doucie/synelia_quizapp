@@ -22,6 +22,7 @@ import TreeNode from './TreeNode'
 import DeployNode from './DeployNode'
 import LevelsNode from './LevelsNode'
 import GaugeNode from './GaugeNode'
+import ClaudeSvgNode from './ClaudeSvgNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   const { label, variant, attributes, color } = data
@@ -132,6 +133,11 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Jauges de couverture : module, jauge, synthèse. Même délégation.
   if (variant === 'gauge') {
     return <GaugeNode data={data as EntityNodeData} />
+  }
+
+  // SVG de Claude (collab) : rendu tel quel après recolor. Même délégation.
+  if (variant === 'claude') {
+    return <ClaudeSvgNode data={data as EntityNodeData} />
   }
 
   // Vue « script » du MPD : le MPD est aussi un script SQL. Le rendu n'a rien à

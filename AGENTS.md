@@ -123,6 +123,13 @@ Vue d'ensemble rapide : `README.md` racine.
 - **Figure 16 — `memoire-deploiement-local`** (`src/diagrams/memoire/deploiement_local.ts`, section 6.6) : topologie d’exécution — natif sur l’hôte vs conteneurisé, trait plein/pointillé (pas le fond). 2 cadres tailles fixes + 5 services = 7 nœuds RF (`frame` d’abord, z-order, sans `<Handle>`), 4 flèches `markerEnd` `isStrong` (pattern fig. 7) dont pastille « proxy /api/** » (`labelPx` 20 — ~7,5 pt imprimés, tient dans le couloir 170 px). La variante **`deploy`** (`deployKind`, `deployTitle/Dashed/Logo/Port/Note/Badge/Accent/Icon`) est dispatchée vers **`DeployNode`** : ports mono 24 teintés (335/100/128/0/210 — 26 faisait passer `:9000 / 9001` à la ligne), notes en `foreground/85` (le `muted` à 16 px était illisible, règle fig. 1/2), `deployIcon` pour les symboles (`database`) — vs `deployLogo` pour les marques. **L’hôte EST le poste** (`deployArt: 'host-machine'`) : écran 1520 (titre en lunette) + colonne-tour à droite + bande bureau — pied centré sous l’écran, tour `HostTower` À CÔTÉ sur la ligne de bureau. Carte MySQL : dauphin + texte + cylindre `database` (badge EXTERNE retiré) ; tirets Compose sur l’accent (bleu baleine). Écran opaque SOUS les arêtes : `data-edges-above` (`DiagramCanvas` + `index.css`, scopé) et `exportSvg(…, { edgesAbove })` (câblé `App.tsx`) — RF peint les nœuds devant les arêtes par défaut, et l’export aussi. Routage : angular→spring (proxy), spring `bottom`→mysql `top` + minio `left`, spring **`right`→redis `top-right`** (`bottom` frôlait la bordure du cadre ; ancre à 70 %, entrée verticale par le haut à droite du titre Compose, zéro croisement). `DeployNode` rend les **8 handles** (RF ne monte pas une arête sans son ancre — piège : arête invisible, zéro erreur). Logos `redis`/`minio` Simple Icons CC0 (`LOGO_BRAND` documentés). Notes 1 ligne (relevé harness, planchers exacts).
 - Export Figure 16 : `z_mémoire/template_memoire/typst/captures/8-figures-memoire/memoire-deploiement-local.svg` (1781×1281, 8 rasters, 0 `var()`), inséré après la table des services de la section 6.6.
 - Détails : `z_mémoire/figures_flow/plans/implementations/20261010_deploiement_local.md`.
+- **Figure 17 — `memoire-niveaux-tests`** (`src/diagrams/memoire/niveaux_tests.ts`, section 7.1) : trois niveaux outillés dans l’ordre du texte — unitaires/slice (`mvnw test`), intégration (contrôleurs, `Postman`), fonctionnel (`spec.ts`, recette) — chacun avec objectif + outils + exemples en langage courant sourcés du dépôt (~30 classes backend, 2 collections Postman, ~22 specs). La variante **`levels`** (`testLevels?: TestLevel[]`) est dispatchée vers **`LevelsNode`**, nœud composite unique en flux (hauteurs auto, seule la largeur posée), zéro arête RF : 3 bandes ÉGALES (pas une pyramide des volumes) à liseré 4 px, médaillons numérotés `tool`/`link`/`monitor`, chips outils mono teintés + chips exemples, mention « Extraits du dépôt ». Remplace la pyramide (`pyramide_tests.png` intact, phrase « esprit de la pyramide » conservée). **V1 `memoire-cible-tests` (`bullseye`) abandonnée avant export** : densité illisible sans légende — code supprimé, jamais dans `body.typ`.
+- Export Figure 17 : `z_mémoire/template_memoire/typst/captures/8-figures-memoire/memoire-niveaux-tests.svg` (1 raster, 0 `var()`), inséré § 7.1.
+- Détails : `z_mémoire/figures_flow/plans/implementations/20261013_niveaux_tests.md`.
+- **Figure 18 — `memoire-jauges-modules`** (`src/diagrams/memoire/jauges_modules.ts`, section 8.2, dernière de la série) : le tableau en six jauges — une ligne par module, remplissage selon le niveau qualitatif, synthèse verbatim. La variante **`gauge`** (`gaugeRows?: GaugeRow[]` : nom/icône/`level: 'high'|'mid'`/synthèse) est dispatchée vers **`GaugeNode`**, nœud composite unique en flux, zéro arête RF : médaillon 56 + nom + synthèse italique `/85` + jauge 300×18 + label (**aucun pourcentage**), vert 128 à 88 % (5 × Élevé), ambre 30 à 64 % (transverse perfectible, choix demandeur). Icônes fig. 10 (`megaphone`/`inbox`/`checksquare`/`calendar`) + `sliders` (kanban fig. 13) / `tool` en substitutions documentées (ni balance ni engrenage chez Feather).
+- Export Figure 18 : `z_mémoire/template_memoire/typst/captures/8-figures-memoire/memoire-jauges-modules.svg` (1 raster, 0 `var()`), inséré après le tableau § 8.2 (tableau conservé).
+- Détails : `z_mémoire/figures_flow/plans/implementations/20261013_jauges_modules.md`.
+- Légende fig. 17 retirée (« Noms simplifiés… », retour demandeur) : `LevelsNode.tsx` sans `NOTE_SIZE`, flux intact — penser au ré-export ⤓.
 - Détails : `z_mémoire/figures_flow/plans/implementations/20261006_perimetre_projet.md`.
 
 ### État actuel (organigramme)
@@ -152,6 +159,29 @@ Vue d'ensemble rapide : `README.md` racine.
 - **Les handles d'`OrgNode` sont posés en `style` inline** (`HANDLE_STYLE`, taille nulle) : `@xyflow/react` impose `width/height: 6px` dans une feuille **non mise en couche**, qui bat Tailwind. Sans ce contournement chaque ancre est décalée de 3 px vers l'intérieur de la boîte et une pastille est visible à l'impression. `ProcessNode` a le même défaut, non corrigé — hors périmètre.
 - **La page paysage passe par `#landscape-figure`** (`theme.typ`), importé dans `body.typ`. Deux contraintes non négociables : largeur d'image **explicite** (`width: 25.3cm`, jamais `100%` — un pourcentage dans une boîte auto est circulaire) et `placement: none` (`header: none` sur cette page, donc une figure flottée n'aurait nulle part où aller).
 - Détails et points ouverts : `figures_flow/plans/implementations/20261004_organigramme_paysage_refonte.md`, puis `20261005_organigramme_services_dark_d4.md` (fond de thème, contour, `SVC_H[3]`, abréviation de `d4`).
+
+### État actuel (UML — collab Claude, restart lot 0)
+- Lot A (`UcNode` maison + 3 UC) **abandonné et supprimé** : restart propre
+  (« tout jeter pour ne pas se tromper »). Conservés : catégorie **`uml`**
+  (`types`, `Sidebar` « UML » ◑), règles et vérification (`plans/uml/`).
+- Mécanisme : variante **`claude`** (`claudeSvg` brut `?raw` +
+  `claudeColors?`) → **`ClaudeSvgNode`** : le SVG livré est rendu **tel
+  quel** après `recolorClaudeSvg` (`src/utils/umlRecolor.ts` : palette
+  `DEFAULT_CLAUDE_MAP` → teintes fig. 1, fonte Cabinet Grotesk, purge C2PA ;
+  couleur non mappée = pastille rouge hors export + `console.error`).
+  Nœud composite unique, zéro arête RF, largeur `exportWidth`, hauteur
+  `viewBox` (jamais `height`).
+- Échanges : `plans/uml/echanges/lotN_*.md` (un par lot, faits sourcés
+  fichier:ligne + contraintes SVG + Q&A) ; SVG livrés dans
+  `src/diagrams/uml/claude/`.
+- **Intégration lot 1 (15 figures)** : copies dans `src/diagrams/uml/
+  claude/`, registre `src/diagrams/uml/claude.ts` (8 UC, 3 états,
+  2 séquences, composants, déploiement — `variant: 'claude'`,
+  `exportWidth: 1200`, originaux `results_claude/` intacts),
+  `umlRecolor` +3 couleurs second lot. Contenu non vérifié, `body.typ`
+  intact — vérifications avancées plus tard.
+- Détails : `z_mémoire/figures_flow/plans/implementations/20261013_uml_lot_a_uc.md` (abandonné),
+  `z_mémoire/figures_flow/plans/implementations/20261015_uml_integration_claude.md`.
 
 ## Pour naviguer
 - Base cible BD post-migration 420 : `cartographie-fonctionnelle-front/bd_actuelle/quizapp_db_cible_post_420_migration.md`.
