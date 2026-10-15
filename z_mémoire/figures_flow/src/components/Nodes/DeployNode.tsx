@@ -27,7 +27,7 @@ const NAME_SIZE = 22
 // 24, pas 26 : `:9000 / 9001` en mono 26 passait sur 2 lignes dans 350 px
 // (13 car. × ~21 px > 238 px utiles, relevé au harness).
 const PORT_SIZE = 24
-const NOTE_SIZE = 16
+const NOTE_SIZE = 18
 const BADGE_SIZE = 14
 const LOGO = 44
 const WHALE = 28
