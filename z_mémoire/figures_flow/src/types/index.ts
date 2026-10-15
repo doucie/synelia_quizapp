@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -149,6 +149,10 @@ export interface EntityNodeData {
   deployBadge?: string
   /** Accent SAFE_HUES d’un service ou d’un logo (variante `deploy`). */
   deployAccent?: string
+  /** Niveaux de validation de la stratégie de tests (variante `levels`, ordre du § 7.1). */
+  testLevels?: TestLevel[]
+  /** Lignes de jauges de couverture par module (variante `gauge`, ordre du tableau § 8.2). */
+  gaugeRows?: GaugeRow[]
   /**
    * Largeur px explicite de la racine d’export (`[data-export-root]`).
    *
@@ -286,6 +290,26 @@ export interface TreeBranch {
 
 /** Logo d’un service déployé ou d’un cadre conteneurisé (variante `deploy`). */
 export type DeployLogo = 'angular' | 'springboot' | 'mysql' | 'redis' | 'minio' | 'docker'
+
+/** Un niveau de la stratégie de tests : nom, objectif, outils et exemples en langage courant. */
+export interface TestLevel {
+  num: string
+  name: string
+  icon: 'tool' | 'link' | 'monitor'
+  color: string
+  goal: string
+  tools: string[]
+  examples: string[]
+}
+
+/** Une ligne de jauge de couverture : module, niveau qualitatif et synthèse du tableau § 8.2. */
+export interface GaugeRow {
+  name: string
+  icon: 'megaphone' | 'inbox' | 'checksquare' | 'calendar' | 'sliders' | 'tool'
+  /** `high` = Élevé (vert, jauge longue), `mid` = Moyen à élevé (ambre, jauge courte). */
+  level: 'high' | 'mid'
+  summary: string
+}
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
 
