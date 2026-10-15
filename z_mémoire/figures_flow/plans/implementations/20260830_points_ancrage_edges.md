@@ -178,3 +178,20 @@ Avant, tous les nœuds de processus partageaient l'ordre `right`/`left` de `Hand
 - Overlay de debug : approuvé (temporaire).
 - **Stratégie : Option C d'abord** (étapes 1-4 ci-dessus uniquement). Options A et B en attente conditionnelle de ce que
   révèlera l'overlay.
+
+## Notes rapatriées (2026-10-15 — condensation AGENTS.md)
+
+- Helpers : `resolveHandleId`, `edgePathOffset`, `edgeAnchorGroup`
+  (`src/components/Edges/edgeAnchors.ts`) ; overlay dans
+  `src/utils/edgeDebug.ts`, bouton dans `DiagramCanvas.tsx`.
+- L'overlay passe obligatoirement par `EdgeLabelRenderer` : `BaseEdge`
+  rend un `<path>` dans le `<svg>` de React Flow, donc un `<div>` posé à
+  côté serait créé dans le namespace SVG — un élément inconnu, sans rendu.
+- Ancrages par défaut verticaux du MCT : `MCT_SOURCE_HANDLES` /
+  `MCT_TARGET_HANDLES` (`edgeAnchors.ts`, ensemble
+  `MCT_VERTICAL_VARIANTS` : `mct-event`/`mct-sync`/`mct-syncop`/
+  `mct-operation`/`mct-result` ; SAT, MPT et `EntityNode.tsx` restent
+  `'horizontal'` ; MOT hérite via `archive/`). **L'ordre des `<Handle>` de
+  `Handles({ order })` (`ProcessNode.tsx`) doit rester identique à
+  `handleIdsOf`** — sinon React Flow (1er handle du type dans le DOM) et
+  le calcul d'offset divergent.
