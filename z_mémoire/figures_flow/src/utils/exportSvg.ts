@@ -1,6 +1,7 @@
 import { toCanvas } from 'html-to-image'
 import { DEFAULT_MOT_TABLE_CONFIG } from '../types'
 import { isEdgeDebugEnabled } from './edgeDebug'
+import { saveSvgBlob } from './saveWithPicker'
 
 /**
  * Exporte un nœud isolé en SVG.
@@ -31,12 +32,9 @@ export async function exportNodeSvg(nodeId: string, filename: string): Promise<v
 }
 
 function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  // Dialogue OS « Enregistrer sous » (dossier au choix, mémorisé) quand le
+  // navigateur l'expose, sinon téléchargement silencieux historique.
+  void saveSvgBlob(blob, filename)
 }
 
 const TRANSLATE_RE = /translate\(([-\d.]+)px?,\s*([-\d.]+)px?\)/
