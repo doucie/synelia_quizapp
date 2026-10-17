@@ -164,6 +164,23 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 215 20.2% 65.1%;
 
+  /* Jetons des figures mémoire (Fig. 7 « Encre » + Fig. 8 flux indigo) :
+     la couleur est la donnée (hex verbatim), le sombre la transpose dans la
+     même échelle Chakra/Tailwind en nuances 300-800 — cf.
+     plans/implementations/20261017_dark_tokens_figures.md. */
+  --fig-navy: #1a365d;
+  --fig-cost: #1a365d;
+  --fig-success: #38a169;
+  --fig-warning: #dd6b20;
+  --fig-neutral: #4a5568;
+  --fig-soft: #f7fafc;
+  --fig-line: #cbd5e0;
+  --fig-frame: #a0aec0;
+  --fig-tint: rgba(56, 161, 105, 0.06);
+  --fig-indigo: #6366f1;
+  --fig-indigo-soft: #eef2ff;
+  --fig-indigo-line: #a5b4fc;
+  --fig-indigo-ink: #3730a3;
 }
 
 /* React Flow overrides (light) — :root .react-flow beats .react-flow */
@@ -221,6 +238,22 @@
   --input: 214.3 31.8% 22%;
   --ring: 215 20.2% 65.1%;
 
+  /* Sombre des jetons figures — mêmes rôles, nuances claires de la même
+     échelle (Chakra : green.300 / orange.300 / gray.400-500-800 / blue.300 ;
+     Tailwind indigo-400/950/700/200). */
+  --fig-navy: #1a365d;
+  --fig-cost: #90cdf4;
+  --fig-success: #68d391;
+  --fig-warning: #f6ad55;
+  --fig-neutral: #a0aec0;
+  --fig-soft: #2d3748;
+  --fig-line: #4a5568;
+  --fig-frame: #718096;
+  --fig-tint: rgba(72, 187, 120, 0.1);
+  --fig-indigo: #818cf8;
+  --fig-indigo-soft: #1e1b4b;
+  --fig-indigo-line: #4338ca;
+  --fig-indigo-ink: #c7d2fe;
 }
 
 /* React Flow overrides (dark) — .dark .react-flow beats .react-flow */

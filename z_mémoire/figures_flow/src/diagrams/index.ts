@@ -50,6 +50,10 @@ import { arbreDepot as memoireArbreDepot } from './memoire/arbre_depot'
 import { deploiementLocal as memoireDeploiementLocal } from './memoire/deploiement_local'
 import { niveauxTests as memoireNiveauxTests } from './memoire/niveaux_tests'
 import { jaugesModules as memoireJaugesModules } from './memoire/jauges_modules'
+import { benchmarkMatrice as memoireBenchmark } from './memoire/benchmark_matrice'
+import { stackFlux as memoireStackFlux } from './memoire/stack_flux'
+import { moscowPyramide as memoireMoscowPyramide } from './memoire/moscow_pyramide'
+import { paletteTypst as memoirePaletteTypst } from './memoire/palette_typst'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -163,6 +167,10 @@ export const diagrams: DiagramDefinition[] = [
   memoireDeploiementLocal,
   memoireNiveauxTests,
   memoireJaugesModules,
+  memoireBenchmark,
+  memoireStackFlux,
+  memoireMoscowPyramide,
+  memoirePaletteTypst,
 
   // --- Palette (1) ---
   colorPalette,

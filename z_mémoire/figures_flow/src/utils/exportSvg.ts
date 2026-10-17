@@ -4,6 +4,26 @@ import { isEdgeDebugEnabled } from './edgeDebug'
 import { saveSvgBlob } from './saveWithPicker'
 
 /**
+ * Rend le thème clair forcé pour la durée d'une capture d'export.
+ *
+ * Les computed styles (donc les rasters) reflètent la classe `.dark` du
+ * documentElement : exporter tel quel en thème sombre produirait une figure
+ * sombre — l'export est un artefact d'impression (figures du mémoire), il
+ * reste clair même si l'utilisateur navigue en sombre. La classe est retirée
+ * avant la capture et rétablie après (dans tous les cas d'arrêt).
+ */
+async function withLightTheme<T>(fn: () => Promise<T>): Promise<T> {
+  const root = document.documentElement
+  const wasDark = root.classList.contains('dark')
+  if (wasDark) root.classList.remove('dark')
+  try {
+    return await fn()
+  } finally {
+    if (wasDark) root.classList.add('dark')
+  }
+}
+
+/**
  * Exporte un nœud isolé en SVG.
  *
  * Rasterisation bornée au nœud via `captureNodePadded` (clone paddé) : c'est
@@ -15,7 +35,7 @@ export async function exportNodeSvg(nodeId: string, filename: string): Promise<v
   if (!el) return
 
   const pr = 2
-  const { canvas } = await captureNodePadded(el)
+  const { canvas } = await withLightTheme(() => captureNodePadded(el))
 
   const w = canvas.width / pr
   const h = canvas.height / pr
@@ -519,7 +539,11 @@ async function captureNodePadded(
  * (`onlyRenderVisibleElements` est désactivé : nœuds et arêtes sont tous dans
  * le DOM). Conteneurs de `react-flow__background` et panneaux exclus comme avant.
  */
-export async function exportSvg(filename = 'diagram.svg', opts: { edgesAbove?: boolean } = {}) {
+export function exportSvg(filename = 'diagram.svg', opts: { edgesAbove?: boolean } = {}): Promise<void> {
+  return withLightTheme(() => exportSvgLight(filename, opts))
+}
+
+async function exportSvgLight(filename = 'diagram.svg', opts: { edgesAbove?: boolean } = {}) {
   const renderer = document.querySelector('.react-flow__renderer') as HTMLElement | null
   const viewport = renderer?.querySelector('.react-flow__viewport') as HTMLElement | null
   if (!renderer || !viewport) return

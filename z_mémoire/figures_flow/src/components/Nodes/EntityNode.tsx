@@ -22,6 +22,10 @@ import TreeNode from './TreeNode'
 import DeployNode from './DeployNode'
 import LevelsNode from './LevelsNode'
 import GaugeNode from './GaugeNode'
+import BenchmarkNode from './BenchmarkNode'
+import StackFlowNode from './StackFlowNode'
+import MoscowNode from './MoscowNode'
+import PaletteNode from './PaletteNode'
 import ClaudeSvgNode from './ClaudeSvgNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
@@ -133,6 +137,26 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Jauges de couverture : module, jauge, synthèse. Même délégation.
   if (variant === 'gauge') {
     return <GaugeNode data={data as EntityNodeData} />
+  }
+
+  // Matrice de benchmark : sections catégorisées, pastilles Oui/~ /Non. Même délégation.
+  if (variant === 'benchmark') {
+    return <BenchmarkNode data={data as EntityNodeData} />
+  }
+
+  // Pile 3-tiers avec flux bidirectionnels : couches + connecteurs internes. Même délégation.
+  if (variant === 'stackflow') {
+    return <StackFlowNode data={data as EntityNodeData} />
+  }
+
+  // Pyramide MoSCoW : pyramide SVG + cartes de tags. Même délégation.
+  if (variant === 'moscow') {
+    return <MoscowNode data={data as EntityNodeData} />
+  }
+
+  // Palette documentaire : rangée de pastilles (hex du thème Typst). Même délégation.
+  if (variant === 'palette') {
+    return <PaletteNode data={data as EntityNodeData} />
   }
 
   // SVG de Claude (collab) : rendu tel quel après recolor. Même délégation.

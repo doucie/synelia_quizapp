@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'claude' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'palette' | 'claude' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -153,6 +153,22 @@ export interface EntityNodeData {
   testLevels?: TestLevel[]
   /** Lignes de jauges de couverture par module (variante `gauge`, ordre du tableau § 8.2). */
   gaugeRows?: GaugeRow[]
+  /** Colonnes d'une matrice de benchmark (variante `benchmark`, Fig. 7 : concurrents + SyneliaQuizApp). */
+  benchmarkCols?: string[]
+  /** Sections catégorisées d'une matrice de benchmark (variante `benchmark`, ordre du HTML source). */
+  benchmarkSections?: BenchmarkSection[]
+  /** Couches d'une pile 3-tiers avec flux (variante `stackflow`, Fig. 8 : stack_technique.html). */
+  stackflowLayers?: StackflowLayer[]
+  /** Connecteurs bidirectionnels entre couches (variante `stackflow`, un par intervalle). */
+  stackflowFlows?: StackflowFlow[]
+  /** Niveaux d'une pyramide MoSCoW (variante `moscow`, Fig. 23 : MUST → WON'T). */
+  moscowLevels?: MoscowLevel[]
+  /**
+   * Jetons d'une palette documentaire (variante `palette`, figure du mémoire) :
+   * chaque pastille est un hex de `template_memoire/typst/theme.typ`. Ici la
+   * couleur **est** la donnée affichée, pas un choix de style.
+   */
+  paletteSwatches?: PaletteSwatch[]
   /**
    * SVG brut d’une figure dessinée par Claude (variante `claude`, import
    * `?raw`) : rendu tel quel après `recolorClaudeSvg` (palette + fonte).
@@ -316,6 +332,65 @@ export interface GaugeRow {
   /** `high` = Élevé (vert, jauge longue), `mid` = Moyen à élevé (ambre, jauge courte). */
   level: 'high' | 'mid'
   summary: string
+}
+
+/** Une cellule de matrice benchmark : ton sémantique + texte affiché + note éventuelle. */
+export interface BenchmarkValue {
+  tone: 'yes' | 'partial' | 'no' | 'cost'
+  text: string
+  note?: string
+}
+
+/** Une ligne de matrice benchmark : fonctionnalité + une cellule par colonne. */
+export interface BenchmarkRow {
+  feature: string
+  values: BenchmarkValue[]
+}
+
+/** Une section catégorisée de matrice benchmark (bandeau uppercase + lignes). */
+export interface BenchmarkSection {
+  title: string
+  rows: BenchmarkRow[]
+}
+
+/** Une pastille techno d'une couche stackflow (nom + version précisée). */
+export interface StackflowPill {
+  name: string
+  ver?: string
+}
+
+/** Une couche d'une pile 3-tiers (variante `stackflow`, Fig. 8). */
+export interface StackflowLayer {
+  name: string
+  role: string
+  color: string
+  pills: StackflowPill[]
+}
+
+/** Un connecteur bidirectionnel entre deux couches (flux descendant + montant). */
+export interface StackflowFlow {
+  down: string
+  up: string
+}
+
+/** Un niveau MoSCoW : nom, effectif, sous-titre, teinte, tags, note éventuelle. */
+export interface MoscowLevel {
+  name: string
+  count: string
+  sub: string
+  color: string
+  tags: string[]
+  note?: string
+}
+
+/** Un jeton de palette : nom du jeton, hex verbatim, usage, texte encre sur la pastille. */
+export interface PaletteSwatch {
+  name: string
+  hex: string
+  use: string
+  inkOnSwatch?: boolean
+  /** Groupe d'appartenance ; les pastilles consécutives d'un même groupe forment une rangée. */
+  group?: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
