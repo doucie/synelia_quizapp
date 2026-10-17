@@ -227,7 +227,7 @@
   Le marché propose aujourd'hui de nombreuses solutions de recrutement, parmi lesquelles des ATS généralistes comme Workable ou Greenhouse, ainsi que des plateformes plus spécialisées dans l'évaluation technique comme HackerRank, Codility ou TestGorilla.
 
   #figure(
-    image("../captures/8-figures-memoire/matrice_benchmark.png", width: 100%),
+    image("../captures/8-figures-memoire/memoire-benchmark-matrice.svg", width: 100%),
     caption: [Matrice de benchmark — Comparaison des solutions du marché et positionnement de SyneliaQuizApp.],
   )
 
