@@ -12,9 +12,11 @@ import type { DiagramDefinition } from '../../types'
 
 const W = 1150
 
-const FRONT = 'hsl(335, 100%, 40%)'
-const BACK = 'hsl(100, 100%, 40%)'
-const DATA = 'hsl(128, 100%, 40%)'
+// Couleurs de la palette documentaire (jetons --fig-*, version sombre dans
+// index.css) : interface = danger, serveur = success, stockage = secondary.
+const FRONT = 'var(--fig-danger)'
+const BACK = 'var(--fig-success)'
+const DATA = 'var(--fig-secondary)'
 
 export const stackFlux: DiagramDefinition = {
   id: 'memoire-stack-flux',

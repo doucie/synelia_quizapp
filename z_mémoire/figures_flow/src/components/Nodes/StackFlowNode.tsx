@@ -1,5 +1,4 @@
 import type { EntityNodeData } from '../../types'
-import { hsla } from '../../utils/color'
 import { Logo, type LogoKey } from './logos'
 
 /**
@@ -13,10 +12,13 @@ import { Logo, type LogoKey } from './logos'
  * (`exportWidth`), jamais `height` (invariant n°1).
  *
  * Style Gouvernance (niveau `dir`) : carte `border-left 5px` + tint
- * `hsla 0.07`, accents 335 (front) / 100 (back) / 128 (data) cohérents
- * fig. 3/4/5, corps `calc(var(--org-font-scale,1)*Npx)` inline.
- * Flux : trait indigo + pastille, repris du HTML source — jetons
- * `--fig-indigo-*` avec version sombre (`index.css`).
+ * `color-mix`, accents de la palette documentaire — interface =
+ * `var(--fig-danger)` (Angular), serveur = `var(--fig-success)` (Spring Boot),
+ * stockage = `var(--fig-secondary)` (MySQL). Code literal « sql » du logo
+ * MySQL repeint en `var(--fig-warning)` (overlay `sqlFill`), corps
+ * `calc(var(--org-font-scale,1)*Npx)` inline.
+ * Flux : trait + pastille, repris du HTML source — jetons
+ * `--fig-flow-*` avec version sombre (`index.css`).
  */
 
 const NAME_SIZE = 26
@@ -25,10 +27,16 @@ const PILL_SIZE = 17
 const FLOW_SIZE = 17
 
 const LOGO_SIZE = 52
-const ARROW = 'var(--fig-indigo)'
-const SOFT = 'var(--fig-indigo-soft)'
-const OUTLINE = 'var(--fig-indigo-line)'
-const INK = 'var(--fig-indigo-ink)'
+const ARROW = 'var(--fig-flow)'
+const SOFT = 'var(--fig-flow-soft)'
+const OUTLINE = 'var(--fig-flow-line)'
+const INK = 'var(--fig-flow-ink)'
+
+/** Teinte derrière contenu : `color-mix` accepte un jeton CSS var(...) en
+ * couleur de base (résolu par computed styles, contrairement à `hsla`). */
+function tinted(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
+}
 
 function px(value: number) {
   return { fontSize: `calc(var(--org-font-scale, 1) * ${value}px)` }
@@ -100,14 +108,19 @@ export default function StackFlowNode({ data }: { data: EntityNodeData }) {
               borderColor: 'hsl(var(--border))',
               borderLeftWidth: 5,
               borderLeftColor: layer.color,
-              backgroundColor: hsla(layer.color, 0.07),
+              backgroundColor: tinted(layer.color, 7),
             }}
           >
             <span
               className="inline-flex shrink-0 items-center justify-center rounded-[9px]"
-              style={{ width: 64, height: 64, backgroundColor: hsla(layer.color, 0.14) }}
+              style={{ width: 64, height: 64, backgroundColor: tinted(layer.color, 14) }}
             >
-              <Logo name={LAYER_LOGO[i] ?? 'mysql'} size={LOGO_SIZE} fill={layer.color} />
+              <Logo
+                name={LAYER_LOGO[i] ?? 'mysql'}
+                size={LOGO_SIZE}
+                fill={layer.color}
+                sqlFill={i === 2 ? 'var(--fig-warning)' : undefined}
+              />
             </span>
             <span className="flex shrink-0 flex-col" style={{ minWidth: 240 }}>
               <span className="font-bold leading-tight text-foreground" style={{ ...px(NAME_SIZE), color: layer.color }}>
@@ -126,8 +139,8 @@ export default function StackFlowNode({ data }: { data: EntityNodeData }) {
                     ...px(PILL_SIZE),
                     padding: '5px 11px',
                     borderRadius: 20,
-                    border: `1px solid ${hsla(layer.color, 0.3)}`,
-                    backgroundColor: hsla(layer.color, 0.1),
+                    border: `1px solid ${tinted(layer.color, 30)}`,
+                    backgroundColor: tinted(layer.color, 10),
                     color: layer.color,
                   }}
                 >

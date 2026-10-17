@@ -24,16 +24,39 @@ résolu par computed styles à l'export (pas de hook JS, pas de re-render).
 | `--fig-line` | `#cbd5e0` | `#4a5568` (gray.600) | filets internes |
 | `--fig-frame` | `#a0aec0` | `#718096` (gray.500) | contour + soulignement en-tête |
 | `--fig-tint` | `rgba(56,161,105,.06)` | `rgba(72,187,120,.10)` | colonne Synelia |
-| `--fig-indigo` | `#6366f1` | `#818cf8` (indigo.400) | flèches fig. 8 |
-| `--fig-indigo-soft` | `#eef2ff` | `#1e1b4b` (indigo.950) | pastilles fig. 8 |
-| `--fig-indigo-line` | `#a5b4fc` | `#4338ca` (indigo.700) | bord pastille |
-| `--fig-indigo-ink` | `#3730a3` | `#c7d2fe` (indigo.200) | texte pastille |
+| `--fig-danger` | `#e53e3e` | `#feb2b2` (red.300) | couche Interface fig. 8 (Angular) |
+| `--fig-secondary` | `#2c5282` | `#90cdf4` (blue.300) | couche Stockage fig. 8 (MySQL) |
+| `--fig-flow` | `#3182ce` (accent thème) | `#90cdf4` (blue.300) | flèches fig. 8 |
+| `--fig-flow-soft` | `rgba(49,130,206,.10)` | `rgba(144,205,244,.12)` | pastilles fig. 8 |
+| `--fig-flow-line` | `#63b3ed` (blue.300) | `#2b6cb0` (blue.700) | bord pastille |
+| `--fig-flow-ink` | `#2c5282` (secondary) | `#bee3f8` (blue.200) | texte pastille |
+
+## Fig. 8 aux couleurs de la palette documentaire (suite directe, même jour)
+
+Décision utilisateur : couches `danger` (Angular) / `success` (Spring Boot) /
+`secondary` (MySQL, couleur principale du logo), lettre « sql » du logo en
+`warning` — « my » et le dauphin restent secondary. Les flux passent de
+l'indigo HTML source à l'accent de la palette (`--fig-flow-*`, ex-`indigo`).
+
+- **Piège** : `hsla()` (`src/utils/color.ts`) ne parse que `hsl(H…)`/hex — sur
+  un `var(--fig-x)` elle renvoie `undefined`. Teintes de couche →
+  `color-mix(in srgb, ${color} N%, transparent)` (helper `tinted`, résoluble
+  par computed styles ; 7 % carte, 14 % médaillon, 10 % pastille, 30 % bord).
+- **Logo bicolore** : le path Simple Icons mysql est un path unique (8
+  sous-chemins : dauphin + M·y·S·Q·trou-Q·L). Annotation par-dessus : les 4
+  sous-chemins « sql » (S, Q + son contre-forme, L) extraits par tokeniseur
+  (flags d'arc `00` à re-scinder) et repositionnés en absolu → const
+  `MYSQL_SQL_PATH` + prop `sqlFill?: string` sur `Logo` (overlay
+  `<path>` même fill-rule : le path de base reste intact, les
+  contreformes « my » sont préservées).
 
 - [x] `index.css` : les 13 jetons (2 blocs)
 - [x] `BenchmarkNode.tsx` : `INK` scindé en `NAVY`/`COST`, références `var(--fig-*)`, import `hsla` retiré (teinte via `--fig-tint`)
-- [x] `StackFlowNode.tsx` : 4 constantes indigo → `--fig-indigo-*`
+- [x] `StackFlowNode.tsx` : 4 constantes indigo → `--fig-flow-*`, teintes `tinted()` (`color-mix`), `sqlFill` sur le logo MySQL
+- [x] `logos.tsx` : `MYSQL_SQL_PATH` + prop `sqlFill`
+- [x] `stack_flux.ts` : `layer.color` → `var(--fig-danger/success/secondary)`
 - [x] `npx tsc --noEmit` + `npx vite build` OK
-- [ ] vérif visuelle des deux thèmes (basculer via `ThemeToggle`)
+- [ ] vérif visuelle des deux thèmes (basculer via `ThemeToggle`) + rendu du logo bicolore
 
 ## Export toujours clair (décision (a))
 
