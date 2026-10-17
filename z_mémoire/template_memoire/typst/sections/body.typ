@@ -243,7 +243,7 @@
   Dans ce paysage, #strong[Spring Boot] s'impose comme une référence pour les applications Java orientées API. Il facilite la mise en place de services REST, l'intégration avec la sécurité, la persistance via JPA et l'organisation modulaire du code. #strong[Angular] représente de son côté une solution robuste pour les applications monopage complexes, en particulier lorsqu'il faut structurer de nombreux écrans, partager des composants et maintenir une logique de navigation cohérente entre plusieurs profils d'utilisateurs.
 
   #figure(
-    image("../captures/8-figures-memoire/stack_technique.png", width: 100%),
+    image("../captures/8-figures-memoire/memoire-stack-flux.svg", width: 100%),
     caption: [Stack technique de SyneliaQuizApp — Architecture 3-tiers avec flux de données entre les couches.],
   )
 
