@@ -1,25 +1,28 @@
 import type { EntityNodeData } from '../../types'
 
 /**
- * Figure 4 — Vraie pyramide des objectifs (§1.4.1) : 3 objectifs généraux du
- * texte s'étagent du socle vers le sommet (digitaliser → automatiser →
- * collaborer) et l'apex dépasse la liste : « Piloter par la donnée »,
- * annoté `perspective` (cf. perspectives du mémoire). La forme du triangle
- * porte le sens — plus de colonne de cartes ni de légende (décisions
- * utilisateur v2 : vraie pyramide, apex perspective).
+ * Figure 4 — Vraie pyramide des objectifs (§1.4.1), conception v3 : 3
+ * objectifs généraux du texte s'étagent du socle vers le sommet (digitaliser
+ * → automatiser → collaborer) et l'apex dépasse la liste : « Piloter par la
+ * donnée », annoté `perspective` (cf. perspectives du mémoire).
  *
- * Motif `MoscowNode` (clip-path en %, racine étirée… ici une seule colonne :
- * l'axe MATURITÉ à gauche, la pyramide centrée) ; jamais `height`,
- * `exportWidth` px inline, corps `calc(var(--org-font-scale,1)*Npx)`,
- * `tinted()` = `color-mix` (jamais `hsla` sur `var()`). L'apex (bande la plus
- * étroite) ancre son texte tout en bas de la bande ; les autres bandes
- * centrent à ~56 %.
+ * Motif `MoscowNode` ; extension validée : la hauteur ne peut PAS venir des
+ * bandes en `flex: 1` sans colonne de cartes (la v2 s'écroulait) → ici
+ * hauteurs de bandes FIXES (92/118/138/152 = 500 px), le précédent « hauteurs
+ * fixes admises dans le nœud » de `perimetre_projet` (AGENTS fig. 2). Jamais
+ * de `height` sur la racine, `exportWidth` px inline, corps
+ * `calc(var(--org-font-scale,1)*Npx)`, `tinted()` = `color-mix` (jamais
+ * `hsla` sur `var()`). L'apex (bande la plus étroite) ancre son texte tout en
+ * bas de la bande ; les autres bandes centrent à ~56 %.
  */
 
-const TITLE_SIZE = 17
-const LINE_SIZE = 12
+const TITLE_SIZE = 18
+const LINE_SIZE = 13
 const NOTE_SIZE = 10.5
 const AXIS_SIZE = 15
+
+/** Hauteurs fixes des bandes (v3) : apex plus bas, socle plus haut. */
+const BAND_H = [92, 118, 138, 152]
 
 /** Demi-largeur de chaque bande : de 0 % (apex) à 50 % (base). */
 function bandClip(i: number): string {
@@ -57,13 +60,13 @@ export default function ObjectifsPyramidNode({ data }: { data: EntityNodeData })
         </span>
       </div>
 
-      {/* Pyramide : 4 bandes égales en `flex: 1`, découpées en pourcentages. */}
-      <div className="flex flex-col" style={{ width: 660 }}>
+      {/* Pyramide : 4 bandes à hauteur fixe (v3), découpées en pourcentages. */}
+      <div className="flex shrink-0 flex-col" style={{ width: 860 }}>
         {levels.map((lv, i) => (
           <div
             key={lv.title}
             className="relative flex min-w-0 justify-center"
-            style={{ flex: 1, clipPath: bandClip(i), backgroundColor: lv.color }}
+            style={{ height: BAND_H[i] ?? 120, clipPath: bandClip(i), backgroundColor: lv.color }}
           >
             <div
               className="absolute flex flex-col items-center text-center"

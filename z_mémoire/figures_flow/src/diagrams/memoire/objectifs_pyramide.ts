@@ -1,14 +1,15 @@
 import type { DiagramDefinition } from '../../types'
 
 /**
- * Figure 4 — Vraie pyramide des objectifs du projet (§1.4.1).
- *
+ * Figure 4 — Vraie pyramide des objectifs du projet (§1.4.1), conception v3
+ * (agrandissement : la v2 s'écroulait — la hauteur ne peut PAS venir des
+ * bandes `flex:1` sans colonne de cartes ; ici hauteurs de bandes FIXES,
+ * précédent « hauteurs fixes admises dans le nœud » de `perimetre_projet`).
  * Vrai triangle (motif MoscowNode), apex = « Piloter par la donnée » annoté
- * `perspective` (conception v2 après refonte). Couleurs = jetons `--fig-*`
- * (navy/success/warning/secondary, sommet → socle — voir
- * `ObjectifsPyramidNode`).
+ * `perspective`. Couleurs = jetons `--fig-*` (navy/success/warning/secondary,
+ * sommet → socle — voir `ObjectifsPyramidNode`).
  */
-const W = 720
+const W = 910
 
 export const objectifsPyramide: DiagramDefinition = {
   id: 'memoire-objectifs-pyramide',

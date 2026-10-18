@@ -171,9 +171,11 @@ export interface EntityNodeData {
   asisProblem?: string
   /** Bandeau de conclusion du processus as-is (variante `asis`, `**…**` = mise en avant). */
   asisConclusion?: string
-  /** Maillons de la chaîne as-is (variante `asis`, fig. 2 : 4 maillons). */
-  asisLinks?: AsisLink[]
-  /** Ruptures entre maillons (variante `asis`, fig. 2 : symptômes entre les 4 maillons). */
+  /** Canaux de diffusion + récepteurs (variante `asis`, fig. 2 : scène v3). */
+  asisChannels?: AsisChannel[]
+  /** Maillons d'évaluation → décision (variante `asis`, fig. 2). */
+  asisEvals?: AsisEval[]
+  /** Ruptures entre maillons (variante `asis`, fig. 2 : symptômes verbatim). */
   asisBreaks?: AsisBreak[]
   /** Puces éparpillées de l'éclatement (variante `pairs`, fig. 3, nuage de gauche). */
   besoinScatter?: BesoinScatterItem[]
@@ -422,10 +424,21 @@ export interface PaletteSwatch {
   group?: string
 }
 
-/** Un maillon de la chaîne as-is (fig. 2) : icône, nom, précision du texte. */
-export interface AsisLink {
+/** Un canal de diffusion de la scène as-is (fig. 2) : tuile logo ou icône,
+ * récepteur attenant — une feuille-CV par canal, vers SON récepteur. */
+export interface AsisChannel {
+  label: string
+  /** `logo` = tuile logo (Simple Icons, `ref` = `LogoKey`) ; sinon icône Feather. */
+  kind: 'logo' | 'icon'
+  ref: 'linkedin' | 'mail' | 'briefcase'
+  /** Récepteur de la feuille-CV du canal : icône Feather + précision. */
+  receiver: { icon: 'folder' | 'inbox' | 'grid'; label: string; note: string }
+}
+
+/** Un maillon d'évaluation de la scène as-is (fig. 2) : icône + nom + précision. */
+export interface AsisEval {
   title: string
-  icon: 'megaphone' | 'inbox' | 'tool' | 'checksquare'
+  icon: 'filetext' | 'phone' | 'checksquare'
   hint: string
 }
 
