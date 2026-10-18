@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'palette' | 'claude' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'tpyramid' | 'palette' | 'claude' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -163,6 +163,8 @@ export interface EntityNodeData {
   stackflowFlows?: StackflowFlow[]
   /** Niveaux d'une pyramide MoSCoW (variante `moscow`, Fig. 23 : MUST → WON'T). */
   moscowLevels?: MoscowLevel[]
+  /** Niveaux d'une pyramide des tests (variante `tpyramid`, §7.1 : E2E → unitaires). */
+  tpyramidLevels?: TPyramidLevel[]
   /**
    * Jetons d'une palette documentaire (variante `palette`, figure du mémoire) :
    * chaque pastille est un hex de `template_memoire/typst/theme.typ`. Ici la
@@ -379,6 +381,19 @@ export interface MoscowLevel {
   count: string
   color: string
   tags: string[]
+}
+
+/** Un niveau de la pyramide des tests : bande (nom court + effectif) et son
+ * callout détaillé (titre, lignes d'outillage, caractéristiques en pied). */
+export interface TPyramidLevel {
+  name: string
+  count: string
+  color: string
+  callout: {
+    title: string
+    lines: string[]
+    tail: string
+  }
 }
 
 /** Un jeton de palette : nom du jeton, hex verbatim, usage, texte encre sur la pastille. */

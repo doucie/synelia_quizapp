@@ -25,6 +25,7 @@ import GaugeNode from './GaugeNode'
 import BenchmarkNode from './BenchmarkNode'
 import StackFlowNode from './StackFlowNode'
 import MoscowNode from './MoscowNode'
+import TestsPyramidNode from './TestsPyramidNode'
 import PaletteNode from './PaletteNode'
 import ClaudeSvgNode from './ClaudeSvgNode'
 
@@ -152,6 +153,11 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Pyramide MoSCoW : pyramide SVG + cartes de tags. Même délégation.
   if (variant === 'moscow') {
     return <MoscowNode data={data as EntityNodeData} />
+  }
+
+  // Pyramide des tests : 3 bandes clip-path + callouts. Même délégation.
+  if (variant === 'tpyramid') {
+    return <TestsPyramidNode data={data as EntityNodeData} />
   }
 
   // Palette documentaire : rangée de pastilles (hex du thème Typst). Même délégation.

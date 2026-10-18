@@ -53,6 +53,7 @@ import { jaugesModules as memoireJaugesModules } from './memoire/jauges_modules'
 import { benchmarkMatrice as memoireBenchmark } from './memoire/benchmark_matrice'
 import { stackFlux as memoireStackFlux } from './memoire/stack_flux'
 import { moscowPyramide as memoireMoscowPyramide } from './memoire/moscow_pyramide'
+import { pyramideTests as memoirePyramideTests } from './memoire/pyramide_tests'
 import { paletteTypst as memoirePaletteTypst } from './memoire/palette_typst'
 
 // === Palette ===
@@ -170,6 +171,7 @@ export const diagrams: DiagramDefinition[] = [
   memoireBenchmark,
   memoireStackFlux,
   memoireMoscowPyramide,
+  memoirePyramideTests,
   memoirePaletteTypst,
 
   // --- Palette (1) ---
