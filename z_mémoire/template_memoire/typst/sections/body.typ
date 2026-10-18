@@ -1314,8 +1314,8 @@
   Cette stratégie s'organise selon plusieurs niveaux, dans l'esprit de la pyramide des tests et des patterns de validation.
 
   #figure(
-    image("../captures/8-figures-memoire/memoire-niveaux-tests.svg", width: 100%),
-    caption: [Trois niveaux de validation — unitaires, intégration, fonctionnel : objectifs, outils et exemples.],
+    image("../captures/8-figures-memoire/memoire-pyramide-tests.svg", width: 100%),
+    caption: [Pyramide des tests — volume, criticité et outillage par niveau dans SyneliaQuizApp.],
   )
 
   Le premier niveau vérifie la stabilité technique du code par la compilation, les builds et les tests unitaires ciblés. Le deuxième niveau sécurise les interactions entre couches, notamment via des tests de contrôleurs, des validations de contrats JSON et des scénarios API rejoués avec Postman. Le troisième niveau correspond aux validations fonctionnelles menées sur l'interface et sur le parcours public, afin de s'assurer que les enchaînements réels restent cohérents du point de vue utilisateur.
