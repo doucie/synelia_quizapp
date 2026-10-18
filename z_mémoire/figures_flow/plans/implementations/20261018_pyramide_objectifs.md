@@ -1,40 +1,39 @@
-# 20261018 — Fig. 4 refaite : `pyramide_objectifs` (bandes empilées)
+# 20261018 — Fig. 4 refaite : `pyramide_objectifs` (vraie pyramide, apex perspective)
 
 Remplace `figures_html/pyramide_objectifs.html` (§1.4.1 objectifs généraux,
-`body.typ:162`). Décisions utilisateur : **bandes empilées** (fidèle au
-source), PAS un vrai triangle clip-path (apex étriqué, pastilles debout
-impraticable — leçon fig. 23) ; légende HTML supprimée (redondante).
+`body.typ:162`).
 
-## Verbatim source (figé, sommet → socle)
-- 4 Piloter par la donnée : KPIs de recrutement / Analyse des sources / Taux de
-  conversion / Amélioration continue.
-- 3 Faciliter la collaboration : Évaluations multi-recruteurs / Tableaux de
-  bord partagés / Notifications temps réel / Traçabilité décisionnelle.
-- 2 Automatiser les évaluations : Quiz paramétrables / Correction
-  automatique / Pipeline configurable / Relances et notifications / Scoring
-  objectif.
-- 1 Digitaliser le processus de recrutement : Plateforme web centralisée /
-  Base candidats unique / Gestion des campagnes / Suppression Excel / emails /
-  Portail candidat autonome.
-- Ordre affiché sommet→socle (4 en haut, 1 en bas) — caption du mémoire :
-  « Du socle de digitalisation au pilotage stratégique par la donnée. »
+**Conception v1 abandonnée** (bandes empilées numérotées + pastilles, colonne
+de cartes) : restylage des HTML — même critique que figs 2/3. Puis **v2
+abandonnée à son tour** : 4 bandes de largeurs dégressives avec pastilles =
+toujours des cartes, le triangle n'était pas un triangle.
 
-## Design
-- Variante `'objpyr'` → `ObjectifsPyramidNode` (pattern `MoscowNode` :
-  racine `items-stretch`, bandes `flex:1` mais largeurs décroissantes vers le
-  sommet au lieu de clip-path : 100 % / 88 % / 76 % / 64 % centrées).
-- Pastilles = motif fig. 23 (`tinted(level)` ~12 %, bordure 30 %, texte
-  `hsl(var(--foreground))`), pastilles du niveau 4 poussées vers `--fig-navy`.
-- Jetons niveaux : 1 `--fig-secondary`, 2 `--fig-warning`, 3 `--fig-success`,
-  4 `--fig-navy` (réglable à l'œil à l'export) — num pastilles à gauche,
-  connecteur trait `--fig-frame` + chevron haut entre bandes.
-- Légende du source NON reprise ; footer NON repris.
+## Conception v2 (approuvée)
+- **Métaphore** : le § étage 3 objectifs généraux du socle vers le sommet et
+  la caption introduit le pilotage par la donnée ⇒ **vrai triangle clip-path**
+  (motif exact `MoscowNode` : 4 bandes égales `flex:1`, `bandClip` en %,
+  sommet x=50 %/y=0, racine étirée) :
+  - socle **Digitaliser le processus** (`--fig-secondary`) — « logique éclatée
+    → plateforme centralisée », « moins de manipulations manuelles, parcours
+    visible » ;
+  - bande **Automatiser les évaluations** (`--fig-warning`) — « quiz
+    configurable, correction automatique », « pré-filtrage plus objectif,
+    jugement humain appuyé » (verbatim §) ;
+  - bande **Faciliter la collaboration** (`--fig-success`) — « évaluations
+    multi-recruteurs », « coordination entretiens & décisions » ;
+  - apex **Piloter par la donnée** (`--fig-navy`), note *perspective* —
+    décision utilisateur : apex conservé, avec annotation « perspective ».
+- Texte **dans** les bandes (`--fig-soft`, ancrage 56 %, apex 82 %) — plus de
+  colonne latérale, plus de pastilles, plus de légende : la forme seule dit
+  l'empilement. Axe **MATURITÉ** (`--fig-frame`, flèche en haut) à gauche.
 
 ## Fait
-- [ ] `types/index.ts` : `Variant` + `'objpyr'`, type `ObjPyrLevel`
-      (num, title, items[], token key), champ `objPyrLevels` (sommet→socle).
-- [ ] `src/components/Nodes/ObjectifsPyramidNode.tsx` + EntityNode delegation.
-- [ ] `src/diagrams/memoire/pyramide_objectifs.ts` (W ~1240).
-- [ ] Validation `tsc`/`build` ; export utilisateur ; substitution
-      `body.typ:162` (caption inchangée) ; `git rm pyramide_objectifs.png` ;
-      `typst compile` ; commits.
+- [x] `types/index.ts` : `ObjPyrLevel` réduit à (title, lines, color, note?),
+      champ `objPyrLevels` (sommet → socle).
+- [x] `src/components/Nodes/ObjectifsPyramidNode.tsx` réécrit (clip-path +
+      axe, zéro carte) ; `src/diagrams/memoire/objectifs_pyramide.ts`
+      (W 720, ordre sommet → socle).
+- [x] Validation `tsc` + `build` ; commit `refactor(memoire)` v2 (3b39c9c).
+- [ ] Export utilisateur → `objectifs-pyramide` ;
+      substitution `body.typ:162` (caption inchangée) ; `git rm
+      pyramide_objectifs.png` ; `typst compile` ; commits `docs(typst)`.
