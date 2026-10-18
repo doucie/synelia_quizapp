@@ -56,6 +56,8 @@ import { moscowPyramide as memoireMoscowPyramide } from './memoire/moscow_pyrami
 import { pyramideTests as memoirePyramideTests } from './memoire/pyramide_tests'
 import { paletteTypst as memoirePaletteTypst } from './memoire/palette_typst'
 import { processusAsIs as memoireProcessusAsIs } from './memoire/processus_as_is'
+import { besoinSolution as memoireBesoinSolution } from './memoire/besoin_solution'
+import { objectifsPyramide as memoireObjectifsPyramide } from './memoire/objectifs_pyramide'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -150,7 +152,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (24) ---
+  // --- Mémoire (26) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -175,6 +177,8 @@ export const diagrams: DiagramDefinition[] = [
   memoirePyramideTests,
   memoirePaletteTypst,
   memoireProcessusAsIs,
+  memoireBesoinSolution,
+  memoireObjectifsPyramide,
 
   // --- Palette (1) ---
   colorPalette,

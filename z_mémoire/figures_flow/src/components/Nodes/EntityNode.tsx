@@ -28,6 +28,8 @@ import MoscowNode from './MoscowNode'
 import TestsPyramidNode from './TestsPyramidNode'
 import PaletteNode from './PaletteNode'
 import ProcessusAsIsNode from './ProcessusAsIsNode'
+import BesoinFunnelNode from './BesoinFunnelNode'
+import ObjectifsPyramidNode from './ObjectifsPyramidNode'
 import ClaudeSvgNode from './ClaudeSvgNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
@@ -170,6 +172,16 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Même délégation.
   if (variant === 'asis') {
     return <ProcessusAsIsNode data={data as EntityNodeData} />
+  }
+
+  // Entonnoir besoin → plateforme : nuage éclaté, sorties fléchées. Même délégation.
+  if (variant === 'pairs') {
+    return <BesoinFunnelNode data={data as EntityNodeData} />
+  }
+
+  // Pyramide des objectifs : 4 bandes empilées numérotées. Même délégation.
+  if (variant === 'objpyr') {
+    return <ObjectifsPyramidNode data={data as EntityNodeData} />
   }
 
   // SVG de Claude (collab) : rendu tel quel après recolor. Même délégation.

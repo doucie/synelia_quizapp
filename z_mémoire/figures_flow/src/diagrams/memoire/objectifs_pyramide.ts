@@ -1,16 +1,14 @@
 import type { DiagramDefinition } from '../../types'
 
 /**
- * Figure 4 — Pyramide des objectifs du projet (§1.4.1).
+ * Figure 4 — Vraie pyramide des objectifs du projet (§1.4.1).
  *
- * Verbatim de `figures_html/pyramide_objectifs.html`, ordre sommet → socle
- * (4 Piloter … 1 Digitaliser, comme le source). La légende du source est
- * supprimée (redondante des bandes). Ordre des bandes d'affichage :
- * Piloter / Collaborer / Automatiser / Digitaliser. Couleurs = jetons
- * `--fig-*` (navy/success/warning/secondary, top → base — voir
+ * Vrai triangle (motif MoscowNode), apex = « Piloter par la donnée » annoté
+ * `perspective` (conception v2 après refonte). Couleurs = jetons `--fig-*`
+ * (navy/success/warning/secondary, sommet → socle — voir
  * `ObjectifsPyramidNode`).
  */
-const W = 1240
+const W = 720
 
 export const objectifsPyramide: DiagramDefinition = {
   id: 'memoire-objectifs-pyramide',
@@ -30,46 +28,25 @@ export const objectifsPyramide: DiagramDefinition = {
         exportWidth: W,
         objPyrLevels: [
           {
-            num: 4,
             title: 'Piloter par la donnée',
-            items: [
-              'KPIs de recrutement',
-              'Analyse des sources',
-              'Taux de conversion',
-              'Amélioration continue',
-            ],
+            lines: [],
+            color: 'var(--fig-navy)',
+            note: 'perspective',
           },
           {
-            num: 3,
             title: 'Faciliter la collaboration',
-            items: [
-              'Évaluations multi-recruteurs',
-              'Tableaux de bord partagés',
-              'Notifications temps réel',
-              'Traçabilité décisionnelle',
-            ],
+            lines: ['Évaluations multi-recruteurs', 'Coordination entretiens & décisions'],
+            color: 'var(--fig-success)',
           },
           {
-            num: 2,
             title: 'Automatiser les évaluations',
-            items: [
-              'Quiz paramétrables',
-              'Correction automatique',
-              'Pipeline configurable',
-              'Relances et notifications',
-              'Scoring objectif',
-            ],
+            lines: ['Quiz configurable, correction automatique', 'Pré-filtrage plus objectif, jugement humain appuyé'],
+            color: 'var(--fig-warning)',
           },
           {
-            num: 1,
-            title: 'Digitaliser le processus de recrutement',
-            items: [
-              'Plateforme web centralisée',
-              'Base candidats unique',
-              'Gestion des campagnes',
-              'Suppression Excel / emails',
-              'Portail candidat autonome',
-            ],
+            title: 'Digitaliser le processus',
+            lines: ['Logique éclatée → plateforme centralisée', 'Moins de manipulations manuelles, parcours visible'],
+            color: 'var(--fig-secondary)',
           },
         ],
       },

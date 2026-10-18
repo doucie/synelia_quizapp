@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'tpyramid' | 'palette' | 'claude' | 'asis' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'tpyramid' | 'palette' | 'claude' | 'asis' | 'pairs' | 'objpyr' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -165,14 +165,22 @@ export interface EntityNodeData {
   moscowLevels?: MoscowLevel[]
   /** Niveaux d'une pyramide des tests (variante `tpyramid`, §7.1 : E2E → unitaires). */
   tpyramidLevels?: TPyramidLevel[]
-  /** Phases du processus as-is (variante `asis`, fig. 2 : 3 chaînes d'outils + ruptures). */
-  asisPhases?: AsisPhase[]
   /** Bandeau de stats du processus as-is (variante `asis` : chiffres du HTML, verbatim). */
   asisStats?: { num: string; label: string }[]
   /** Phrase « problème » du bandeau (variante `asis`, `**…**` = mise en avant). */
   asisProblem?: string
   /** Bandeau de conclusion du processus as-is (variante `asis`, `**…**` = mise en avant). */
   asisConclusion?: string
+  /** Maillons de la chaîne as-is (variante `asis`, fig. 2 : 4 maillons). */
+  asisLinks?: AsisLink[]
+  /** Ruptures entre maillons (variante `asis`, fig. 2 : symptômes entre les 4 maillons). */
+  asisBreaks?: AsisBreak[]
+  /** Puces éparpillées de l'éclatement (variante `pairs`, fig. 3, nuage de gauche). */
+  besoinScatter?: BesoinScatterItem[]
+  /** Sorties de la plateforme (variante `pairs`, fig. 3 : 4 bénéfices fléchés). */
+  besoinOutputs?: BesoinOutput[]
+  /** Niveaux de la pyramide des objectifs (variante `objpyr`, fig. 4 : sommet → socle). */
+  objPyrLevels?: ObjPyrLevel[]
   /**
    * Jetons d'une palette documentaire (variante `palette`, figure du mémoire) :
    * chaque pastille est un hex de `template_memoire/typst/theme.typ`. Ici la
@@ -414,23 +422,42 @@ export interface PaletteSwatch {
   group?: string
 }
 
-/** Un outil du processus as-is : nom et précision (fichier, canal…). */
-export interface AsisTool {
-  name: string
-  kind: string
+/** Un maillon de la chaîne as-is (fig. 2) : icône, nom, précision du texte. */
+export interface AsisLink {
+  title: string
+  icon: 'megaphone' | 'inbox' | 'tool' | 'checksquare'
+  hint: string
 }
 
-/** Une rupture entre deux outils : libellé sous la pastille `!`. */
+/** Une rupture entre maillons : le symptôme du § 1.3.1, sous la pastille `!`. */
 export interface AsisBreak {
   label: string
 }
 
-/** Une phase du processus as-is : titre, chaîne d'outils et ruptures entre eux.
- * `breaks[i]` s'intercale entre `tools[i]` et `tools[i+1]`. */
-export interface AsisPhase {
+/** Un point de l'éparpillement as-is (fig. 3, nuage de gauche). */
+export interface BesoinScatterItem {
+  label: string
+  /** Inclinaison de la puce, en degrés (visage « éclaté » du nuage). */
+  tilt: number
+}
+
+/** Une sortie de la plateforme (fig. 3) : titre, phrase courte, icône,
+ * suffixe de jeton `--fig-<color>` (sémantique : secondary/success/warning/neutral). */
+export interface BesoinOutput {
   title: string
-  tools: AsisTool[]
-  breaks: AsisBreak[]
+  line: string
+  icon: 'database' | 'zap' | 'sliders' | 'eye'
+  color: 'secondary' | 'success' | 'warning' | 'neutral'
+}
+
+/** Un niveau de la pyramide des objectifs (fig. 4) : titre, apports, couleur,
+ * note éventuelle en légende de bande. */
+export interface ObjPyrLevel {
+  title: string
+  lines: string[]
+  color: string
+  /** Note en petit, sous les apports (apex : « Perspective »). */
+  note?: string
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
