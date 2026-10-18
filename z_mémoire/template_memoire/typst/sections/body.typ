@@ -406,8 +406,8 @@
   La campagne de recrutement constitue l'unité de pilotage centrale du système.
 
   #figure(
-    image("../captures/8-figures-memoire/machine_etats_campagne.png", width: 100%),
-    caption: [Machine à états d'une campagne de recrutement — Transitions et conditions de passage entre statuts.],
+    image("../captures/8-figures-memoire/uml-etats-campagne.svg", width: 100%),
+    caption: [États-transitions d'une campagne — brouillon, mise en attente, ouverture, pause et clôture, avec archivage à part.],
   )
 
   Le besoin métier impose de pouvoir créer une campagne, définir son état de cycle de vie, lui associer un pipeline, lui rattacher un ou plusieurs formulaires, générer des liens de diffusion et partager son accès avec des collaborateurs internes selon des permissions fines.
@@ -418,8 +418,8 @@
   Le système doit offrir un parcours de candidature public simple et fiable.
 
   #figure(
-    image("../captures/8-figures-memoire/machine_etats_candidature.png", width: 100%),
-    caption: [Machine à états d'une candidature — Parcours complet du candidat dans le pipeline de recrutement.],
+    image("../captures/8-figures-memoire/uml-etats-etape.svg", width: 100%),
+    caption: [États-transitions d'une étape de pipeline — progression contrainte du dossier candidat.],
   )
 
   Ce besoin est fondamental, car il conditionne à la fois la qualité de la donnée collectée et la perception du sérieux de l'entreprise par les candidats.
