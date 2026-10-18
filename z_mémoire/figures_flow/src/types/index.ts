@@ -165,13 +165,7 @@ export interface EntityNodeData {
   moscowLevels?: MoscowLevel[]
   /** Niveaux d'une pyramide des tests (variante `tpyramid`, §7.1 : E2E → unitaires). */
   tpyramidLevels?: TPyramidLevel[]
-  /** Bandeau de stats du processus as-is (variante `asis` : chiffres du HTML, verbatim). */
-  asisStats?: { num: string; label: string }[]
-  /** Phrase « problème » du bandeau (variante `asis`, `**…**` = mise en avant). */
-  asisProblem?: string
-  /** Bandeau de conclusion du processus as-is (variante `asis`, `**…**` = mise en avant). */
-  asisConclusion?: string
-  /** Canaux de diffusion + récepteurs (variante `asis`, fig. 2 : scène v3). */
+  /** Canaux de diffusion + récepteurs (variante `asis`, fig. 2 : scène v4). */
   asisChannels?: AsisChannel[]
   /** Maillons d'évaluation → décision (variante `asis`, fig. 2). */
   asisEvals?: AsisEval[]
@@ -424,13 +418,12 @@ export interface PaletteSwatch {
   group?: string
 }
 
-/** Un canal de diffusion de la scène as-is (fig. 2) : tuile logo ou icône,
- * récepteur attenant — une feuille-CV par canal, vers SON récepteur. */
+/** Un canal de diffusion de la scène as-is (fig. 2) : tuile logo (Simple
+ * Icons, marque), récepteur attenant — une feuille-CV par canal, vers SON
+ * récepteur. */
 export interface AsisChannel {
   label: string
-  /** `logo` = tuile logo (Simple Icons, `ref` = `LogoKey`) ; sinon icône Feather. */
-  kind: 'logo' | 'icon'
-  ref: 'linkedin' | 'mail' | 'briefcase'
+  ref: 'linkedin' | 'indeed' | 'glassdoor'
   /** Récepteur de la feuille-CV du canal : icône Feather + précision. */
   receiver: { icon: 'folder' | 'inbox' | 'grid'; label: string; note: string }
 }
