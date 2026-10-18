@@ -567,7 +567,7 @@
   L'ensemble des besoins identifiés ne possède pas la même criticité. Une priorisation de type MoSCoW a donc été retenue afin de distinguer les fonctionnalités indispensables à la valeur métier immédiate, celles qui renforcent l'efficacité opérationnelle et celles qui relèvent d'une extension ultérieure.
 
   #figure(
-    image("../captures/8-figures-memoire/pyramide_moscow.png", width: 100%),
+    image("../captures/8-figures-memoire/memoire-moscow-pyramide.svg", width: 100%),
     caption: [Pyramide MoSCoW — Priorisation des besoins fonctionnels de SyneliaQuizApp.],
   )
 
