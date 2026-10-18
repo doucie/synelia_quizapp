@@ -55,6 +55,7 @@ import { stackFlux as memoireStackFlux } from './memoire/stack_flux'
 import { moscowPyramide as memoireMoscowPyramide } from './memoire/moscow_pyramide'
 import { pyramideTests as memoirePyramideTests } from './memoire/pyramide_tests'
 import { paletteTypst as memoirePaletteTypst } from './memoire/palette_typst'
+import { processusAsIs as memoireProcessusAsIs } from './memoire/processus_as_is'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -149,7 +150,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (18) ---
+  // --- Mémoire (24) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -173,6 +174,7 @@ export const diagrams: DiagramDefinition[] = [
   memoireMoscowPyramide,
   memoirePyramideTests,
   memoirePaletteTypst,
+  memoireProcessusAsIs,
 
   // --- Palette (1) ---
   colorPalette,

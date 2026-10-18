@@ -27,6 +27,7 @@ import StackFlowNode from './StackFlowNode'
 import MoscowNode from './MoscowNode'
 import TestsPyramidNode from './TestsPyramidNode'
 import PaletteNode from './PaletteNode'
+import ProcessusAsIsNode from './ProcessusAsIsNode'
 import ClaudeSvgNode from './ClaudeSvgNode'
 
 export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
@@ -163,6 +164,12 @@ export default function EntityNode({ data, id }: NodeProps<EntityNodeData>) {
   // Palette documentaire : rangée de pastilles (hex du thème Typst). Même délégation.
   if (variant === 'palette') {
     return <PaletteNode data={data as EntityNodeData} />
+  }
+
+  // Processus as-is du mémoire : bandeau de stats, 3 chaînes d'outils, ruptures.
+  // Même délégation.
+  if (variant === 'asis') {
+    return <ProcessusAsIsNode data={data as EntityNodeData} />
   }
 
   // SVG de Claude (collab) : rendu tel quel après recolor. Même délégation.

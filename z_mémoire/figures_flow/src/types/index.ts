@@ -5,7 +5,7 @@ export type Category = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'traitements' | 'arch
 
 export type ProcessVariant = 'mct-event' | 'mct-sync' | 'mct-syncop' | 'mct-operation' | 'mct-result' | 'sat-task' | 'sat-phase' | 'sat-head' | 'sat-lane' | 'mpt-layer' | 'mot-matrix'
 
-export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'tpyramid' | 'palette' | 'claude' | ProcessVariant
+export type Variant = 'mcd' | 'mld' | 'mpd' | 'mpd-sql' | 'org-box' | 'actor' | 'scope' | 'quadrant' | 'decision' | 'stack' | 'persona' | 'state' | 'auth' | 'notif' | 'bf' | 'rings' | 'hub' | 'rg' | 'versus' | 'tree' | 'deploy' | 'levels' | 'gauge' | 'benchmark' | 'stackflow' | 'moscow' | 'tpyramid' | 'palette' | 'claude' | 'asis' | ProcessVariant
 
 export interface Attribute {
   name: string
@@ -165,6 +165,14 @@ export interface EntityNodeData {
   moscowLevels?: MoscowLevel[]
   /** Niveaux d'une pyramide des tests (variante `tpyramid`, §7.1 : E2E → unitaires). */
   tpyramidLevels?: TPyramidLevel[]
+  /** Phases du processus as-is (variante `asis`, fig. 2 : 3 chaînes d'outils + ruptures). */
+  asisPhases?: AsisPhase[]
+  /** Bandeau de stats du processus as-is (variante `asis` : chiffres du HTML, verbatim). */
+  asisStats?: { num: string; label: string }[]
+  /** Phrase « problème » du bandeau (variante `asis`, `**…**` = mise en avant). */
+  asisProblem?: string
+  /** Bandeau de conclusion du processus as-is (variante `asis`, `**…**` = mise en avant). */
+  asisConclusion?: string
   /**
    * Jetons d'une palette documentaire (variante `palette`, figure du mémoire) :
    * chaque pastille est un hex de `template_memoire/typst/theme.typ`. Ici la
@@ -404,6 +412,25 @@ export interface PaletteSwatch {
   inkOnSwatch?: boolean
   /** Groupe d'appartenance ; les pastilles consécutives d'un même groupe forment une rangée. */
   group?: string
+}
+
+/** Un outil du processus as-is : nom et précision (fichier, canal…). */
+export interface AsisTool {
+  name: string
+  kind: string
+}
+
+/** Une rupture entre deux outils : libellé sous la pastille `!`. */
+export interface AsisBreak {
+  label: string
+}
+
+/** Une phase du processus as-is : titre, chaîne d'outils et ruptures entre eux.
+ * `breaks[i]` s'intercale entre `tools[i]` et `tools[i+1]`. */
+export interface AsisPhase {
+  title: string
+  tools: AsisTool[]
+  breaks: AsisBreak[]
 }
 
 export type EntityNode = Node<EntityNodeData, 'entity'>
