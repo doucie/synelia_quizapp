@@ -373,14 +373,12 @@ export interface StackflowFlow {
   up: string
 }
 
-/** Un niveau MoSCoW : nom, effectif, sous-titre, teinte, tags, note éventuelle. */
+/** Un niveau MoSCoW : nom, effectif, teinte, tags. */
 export interface MoscowLevel {
   name: string
   count: string
-  sub: string
   color: string
   tags: string[]
-  note?: string
 }
 
 /** Un jeton de palette : nom du jeton, hex verbatim, usage, texte encre sur la pastille. */

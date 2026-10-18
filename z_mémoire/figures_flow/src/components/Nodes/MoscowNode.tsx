@@ -1,50 +1,42 @@
 import type { EntityNodeData } from '../../types'
-import { hsla } from '../../utils/color'
 
 /**
  * Priorisation MoSCoW (figure du mémoire, Fig. 23) : pyramide des besoins du
  * MVP — verbatim de `figures_html/pyramide_moscow.html` (4 niveaux
  * MUST/SHOULD/COULD/WON'T, 18/12/8/5 besoins).
  *
- * Nœud composite unique, zéro arête React Flow (précédent `LevelsNode`,
- * fig. 17) : pyramide SVG + cartes de niveaux en flux, seule la largeur est
- * posée (`exportWidth`), jamais `height` (invariant n°1). Aucune `<Handle>`.
+ * Nœud composite unique, zéro arête React Flow : pyramide + cartes de niveaux
+ * en flux, seule la largeur est posée (`exportWidth`), jamais `height`
+ * (invariant n°1). Aucune `<Handle>`.
  *
- * Style Gouvernance (`OrgNode`) : cartes `border-left 5px` + tint `hsla 0.07`,
+ * La pyramide est un empilement de 4 `<div>` en `flex: 1` découpés par
+ * `clip-path` en pourcentages : la hauteur des bandes suit l'étirement de la
+ * colonne (racine en `items-stretch`) et le triangle a donc exactement la
+ * hauteur de la colonne de cartes à sa droite, à l'écran comme à l'export
+ * (le font-scale 4/3 n'influence que la hauteur des cartes, sans jamais
+ * désaligner les deux blocs). Le sommet est en x=50 % / y=0.
+ *
+ * Palette documentaire : jetons `--fig-*` posés dans `moscow_pyramide.ts`
+ * (danger/warning/secondary/neutral, comme fig. 8 ; axe en `--fig-frame`),
+ * tint `tinted()` = `color-mix` (les jetons `var()` traversent `hsla`),
  * corps en `calc(var(--org-font-scale,1)*Npx)` inline, texte petit en
- * `foreground/85`. Les gradients du source deviennent des aplats unis, les
- * teintes restent sémantiques (rouge/orange/bleu/gris) : rouge 0, orange 30,
- * bleu 200 conservés, gris hors accent traité en `var(--muted)` (le liseré
- * `border-left` porte la sémantique, le fond reste neutre).
+ * `foreground/85`. Les gradients du source deviennent des aplats unis ; le
+ * texte des bandes se lit en `--fig-soft` (presque-blanc sur les teintes
+ * saturées du thème clair, ardoise sur les teintes claires du thème sombre).
+ * Le liseré `border-left` porte la sémantique, le fond de la carte WON'T
+ * reste neutre en `hsl(var(--muted))`.
  */
 
 const LEVEL_SIZE = 21
 const COUNT_SIZE = 15
 const CARD_LABEL_SIZE = 18
-const CARD_SUB_SIZE = 15
 const TAG_SIZE = 15
-const NOTE_SIZE = 14
 const AXIS_SIZE = 15
 
-const SVG_W = 420
-const SVG_H = 440
-const PYRAMID_W = 420
-const AXIS = 'hsl(215, 16%, 65%)'
-
-/** Points des 4 aires, du sommet vers la base (source `pyramide_moscow.html`). */
-const POLYGONS: string[] = [
-  '210,20 259,105 161,105',
-  '161,105 259,105 308,190 112,190',
-  '112,190 308,190 357,275 63,275',
-  '63,275 357,275 405,360 15,360',
-]
-/** Ordre haut→bas : nom court, y du nom, y de l'effectif. */
-const LABELS: { short: string; yName: number; yCount: number }[] = [
-  { short: 'MUST', yName: 70, yCount: 88 },
-  { short: 'SHOULD', yName: 153, yCount: 170 },
-  { short: 'COULD', yName: 240, yCount: 257 },
-  { short: "WON'T", yName: 325, yCount: 342 },
-]
+const PYRAMID_W = 640
+/** Gris contour de la palette documentaire (l'axe est une déco, jamais sémantique —
+ * cf. `--fig-frame`, version sombre dans `index.css`). */
+const AXIS = 'var(--fig-frame)'
 
 /** Même convention que les autres figures d'impression : `--org-font-scale`
  * est déjà recopiée pendant l'export SVG. */
@@ -52,61 +44,83 @@ function px(value: number) {
   return { fontSize: `calc(var(--org-font-scale, 1) * ${value}px)` }
 }
 
+/**
+ * Bande *i* (0 = sommet) du triangle : les 4 bandes sont égales en hauteur,
+ * la demi-largeur croît linéairement de 0 % (apex, x = 50 %) à 50 % (base
+ * pleine). En pourcentages, le clip suit toute hauteur de colonne.
+ */
+function bandClip(i: number): string {
+  const topHalf = 12.5 * i
+  const bottomHalf = 12.5 * (i + 1)
+  const leftTop = 50 - topHalf
+  const rightTop = 50 + topHalf
+  const leftBottom = 50 - bottomHalf
+  const rightBottom = 50 + bottomHalf
+  return `polygon(${leftTop}% 0%, ${rightTop}% 0%, ${rightBottom}% 100%, ${leftBottom}% 100%)`
+}
+
 function cardTint(color: string, i: number): string | undefined {
-  return i === LABELS.length - 1 ? 'hsl(var(--muted))' : hsla(color, 0.07)
+  return i === 3 ? 'hsl(var(--muted))' : tinted(color, 7)
+}
+
+/** Teinte derrière contenu : `color-mix` accepte un jeton CSS var(...) en
+ * couleur de base (résolu par computed styles, contrairement à `hsla`). */
+function tinted(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
 }
 
 export default function MoscowNode({ data }: { data: EntityNodeData }) {
   const levels = data.moscowLevels ?? []
   return (
-    <div data-export-root className="flex w-full items-start" style={{ width: data.exportWidth, gap: 30 }}>
-      {/* Pyramide : 4 aires en aplats, axe de priorité à gauche. */}
-      <svg
-        width={PYRAMID_W}
-        height={(SVG_H / SVG_W) * PYRAMID_W}
-        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-        className="shrink-0"
-        style={{ display: 'block' }}
-      >
-        {POLYGONS.map((points, i) => (
-          <polygon key={points} points={points} fill={levels[i]?.color ?? AXIS} />
-        ))}
-        {LABELS.map((l, i) => (
-          <g key={l.short}>
-            <text
-              x={210}
-              y={l.yName}
-              textAnchor="middle"
-              fill="#fff"
-              fontWeight={800}
-              style={px(LEVEL_SIZE)}
-            >
-              {l.short}
-            </text>
-            <text x={210} y={l.yCount} textAnchor="middle" fill="rgba(255,255,255,0.8)" style={px(COUNT_SIZE)}>
-              {levels[i]?.count ?? ''}
-            </text>
-          </g>
-        ))}
-        <line x1={14} y1={360} x2={14} y2={30} stroke={AXIS} strokeWidth={1.8} />
-        <polygon points="14,24 10,34 18,34" fill={AXIS} />
-        <text
-          x={12}
-          y={195}
-          textAnchor="middle"
-          fill={AXIS}
-          fontWeight={600}
-          transform="rotate(-90 12 195)"
-          style={px(AXIS_SIZE)}
+    <div data-export-root className="flex w-full" style={{ width: data.exportWidth, gap: 30 }}>
+      {/* Axe de priorité : flèche en haut, trait, libellé vertical bas → haut. */}
+      <div className="flex shrink-0 flex-col items-center" style={{ width: 28, padding: '2px 0' }}>
+        <svg width={12} height={9} viewBox="0 0 12 9" style={{ display: 'block' }}>
+          <polygon points="6,0 0,9 12,9" fill={AXIS} />
+        </svg>
+        <div className="flex-1" style={{ width: 1.8, backgroundColor: AXIS, margin: '3px 0' }} />
+        <span
+          className="font-semibold"
+          style={{
+            ...px(AXIS_SIZE),
+            color: AXIS,
+            letterSpacing: 2,
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            margin: '4px 0',
+          }}
         >
           PRIORITÉ
-        </text>
-      </svg>
+        </span>
+      </div>
+
+      {/* Pyramide : 4 aires égales en `flex: 1`, découpées en pourcentages. */}
+      <div className="flex shrink-0 flex-col" style={{ width: PYRAMID_W }}>
+        {levels.map((lv, i) => (
+          <div
+            key={lv.name}
+            className="relative flex min-w-0 justify-center"
+            style={{ flex: 1, clipPath: bandClip(i), backgroundColor: lv.color }}
+          >
+            {/* Libellé ancré sous le centre de la bande (verbatim : ~60/70 %
+            de la bande) — la zone du triangle y est plus large, le texte ne
+            sort jamais du polygone. */}
+            <div
+              className="absolute flex flex-col items-center"
+              style={{ left: '50%', top: '58%', transform: 'translate(-50%, -35%)', gap: 1 }}
+            >
+              <span className="font-bold" style={{ ...px(LEVEL_SIZE), color: 'var(--fig-soft)' }}>
+                {lv.name.split(' ')[0]}
+              </span>
+              <span style={{ ...px(COUNT_SIZE), color: 'var(--fig-soft)', opacity: 0.8 }}>{lv.count}</span>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Cartes de niveaux : `border-left` coloré + fond teinté. */}
       <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 10 }}>
         {levels.map((lv, i) => {
-          const last = i === LABELS.length - 1
           return (
             <div
               key={lv.name}
@@ -123,9 +137,6 @@ export default function MoscowNode({ data }: { data: EntityNodeData }) {
                 <span className="font-bold text-foreground" style={px(CARD_LABEL_SIZE)}>
                   {lv.name} — {lv.count}
                 </span>
-                <span className="text-foreground/85" style={px(CARD_SUB_SIZE)}>
-                  {lv.sub}
-                </span>
               </div>
               <div className="flex flex-wrap" style={{ gap: 6 }}>
                 {lv.tags.map((tag) => (
@@ -136,20 +147,15 @@ export default function MoscowNode({ data }: { data: EntityNodeData }) {
                       ...px(TAG_SIZE),
                       padding: '4px 11px',
                       borderRadius: 12,
-                      color: last ? 'hsl(var(--muted-foreground))' : lv.color,
-                      backgroundColor: last ? 'hsl(var(--background))' : hsla(lv.color, 0.14),
-                      border: `1px solid ${last ? 'hsl(var(--border))' : hsla(lv.color, 0.3)}`,
+                      color: lv.color,
+                      backgroundColor: tinted(lv.color, 10),
+                      border: `1px solid ${tinted(lv.color, 30)}`,
                     }}
                   >
                     {tag}
                   </span>
                 ))}
               </div>
-              {lv.note && (
-                <span className="block text-foreground/85 italic" style={{ ...px(NOTE_SIZE), marginTop: 6 }}>
-                  {lv.note}
-                </span>
-              )}
             </div>
           )
         })}

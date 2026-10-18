@@ -10,12 +10,14 @@ import type { DiagramDefinition } from '../../types'
  * Nœud composite unique, zéro arête (voir `MoscowNode`).
  */
 
-const W = 1150
+const W = 1370
 
-const MUST = 'hsl(0, 100%, 40%)'
-const SHOULD = 'hsl(30, 100%, 40%)'
-const COULD = 'hsl(200, 100%, 40%)'
-const WONT = 'hsl(215, 16%, 65%)'
+// Couleurs de la palette documentaire (jetons --fig-*, version sombre dans
+// `index.css`), échelle de priorité red/amber/navy/neutral comme fig. 8.
+const MUST = 'var(--fig-danger)'
+const SHOULD = 'var(--fig-warning)'
+const COULD = 'var(--fig-secondary)'
+const WONT = 'var(--fig-neutral)'
 
 export const moscowPyramide: DiagramDefinition = {
   id: 'memoire-moscow-pyramide',
@@ -37,7 +39,6 @@ export const moscowPyramide: DiagramDefinition = {
           {
             name: 'MUST HAVE',
             count: '18 besoins',
-            sub: 'Indispensables · Aucun contournement',
             color: MUST,
             tags: [
               'Candidature publique',
@@ -55,7 +56,6 @@ export const moscowPyramide: DiagramDefinition = {
           {
             name: 'SHOULD HAVE',
             count: '12 besoins',
-            sub: 'Importants · Contournables en MVP',
             color: SHOULD,
             tags: [
               'Dashboard admin',
@@ -65,20 +65,16 @@ export const moscowPyramide: DiagramDefinition = {
               'Logos personnalisables',
               'Recherche avancée',
             ],
-            note: 'Ajoutés en phase V1.1',
           },
           {
             name: 'COULD HAVE',
             count: '8 besoins',
-            sub: 'Souhaitables · Si le temps le permet',
             color: COULD,
             tags: ['Mode hors-ligne quiz', 'Intégration LinkedIn', 'Gamification scores', 'Multi-langue FR/EN'],
-            note: 'Envisagés en V1.2+',
           },
           {
             name: "WON'T HAVE",
             count: '5 besoins',
-            sub: 'Exclus · Reportés à V2',
             color: WONT,
             tags: ['IA matching CV/offre', 'Vidéo-conférence intégrée', 'Signature électronique'],
           },
