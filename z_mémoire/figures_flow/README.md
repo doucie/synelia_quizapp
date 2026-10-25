@@ -215,7 +215,7 @@ Tous dans `src/diagrams/archive/`, avec `// @ts-nocheck` et `category: 'archive'
 
 | Type | Fichier | Description |
 |------|---------|-------------|
-| Palette | `src/diagrams/palette/` | Couleurs et styles des entités |
+| Palette | `src/diagrams/palette/` | Couleurs et styles des entités ; palette documentaire Typst (`theme.typ`) |
 | MOT v2 | `src/diagrams/mot/` | Matrice acteurs × traitements |
 
 **Légende** :

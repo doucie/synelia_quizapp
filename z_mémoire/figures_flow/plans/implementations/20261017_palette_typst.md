@@ -72,4 +72,71 @@ fig. 18, harmonisation ultérieure possible).
 - [x] `npx tsc --noEmit` + `npx vite build` OK
 - [ ] vérif visuelle (`npm run dev`) : teinte 0,07 de l'en-tête/Synelia toujours peinte
 
+## Addenda 20261020 — `accent_soft` rejoint la rangée « Jetons du thème »
+
+La rangée du thème doit être **verbatim et exhaustive** : `theme.typ` contient 7
+jetons, la figure n'en montrait que 6 (`accent_soft` avait été exclu du cahier
+initial). Ajout entre `accent` et `line` (ordre de `theme.typ`), `inkOnSwatch`
+(jeton clair). Usages sourcés : tableaux alternés (`theme.typ:114`),
+`note-box` (`theme.typ:202-207`), cartes Merise (`sections/body.typ:887,901,915`).
+`W` passe de 1160 à **1280** : la rangée Thème passe à 7 cartes (~160 px au lieu
+de ~180) et le nom `accent_soft` doit tenir sur une ligne pour ne pas casser
+l'alignement de la rangée ; fallback si ça dépasse au rendu : réduire
+`NAME_SIZE` d'un cran (jamais de wrap).
+
+- [x] `palette_typst.ts` : `accent_soft` + `W` 1280 + commentaire d'en-tête
+      (7 jetons, usages sourcés)
+- [x] `PaletteNode.tsx` inchangé (data-driven, `toGroups` by `group`)
+- [x] `npx vite build` OK — ⚠ `npx tsc --noEmit` : 132 lignes d'erreurs
+      **préexistantes** (WIP session 20261019, fig. 23/24, tous fichiers hors
+      `palette_typst.ts` ; comptage identique avec/sans la modif, vérif par
+      stash) — à régler sur le lot folklorique claude, pas ici
+- [ ] vérif visuelle (`npm run dev`) : nom `accent_soft` sur une ligne, aucune
+      rangée désalignée
+
+## Addenda 20261020 bis — rangée « chromatiques » (3 hues franches)
+
+Retour utilisateur : les pâles/neutres manquent de relief, il faut des teintes
+franches. Nouvelle 3ᵉ rangée (groupe distinct, sinon la rangée « Proposition »
+passerait à 9+ cartes trop étroites : le mélange forcerait le wrap des noms).
+Même échelle Chakra v1 que le reste des propositions.
+
+| jeton | hex | usage | Chakra |
+|---|---|---|---|
+| yellow | `#ecc94b` | Surlignage, points d'attention | yellow.500 |
+| purple | `#805ad5` | Badges et étiquettes | purple.600 |
+| pink | `#d53f8c` | Accents secondaires | pink.600 |
+
+Suites de la séance : `cyan #00b5d8` ajouté puis **retiré le jour même** (retour
+« too much » ; dans l'échelle Chakra, les hues restantes — blue/orange/teal/
+green — collisionnent toutes avec des jetons déjà affichés, donc pas de
+remplacement). `yellow` en `inkOnSwatch` (jaune clair) ; `W` inchangé (1280) ;
+**16** pastilles en 3 groupes (7 thème + 6 sémantiques/neutres + 3 chroma).
+
+- [x] `palette_typst.ts` : `CHROMA = 'Proposition — chromatiques (à valider)'`
+      + 4 entrées + commentaire d'en-tête (10 propositions)
+- [x] `PaletteNode.tsx` inchangé (groupes calculés via `toGroups`)
+- [x] `npx vite build` OK — `tsc --noEmit` : erreurs préexistantes WIP
+      fig. 23/24 inchangées (cf. addenda précédent)
+- [ ] vérif visuelle (`npm run dev`) : 3 rangées alignées, noms jamais wrappés
+
+## Addenda 20261025 — reclassée en catégorie `palette`
+
+Demande utilisateur : la figure vit sous « Palette » dans la sidebar, pas sous
+« Mémoire ». `category: 'palette'` + `git mv src/diagrams/memoire/palette_typst.ts
+→ src/diagrams/palette/palette_typst.ts` (les dossiers reflètent les catégories).
+
+**Id, URL et export inchangés** (`memoire-palette-typst`) : pas de casse des liens
+`/memoire-palette-typst`, de la clé localStorage ni du nom du SVG exporté.
+Aucun changement de rendu : `rigidLayout`, `fontScale: 4/3`, fonte Cabinet Grotesk
+et `W = 1280` sont portés par la définition. `category` n'est lu que par
+`Sidebar` (regroupement) et `DiagramCanvas` (`isTraitement`), tous deux insensibles
+au passage `memoire → palette`.
+
+- [x] `git mv` + `category: 'palette'` + commentaire d'en-tête (id conservé)
+- [x] `diagrams/index.ts` : import déplacé, entrée sortie du bloc Mémoire
+      (`23 + 2 Claude`) vers `Palette (2)`, après `color_palette`
+- [x] Docs : `AGENTS.md` (ligne du tableau), `README.md` (ligne Palette)
+- [ ] vérif visuelle (`npm run dev`) : figure sous « Palette », dernier groupe
+
 

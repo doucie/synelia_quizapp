@@ -54,7 +54,7 @@ import { benchmarkMatrice as memoireBenchmark } from './memoire/benchmark_matric
 import { stackFlux as memoireStackFlux } from './memoire/stack_flux'
 import { moscowPyramide as memoireMoscowPyramide } from './memoire/moscow_pyramide'
 import { pyramideTests as memoirePyramideTests } from './memoire/pyramide_tests'
-import { paletteTypst as memoirePaletteTypst } from './memoire/palette_typst'
+import { paletteTypst as memoirePaletteTypst } from './palette/palette_typst'
 import { processusAsIs as memoireProcessusAsIs } from './memoire/processus_as_is'
 import { besoinSolution as memoireBesoinSolution } from './memoire/besoin_solution'
 import { objectifsPyramide as memoireObjectifsPyramide } from './memoire/objectifs_pyramide'
@@ -152,7 +152,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (26) ---
+  // --- Mémoire (25) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -175,13 +175,13 @@ export const diagrams: DiagramDefinition[] = [
   memoireStackFlux,
   memoireMoscowPyramide,
   memoirePyramideTests,
-  memoirePaletteTypst,
   memoireProcessusAsIs,
   memoireBesoinSolution,
   memoireObjectifsPyramide,
 
-  // --- Palette (1) ---
+  // --- Palette (2) ---
   colorPalette,
+  memoirePaletteTypst,
 
   // --- Archive (43) ---
   archMcdIdentite,
