@@ -338,6 +338,7 @@ figures_flow/
 │   │   └── DiagramCanvas.tsx
 │   ├── hooks/
 │   │   ├── useDiagramPersistence.ts
+│   │   ├── useDiagramRoute.ts   # URL par figure : pushState / popstate
 │   │   ├── useDiagramState.ts
 │   │   ├── useFontPreference.ts
 │   │   └── useSidebarState.ts
@@ -366,11 +367,22 @@ npm install
 npm run dev
 ```
 
-Ouvrir l'URL affichée (généralement `http://localhost:5173`).
+Ouvrir l'URL affichée (généralement `http://localhost:5173`). Chaque figure a sa
+propre adresse — `http://localhost:5173/memoire-arbre-sgbd`,
+`http://localhost:5173/organigramme-synelia-avec-ag` — donc une figure est
+rechargeable, partageable et ouvrable dans un onglet dédié. Toute autre URL (`/`,
+id inconnu) est normalisée vers la figure affichée.
 
 ## Fonctionnalités
 
 - Navigation entre les diagrammes via une sidebar (Merise + Traitements + Archive)
+- **Une URL par figure** (`/<id>`) : l'URL est la source de vérité (un onglet = une
+  figure, même avec plusieurs onglets ouverts), Précédent/Suivant parcourent les
+  figures visitées, F5 conserve la figure. Cf.
+  `plans/implementations/20261025_routing_url_figures.md`.
+- **Clic droit sur une entrée de la sidebar** → « Ouvrir dans un nouvel onglet » /
+  « Copier l'adresse du lien » (les entrées sont de vraies ancres, Ctrl+clic et
+  clic-milieu fonctionnent aussi) ; le titre de l'onglet est celui de la figure.
 - Drag & drop des entités (positions persistées dans localStorage)
 - Zoom avant/arrière, fit to view
 - Grille d'aimantation (10px)

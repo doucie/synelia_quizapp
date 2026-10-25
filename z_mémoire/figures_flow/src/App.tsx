@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import DiagramCanvas from './components/DiagramCanvas'
@@ -10,16 +10,21 @@ import { diagrams, getDiagram } from './diagrams'
 import { exportSvg } from './utils/exportSvg'
 import { exportPositions } from './utils/exportPositions'
 import { useSidebarState } from './hooks/useSidebarState'
+import { useDiagramRoute } from './hooks/useDiagramRoute'
 
 export default function App() {
   const { expanded, toggle, activeDiagramId, setActiveDiagramId } = useSidebarState()
-  const [activeDiagram, setActiveDiagram] = useState<DiagramDefinition | null>(() => {
-    if (activeDiagramId) {
-      const restored = getDiagram(activeDiagramId)
-      if (restored) return restored
-    }
-    return diagrams[0] ?? null
-  })
+  const { routeId, navigate } = useDiagramRoute()
+
+  /* L'URL est la source de vérité : un onglet = une figure. `localStorage` ne
+     sert plus que de repli pour une arrivée sur `/`, sinon deux onglets sur deux
+     figures se voleraient l'état actif (dernier monté gagnait). */
+  const activeDiagram = useMemo<DiagramDefinition | null>(() => {
+    const routed = routeId ? getDiagram(routeId) : undefined
+    if (routed) return routed
+    const restored = activeDiagramId ? getDiagram(activeDiagramId) : undefined
+    return restored ?? diagrams[0] ?? null
+  }, [routeId, activeDiagramId])
   const [showBackground, setShowBackground] = useState(() => {
     try { return localStorage.getItem('figures_flow:background') !== 'false' } catch { return true }
   })
@@ -43,9 +48,28 @@ export default function App() {
     window.location.reload()
   }, [activeDiagram])
 
+  const handleSelectDiagram = useCallback((diagram: DiagramDefinition) => {
+    // `pushState` : Précédent/Suivant parcourent les figures visitées.
+    navigate(diagram.id)
+  }, [navigate])
+
   useEffect(() => {
     if (activeDiagram) setActiveDiagramId(activeDiagram.id)
   }, [activeDiagram, setActiveDiagramId])
+
+  /* URL normalisée : `/` et les ids inconnus pointent vers la figure réellement
+     affichée, sans nouvelle entrée d'historique. Inerte une fois l'URL alignée
+     (`replace` → `routeId === activeDiagram.id`), donc aucune boucle. */
+  useEffect(() => {
+    if (!activeDiagram) return
+    if (routeId === activeDiagram.id) return
+    navigate(activeDiagram.id, { replace: true })
+  }, [activeDiagram, routeId, navigate])
+
+  /* Titre d'onglet : c'est lui qui distingue les onglets ouverts par clic droit. */
+  useEffect(() => {
+    document.title = activeDiagram ? `${activeDiagram.title} — Figures Flow` : 'Figures Flow'
+  }, [activeDiagram])
 
   useEffect(() => {
     if (!fullscreen) return
@@ -61,7 +85,7 @@ export default function App() {
       {!fullscreen && (
         <Sidebar
           activeId={activeDiagram?.id ?? ''}
-          onSelect={setActiveDiagram}
+          onSelect={handleSelectDiagram}
           expanded={expanded}
           onToggle={toggle}
         />
@@ -96,7 +120,7 @@ export default function App() {
           {fullscreen && (
             <FullscreenOverlay
               activeId={activeDiagram?.id ?? ''}
-              onSelect={setActiveDiagram}
+              onSelect={handleSelectDiagram}
               expanded={expanded}
               onToggle={toggle}
               diagramTitle={activeDiagram?.title ?? null}

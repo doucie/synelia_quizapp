@@ -59,17 +59,29 @@ export default function Sidebar({ activeId, onSelect, expanded, onToggle }: Side
               {expanded[cat.key] && (
                 <div className="ml-2 flex flex-col gap-0.5">
                   {catDiagrams.map((d) => (
-                    <button
+                    /* Vraie ancre (et non un bouton) : le menu contextuel du
+                       navigateur retrouve « Ouvrir dans un nouvel onglet » et
+                       « Copier l'adresse du lien », et Ctrl/clic-milieu
+                       fonctionnent nativement. Le clic gauche simple est
+                       intercepté pour rester dans la SPA (pushState). */
+                    <a
                       key={d.id}
-                      onClick={() => onSelect(d)}
-                      className={`rounded-md px-3 py-1.5 text-left text-xs transition-colors ${
+                      href={`/${d.id}`}
+                      title={d.title}
+                      aria-current={activeId === d.id ? 'page' : undefined}
+                      onClick={(e) => {
+                        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+                        e.preventDefault()
+                        onSelect(d)
+                      }}
+                      className={`block rounded-md px-3 py-1.5 text-left text-xs transition-colors ${
                         activeId === d.id
                           ? 'bg-primary/10 font-medium text-primary'
                           : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {d.domain}
-                    </button>
+                    </a>
                   ))}
                 </div>
               )}
