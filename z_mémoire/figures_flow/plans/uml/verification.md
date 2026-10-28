@@ -202,24 +202,53 @@
 - [x] Front Angular : requiert API REST (`:8085`, proxy `proxy.conf.json`),
       servi par `ng serve` (pas de serveur front dédié).
 
-## ARCHI-2 — `deploiement_syneliaquizapp.svg` : À REPLANIFIER
+## ARCHI-2 — `deploiement_cible_syneliaquizapp.svg` : CIBLE, conservé
 
-- [x] **Un seul nœud**, pas trois machines : tout tourne local (MySQL
-      externe 3306, Spring 8085, Angular 4200, Redis 6379, MinIO 9000/9001
-      dans Compose, SMTP externe). Aucun Dockerfile, un seul
-      `docker-compose.yml` (redis + minio).
-- [x] Ports : **8085** (pas 8080), 587/STARTTLS par défaut non seedés,
-      HTTPS = supposition sans preuve → retirer ou marquer hypothèse.
-- [x] **Doublon avec notre fig. 16 `memoire-deploiement-local`** (déjà
-      vérifiée, ports 4200/8080??/3306/6379/9000-9001) : soit abandon du
-      déploiement UML (avis Claude : abandon si schéma équivalent existe),
-      soit une seule figure fusionnée. ⚠️ Dans tous les cas, traiter le
-      conflit `:8080` vs `:8085` réel (cf. socle).
+Décision 20261025 (règle « les figures montrent la cible »,
+`archi_regles.md` addenda 20261025) : **ce n'est pas un doublon** de la fig. 16.
+`memoire-deploiement-local` montre le déploiement **existant** (un seul poste,
+§ 6.6) ; ce diagramme montre le déploiement **cible** (serveur web nginx,
+applicatif, données, CI/CD). Deux points de vue, deux figures, les deux restent.
+
+- [x] Notation de statut retirée (20261025) : contours pleins partout, mentions
+      « proposé » supprimées, légende existant/cible supprimée, note de bas de
+      figure déplacée en légende du mémoire, `viewBox` recadré (680 × 656).
+- [x] Contenu aligné sur la cible, pas sur l'état du dépôt : nginx (reverse proxy
+      + build Angular), CI/CD, MinIO pour les CV. Aucun de ces éléments n'existe
+      aujourd'hui — c'est admis, c'est l'objet de la figure.
+- [x] Ports : 443 (HTTPS), 8085 (API), 3306, 6379, 9000, 587/STARTTLS —
+      cohérents avec le code (8085, pas 8080). ⚠️ Le conflit `:8080` vs `:8085`
+      relevé sur la fig. 16 se traite dans la figure du mémoire, pas ici.
+- [x] Pas de fusion avec ARCHI-1 : un composant n'est pas un nœud de déploiement.
+- [ ] Légende à mettre sous la figure dans `body.typ` (elle quitte le SVG et
+      reste porteuse de l'écart réel/cible) : « Déploiement cible ; aujourd'hui,
+      un seul poste de développement (figure 16). »
+
+## Audit des pointillés (20261025)
+
+**58** éléments pointillés relevés sur les 15 SVG livrés (chaque élément porte
+`stroke-dasharray` en attribut **et** en `style` → 116 occurrences brutes).
+Après nettoyage : **49**, tous conventionnels.
+
+| Famille | Avant | Après | Verdict |
+|---|---|---|---|
+| `«include»`/`«extend»` (7 UC) | 16 | 16 | convention |
+| Dépendances (`composants_v3`) | 10 | 10 | règle 5, aucune forme pointillée |
+| Séquences (8 lifelines, 4 séparateurs `alt`/`opt`, 11 retours) | 23 | 23 | convention |
+| UC cerclés + puces « droit contextuel » (2 UC recruteur) | 6 | 0 | notation inventée → contours pleins |
+| Filets séparateurs (2 états) | 3 | 0 | mise en page → supprimés |
+
+Les 4 notes de bas de figure qui commentaient le code (« défini dans le code
+mais jamais utilisé », « l'endpoint update contourne la matrice ») sont
+supprimées : la figure montre la cible, pas les trous de l'existant. Détail,
+provenance (Claude, pas Muse Spark) et `viewBox` :
+`plans/implementations/20261025_uml_pointilles_audit.md`.
 
 ## Prochaine étape (triage, après validation demandeur)
 
 - Corps probables : UC global (+ Super admin), UC candidat, SEQ quiz
-  (replanifiée), ÉTATS étape (corrigée), COMPOSANTS (corrigé).
-- Annexe/abandon à trancher : UC ×3 restantes, déploiement (doublon
-  fig. 16), classes (abandon déjà acté par Claude), états évaluation/quiz
+  (replanifiée), ÉTATS étape (corrigée), COMPOSANTS (corrigé), DÉPLOIEMENT
+  cible (20261025 : plus un doublon, cf. ARCHI-2).
+- Annexe/abandon à trancher : UC ×3 restantes, classes (abandon déjà acté par
+  Claude), états évaluation/quiz
   (abandon confirmé).

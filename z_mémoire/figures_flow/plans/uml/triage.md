@@ -26,4 +26,9 @@ Oui, tu peux en abandonner plusieurs, et tu devrais le faire. Un mémoire est ju
 
 Dans le corps, tu peux viser environ 10 à 12 figures pour toute la modélisation : 3 ou 4 pour Merise et 6 à 8 pour UML. Les autres vont en annexe, ce qui montre que ton travail est complet sans alourdir la lecture.
 
+> **Décision 20261025 (figures_flow)** : le déploiement va **dans le corps**.
+> La fig. 16 `memoire-deploiement-local` montre l'existant (un seul poste) et ne
+> remplace donc pas un schéma de la cible — cf. `archi_regles.md` addenda
+> 20261025 et `verification.md` ARCHI-2.
+
 Vérifie avec ton école si les annexes comptent dans la limite de pages. Si elles ne comptent pas, déplacer les figures secondaires en annexe est la solution la plus simple. Si elles comptent, abandonne plutôt les diagrammes de cas d'utilisation répétitifs et le déploiement.

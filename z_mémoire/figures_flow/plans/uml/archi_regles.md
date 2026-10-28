@@ -36,3 +36,41 @@ Ton IA dans VSCode peut vérifier tout ça rapidement. Voici un prompt :
 > Liste-moi les modules ou packages Java principaux du backend et les dépendances entre eux, ainsi que les bibliothèques utilisées pour la base de données, les emails et les migrations. Lis aussi le Dockerfile, le docker-compose et les fichiers de configuration (`application*.properties` ou `.yml`) s'ils existent, et donne-moi les ports, les protocoles et la structure du déploiement. Ne me montre aucun mot de passe ni secret.
 
 Il te reste surtout le diagramme de classes ciblé. Je te conseille de le faire sur un seul module intéressant, comme le moteur de pipeline, pour montrer ta conception logicielle sans refaire le MCD.
+
+---
+
+## Addenda 20261025 — règle projet : les figures montrent la cible
+
+> Ajout figures_flow (tout ce qui précède est le verbatim de Claude).
+
+L'application n'est pas terminée et le code contient des défauts : une figure qui
+s'accroche strictement à l'existant fige des bugs. **Les figures d'architecture
+représentent ce qui doit être**, le code n'étant que la meilleure référence
+disponible.
+
+1. **Référence, pas périmètre** — le code donne le nommage, les technos
+   réellement choisies, les ports, les protocoles ; il ne fixe pas ce qui est
+   dessiné.
+2. **Aucune notation de statut** — pas de contour pointillé « à faire », pas de
+   mention « proposé », pas de légende existant/cible. Tout élément représenté
+   est dessiné avec la même notation pleine.
+3. **Le pointillé reste réservé** à la règle 5 (dépendance sans interface
+   formalisée), aux `«include»`/`«extend»` (cas d'utilisation), aux lifelines,
+   retours et séparateurs `alt`/`opt` (séquence), et au trait d'une **note**
+   UML. Jamais pour une catégorie métier (« soumis à un droit contextuel »),
+   un filet de séparation entre sections, ni un statut. Corollaire : une note
+   qui sert à expliquer une règle métier est un rectangle à coin plié relié
+   par un trait pointillé, pas une puce pointillée en bas de figure.
+4. **Réel ≠ cible** — l'écart se dit dans la légende du mémoire (sous la figure)
+   ou dans `verification.md`, jamais dans le dessin.
+5. **Hors périmètre** — un élément qui n'est pas prévu est omis (règle 8 : 5 à
+   10 composants) ou dessiné en externe gris hors frontière (règle 7), jamais une
+   boîte pointillée à l'intérieur.
+6. **Un cadre = un point de vue** — pas de mélange existant + cible dans la même
+   figure. L'existant, s'il est montré, a sa propre figure (ex. fig. 16
+   `memoire-deploiement-local`).
+
+Corollaire : « est-ce que ça existe vraiment ? » ne se pose plus élément par
+élément dans le dessin ; la question se pose une fois, à la relecture du contenu
+contre le code (`verification.md`).
+
