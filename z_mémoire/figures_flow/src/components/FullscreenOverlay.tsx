@@ -6,6 +6,8 @@ import type { DiagramDefinition } from '../types'
 interface FullscreenOverlayProps {
   activeId: string
   onSelect: (diagram: DiagramDefinition) => void
+  /** Navigation brute (pages d'édition), transmise telle quelle à la sidebar. */
+  onNavigate: (route: string) => void
   expanded: Record<string, boolean>
   onToggle: (key: string) => void
   diagramTitle: string | null
@@ -22,6 +24,7 @@ interface FullscreenOverlayProps {
 export default function FullscreenOverlay({
   activeId,
   onSelect,
+  onNavigate,
   expanded,
   onToggle,
   diagramTitle,
@@ -121,7 +124,9 @@ export default function FullscreenOverlay({
         <div className="absolute left-0 top-0 z-50 flex h-full" ref={sidebarRef}>
           <Sidebar
             activeId={activeId}
+            routeId={activeId}
             onSelect={onSelect}
+            onNavigate={onNavigate}
             expanded={expanded}
             onToggle={onToggle}
           />

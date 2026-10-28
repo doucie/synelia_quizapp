@@ -1,9 +1,15 @@
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import { diagrams } from '../diagrams'
+import { MODELS_ROUTE, MODEL_ROUTE_PREFIX } from '../editor/model'
+import { useModels } from '../editor/store'
 import type { DiagramDefinition, Category } from '../types'
 
 interface SidebarProps {
   activeId: string
+  /** Segment d'URL courant : `mes-modeles`, `modele-<id>` ou l'id d'une figure. */
+  routeId: string
   onSelect: (diagram: DiagramDefinition) => void
+  onNavigate: (route: string) => void
   expanded: Record<string, boolean>
   onToggle: (key: string) => void
 }
@@ -36,7 +42,24 @@ const categoryIcons: Record<Category, string> = {
   palette: '◉',
 }
 
-export default function Sidebar({ activeId, onSelect, expanded, onToggle }: SidebarProps) {
+export default function Sidebar({
+  activeId,
+  routeId,
+  onSelect,
+  onNavigate,
+  expanded,
+  onToggle,
+}: SidebarProps) {
+  const models = useModels()
+
+  /* Même politique que les figures : vraie ancre (menu contextuel, nouvel
+     onglet, copier le lien), clic gauche simple intercepté pour rester dans la
+     SPA. Ctrl/clic et bouton du milieu laissent le navigateur faire. */
+  const followLink = (event: ReactMouseEvent<HTMLAnchorElement>, route: string) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    onNavigate(route)
+  }
 
   return (
     <aside className="relative z-10 flex h-full w-[260px] flex-col border-r border-border bg-background">
@@ -44,6 +67,48 @@ export default function Sidebar({ activeId, onSelect, expanded, onToggle }: Side
         Figures Flow
       </div>
       <nav className="flex-1 overflow-y-auto p-2">
+        <div className="mb-2 border-b border-border pb-2">
+          <a
+            href={`/${MODELS_ROUTE}`}
+            aria-current={routeId === MODELS_ROUTE ? 'page' : undefined}
+            onClick={(e) => followLink(e, MODELS_ROUTE)}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+              routeId === MODELS_ROUTE
+                ? 'bg-primary/10 text-primary'
+                : 'text-foreground hover:bg-muted'
+            }`}
+          >
+            <span className="w-4">◫</span>
+            <span className="flex-1">Mes modèles</span>
+            <span className="text-[10px] opacity-50">{models.length}</span>
+          </a>
+
+          {models.length > 0 && (
+            <div className="ml-2 mt-0.5 flex flex-col gap-0.5">
+              {models.map((model) => {
+                const route = `${MODEL_ROUTE_PREFIX}${model.id}`
+                return (
+                  <a
+                    key={model.id}
+                    href={`/${route}`}
+                    title={model.title}
+                    aria-current={routeId === route ? 'page' : undefined}
+                    onClick={(e) => followLink(e, route)}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-colors ${
+                      routeId === route
+                        ? 'bg-primary/10 font-medium text-primary'
+                        : 'text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <span className="shrink-0 text-[9px] uppercase opacity-60">{model.kind}</span>
+                    <span className="truncate">{model.title}</span>
+                  </a>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         {categories.map((cat) => {
           const catDiagrams = diagrams.filter((d) => d.category === cat.key)
           return (

@@ -1,7 +1,11 @@
 import type { Node } from '@xyflow/react'
 import type { EntityNodeData, ProcessVariant } from '../types'
 
-const SAFE_HUES = [
+/**
+ * Teintes sûres, réutilisées par l'éditeur pour colorer une entité à sa création
+ * (la teinte est ensuite figée dans le document, cf. `editor/model.ts`).
+ */
+export const SAFE_HUES = [
   15, 225, 330, 285, 0, 240, 345, 300, 210, 315, 15, 270, 30, 255, 335, 275,
 ]
 

@@ -11,20 +11,44 @@ import { exportSvg } from './utils/exportSvg'
 import { exportPositions } from './utils/exportPositions'
 import { useSidebarState } from './hooks/useSidebarState'
 import { useDiagramRoute } from './hooks/useDiagramRoute'
+import ModelsPage from './editor/ModelsPage'
+import ModelEditor from './editor/ModelEditor'
+import { MODELS_ROUTE, MODEL_ROUTE_PREFIX } from './editor/model'
+
+/**
+ * Les pages d'édition vivent sous deux slugs d'un seul segment — `mes-modeles`
+ * et `modele-<id>` — parce que `useDiagramRoute` ne connaît que les URL de cette
+ * forme : un `/editeur/<id>` serait rejeté et renvoyé sur la figure par défaut.
+ */
+type EditorRoute = { page: 'list' } | { page: 'model'; id: string }
+
+function parseEditorRoute(routeId: string | null): EditorRoute | null {
+  if (!routeId) return null
+  if (routeId === MODELS_ROUTE) return { page: 'list' }
+  if (routeId.startsWith(MODEL_ROUTE_PREFIX)) {
+    return { page: 'model', id: routeId.slice(MODEL_ROUTE_PREFIX.length) }
+  }
+  return null
+}
 
 export default function App() {
   const { expanded, toggle, activeDiagramId, setActiveDiagramId } = useSidebarState()
   const { routeId, navigate } = useDiagramRoute()
+  const editorRoute = useMemo(() => parseEditorRoute(routeId), [routeId])
 
   /* L'URL est la source de vérité : un onglet = une figure. `localStorage` ne
      sert plus que de repli pour une arrivée sur `/`, sinon deux onglets sur deux
      figures se voleraient l'état actif (dernier monté gagnait). */
   const activeDiagram = useMemo<DiagramDefinition | null>(() => {
+    // Sur une page d'édition, aucune figure statique n'est affichée : résoudre
+    // un diagramme déclencherait l'effet de normalisation d'URL, qui rabattrait
+    // la route d'édition vers lui.
+    if (editorRoute) return null
     const routed = routeId ? getDiagram(routeId) : undefined
     if (routed) return routed
     const restored = activeDiagramId ? getDiagram(activeDiagramId) : undefined
     return restored ?? diagrams[0] ?? null
-  }, [routeId, activeDiagramId])
+  }, [routeId, activeDiagramId, editorRoute])
   const [showBackground, setShowBackground] = useState(() => {
     try { return localStorage.getItem('figures_flow:background') !== 'false' } catch { return true }
   })
@@ -68,8 +92,15 @@ export default function App() {
 
   /* Titre d'onglet : c'est lui qui distingue les onglets ouverts par clic droit. */
   useEffect(() => {
+    // La page d'édition d'un modèle pose son propre titre (il suit le document) ;
+    // ne pas l'écraser ici.
+    if (editorRoute?.page === 'model') return
+    if (editorRoute?.page === 'list') {
+      document.title = 'Mes modèles — Figures Flow'
+      return
+    }
     document.title = activeDiagram ? `${activeDiagram.title} — Figures Flow` : 'Figures Flow'
-  }, [activeDiagram])
+  }, [activeDiagram, editorRoute])
 
   useEffect(() => {
     if (!fullscreen) return
@@ -85,14 +116,16 @@ export default function App() {
       {!fullscreen && (
         <Sidebar
           activeId={activeDiagram?.id ?? ''}
+          routeId={routeId ?? ''}
           onSelect={handleSelectDiagram}
+          onNavigate={navigate}
           expanded={expanded}
           onToggle={toggle}
         />
       )}
       <div className="relative flex flex-1 flex-col">
         <ReactFlowProvider>
-          {!fullscreen && (
+          {!fullscreen && !editorRoute && (
             <Toolbar
               diagramTitle={activeDiagram?.title ?? null}
               showBackground={showBackground}
@@ -107,20 +140,34 @@ export default function App() {
               onResetPositions={handleResetPositions}
             />
           )}
-          <DiagramCanvas
-            /* La clé force le remontage au changement de figure : sans elle, l'effet
-               de réinitialisation dépendant de `diagram?.id` ne se rejoue pas quand
-               deux figures partagent le même id, et l'état précédent reste affiché. */
-            key={activeDiagram?.id ?? 'none'}
-            diagram={activeDiagram}
-            showBackground={showBackground}
-            fullscreen={fullscreen}
-            onNodesInitialized={() => {}}
-          />
+          {editorRoute?.page === 'list' && (
+            <ModelsPage onOpen={(id) => navigate(`${MODEL_ROUTE_PREFIX}${id}`)} />
+          )}
+          {editorRoute?.page === 'model' && (
+            <ModelEditor
+              key={editorRoute.id}
+              modelId={editorRoute.id}
+              onBack={() => navigate(MODELS_ROUTE)}
+              onOpenModel={(id) => navigate(`${MODEL_ROUTE_PREFIX}${id}`, { replace: true })}
+            />
+          )}
+          {!editorRoute && (
+            <DiagramCanvas
+              /* La clé force le remontage au changement de figure : sans elle, l'effet
+                 de réinitialisation dépendant de `diagram?.id` ne se rejoue pas quand
+                 deux figures partagent le même id, et l'état précédent reste affiché. */
+              key={activeDiagram?.id ?? 'none'}
+              diagram={activeDiagram}
+              showBackground={showBackground}
+              fullscreen={fullscreen}
+              onNodesInitialized={() => {}}
+            />
+          )}
           {fullscreen && (
             <FullscreenOverlay
               activeId={activeDiagram?.id ?? ''}
               onSelect={handleSelectDiagram}
+              onNavigate={navigate}
               expanded={expanded}
               onToggle={toggle}
               diagramTitle={activeDiagram?.title ?? null}
