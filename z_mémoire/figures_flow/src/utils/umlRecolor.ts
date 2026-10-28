@@ -40,6 +40,10 @@ export const DEFAULT_CLAUDE_MAP: Record<string, string> = {
 
 const FONT_FROM = 'font-family:anthropic-sans'
 const FONT_TO = "font-family:'Cabinet Grotesk', system-ui, sans-serif"
+// Livraisons venues des scripts Python (`fig_1_*_gen_*.py`) : la fonte est
+// déclarée en attribut de racine, avec la pile système générique.
+const FONT_ATTR_FROM = 'font-family="Helvetica, Arial, sans-serif"'
+const FONT_ATTR_TO = 'font-family="Cabinet Grotesk, system-ui, sans-serif"'
 
 /** Couleurs qui ne sont pas des choix de palette (jamais signalées). */
 const COLOR_ALLOW = new Set([
@@ -60,8 +64,10 @@ export function recolorClaudeSvg(
   const map = { ...DEFAULT_CLAUDE_MAP, ...overrides }
   // 1. Purge du manifeste C2PA (traçabilité de génération, inutile au print).
   let svg = raw.replace(/<metadata>[\s\S]*?<\/metadata>/, '')
-  // 2. Fonte : pile du mémoire (déjà auto-hébergée pour l’export).
+  // 2. Fonte : pile du mémoire (déjà auto-hébergée pour l’export) — forme
+  // `style` (SVG livrés à la main) et forme attribut (scripts Python).
   svg = svg.split(FONT_FROM).join(FONT_TO)
+  svg = svg.split(FONT_ATTR_FROM).join(FONT_ATTR_TO)
   // 3. Palette.
   for (const [from, to] of Object.entries(map)) {
     svg = svg.split(from).join(to)

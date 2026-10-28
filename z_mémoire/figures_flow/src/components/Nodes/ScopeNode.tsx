@@ -1,4 +1,5 @@
 import type { EntityNodeData } from '../../types'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Périmètre de projet (figure du mémoire) : un cadre composite dominant, des
@@ -13,12 +14,19 @@ import type { EntityNodeData } from '../../types'
  * liaison vers les exclus ont été écartés au plan : six segments se liraient
  * comme des flux dans un mémoire qui utilise par ailleurs des flèches pour les
  * flux, et la secondarité suffit à marquer l’exclusion.
+ *
+ * Palette documentaire (addenda 20261020) : navy = jeton `--fig-navy` (gelé,
+ * verbatim de `theme.typ`), titre du bandeau = `--fig-on-fill` (texte sur fond
+ * de couleur, constant) ; coche et teinte des lignes incluses = success
+ * (jeton figé, encres `accentInk()` pour l'icône posée sur le fond de page,
+ * tint `color-mix` — `hsla()` ne parse pas un `var()`). Exclusions/caption :
+ * neutres du thème, inchangés.
  */
 
-/** Navy du mémoire (titres de `theme.typ`), en valeur verbatim. */
-const NAVY = '#1a365d'
-/** Vert de validation, même famille que les teintes `SAFE_HUES`. */
-const CHECK = 'hsl(128, 100%, 35%)'
+/** Navy du mémoire (titres de `theme.typ`) — jeton gelé, verbatim. */
+const NAVY = 'var(--fig-navy)'
+/** Coche de validation : encre success (pastel en sombre). */
+const CHECK = accentInk('var(--fig-success)')
 
 const TITLE_SIZE = 28
 const ROW_SIZE = 24
@@ -40,6 +48,12 @@ function px(value: number) {
   }
 }
 
+/** Teinte derrière contenu : `color-mix` accepte un jeton CSS var(...) en
+ * couleur de base (résolu par computed styles, contrairement à `hsla`). */
+function tinted(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
+}
+
 function IncludedRow({ text, last }: { text: string; last: boolean }) {
   return (
     <div
@@ -48,7 +62,7 @@ function IncludedRow({ text, last }: { text: string; last: boolean }) {
         height: FRAME_ROW_HEIGHT,
         padding: '0 16px',
         marginBottom: last ? 0 : 10,
-        backgroundColor: 'hsla(128, 100%, 40%, 0.08)',
+        backgroundColor: tinted('var(--fig-success)', 8),
       }}
     >
       {/* Check SVG inline, pas « ✓ » : `CHECK` en `stroke`. */}
@@ -89,7 +103,7 @@ function ScopeFrame({ data }: { data: EntityNodeData }) {
         className="flex items-center justify-center text-center"
         style={{ height: TITLE_BAND_HEIGHT, backgroundColor: NAVY }}
       >
-        <span className="font-semibold text-white" style={px(TITLE_SIZE)}>
+        <span className="font-semibold" style={{ ...px(TITLE_SIZE), color: 'var(--fig-on-fill)' }}>
           {data.label}
         </span>
       </div>

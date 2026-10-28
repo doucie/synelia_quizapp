@@ -31,6 +31,9 @@ import { motOrganisationnelV2 } from './mot/mot_organisationnel_v2'
 // === UML (livraisons Claude) ===
 import { umlClaudeFigures } from './uml/claude'
 
+// === Figures du mémoire livrées par Claude ===
+import { memoireClaudeFigures } from './memoire/claude'
+
 // === Mémoire ===
 import { acteursSysteme as memoireActeurs } from './memoire/acteurs_systeme'
 import { perimetreProjet as memoirePerimetre } from './memoire/perimetre_projet'
@@ -55,9 +58,7 @@ import { stackFlux as memoireStackFlux } from './memoire/stack_flux'
 import { moscowPyramide as memoireMoscowPyramide } from './memoire/moscow_pyramide'
 import { pyramideTests as memoirePyramideTests } from './memoire/pyramide_tests'
 import { paletteTypst as memoirePaletteTypst } from './palette/palette_typst'
-import { processusAsIs as memoireProcessusAsIs } from './memoire/processus_as_is'
 import { besoinSolution as memoireBesoinSolution } from './memoire/besoin_solution'
-import { objectifsPyramide as memoireObjectifsPyramide } from './memoire/objectifs_pyramide'
 
 // === Palette ===
 import { colorPalette } from './palette/color_palette'
@@ -112,6 +113,8 @@ import { sat1SetupPreselection as archSat1 } from './archive/sat_1_setup_presele
 import { sat2EntretienAudit as archSat2 } from './archive/sat_2_entretien_audit'
 import { mpt1CandidatureQuiz as archMpt1 } from './archive/mpt_1_candidature_quiz'
 import { mpt2EntretienDecision as archMpt2 } from './archive/mpt_2_entretien_decision'
+import { processusAsIs as archProcessusAsIs } from './archive/processus_as_is'
+import { objectifsPyramide as archObjectifsPyramide } from './archive/objectifs_pyramide'
 import { syneliaAvecAg } from './organigramme/synelia_avec_ag'
 
 export const diagrams: DiagramDefinition[] = [
@@ -152,7 +155,7 @@ export const diagrams: DiagramDefinition[] = [
   // --- Organigramme (1) ---
   syneliaAvecAg,
 
-  // --- Mémoire (25) ---
+  // --- Mémoire (23 + 2 Claude) ---
   memoireActeurs,
   memoirePerimetre,
   memoireQuadrant,
@@ -175,15 +178,14 @@ export const diagrams: DiagramDefinition[] = [
   memoireStackFlux,
   memoireMoscowPyramide,
   memoirePyramideTests,
-  memoireProcessusAsIs,
   memoireBesoinSolution,
-  memoireObjectifsPyramide,
+  ...memoireClaudeFigures,
 
   // --- Palette (2) ---
   colorPalette,
   memoirePaletteTypst,
 
-  // --- Archive (43) ---
+  // --- Archive (43 + 2 mémoire remplacées) ---
   archMcdIdentite,
   archMcdCamp,
   archMcdCand,
@@ -227,6 +229,8 @@ export const diagrams: DiagramDefinition[] = [
   archSat2,
   archMpt1,
   archMpt2,
+  archProcessusAsIs,
+  archObjectifsPyramide,
 ]
 
 export type DiagramId = (typeof diagrams)[number]['id']

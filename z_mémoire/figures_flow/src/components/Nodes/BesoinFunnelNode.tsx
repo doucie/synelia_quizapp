@@ -1,5 +1,6 @@
 import type { EntityNodeData } from '../../types'
 import { FeatherIcon } from './icons'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Figure 3 — L'éparpillement aspiré par la plateforme (§1.3.3) : le § donne
@@ -14,6 +15,10 @@ import { FeatherIcon } from './icons'
  * sortie : centraliser `--fig-secondary`, automatiser `--fig-success`,
  * standardiser `--fig-warning`, tracer `--fig-neutral` ; plateforme en
  * `--fig-navy` ; contours `hsl(var(--border))`, tint `tinted()` = `color-mix`.
+ * Addenda 20261020 : semantics gelées verbatim (les deux modes) — ce qui est
+ * posé EN TEXTE/icône sur le fond de page passe par les encres `accentInk()`
+ * (flèche d'aspiration, médaillons d'icône ; liserés/tints/pieuvre restent
+ * sur les jetons figés).
  */
 
 const SCATTER_SIZE = 11
@@ -67,7 +72,7 @@ export default function BesoinFunnelNode({ data }: { data: EntityNodeData }) {
 
       {/* Aspiration : une seule flèche vers la plateforme. */}
       <div className="flex shrink-0 flex-col items-center justify-center" style={{ width: 40 }}>
-        <ArrowRight color="var(--fig-navy)" />
+        <ArrowRight color={accentInk('var(--fig-navy)')} />
       </div>
 
       {/* La plateforme : bloc d'aspiration et d'émission. */}
@@ -117,8 +122,8 @@ export default function BesoinFunnelNode({ data }: { data: EntityNodeData }) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '50%',
-                  color: `var(--fig-${out.color})`,
-                  backgroundColor: tinted(`var(--fig-${out.color})`, 12),
+                  color: accentInk(`var(--fig-${out.color})`),
+                  backgroundColor: tinted(accentInk(`var(--fig-${out.color})`), 12),
                 }}
               >
                 <FeatherIcon kind={out.icon} size={OUT_ICON_SIZE} />

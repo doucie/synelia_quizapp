@@ -1,5 +1,6 @@
 import type { EntityNodeData } from '../../types'
 import { hsla } from '../../utils/color'
+import { accentInk } from '../../utils/figInk'
 import { FeatherIcon } from './icons'
 
 /**
@@ -16,6 +17,13 @@ import { FeatherIcon } from './icons'
  *
  * Exemples simplifiés (retour demandeur) : pas de noms de fichiers bruts,
  * et la mention « extraits » évite de faire croire à un inventaire.
+ *
+ * Addenda 20261020 : couleurs du data en `hsl(H,100%,40%)` brutes (240/128/30)
+ * — pas des jetons `--fig-*`, mais la même doctrine : liserés et teintes de
+ * fond restent les fills constants ; numéro du médaillon, icône et chips
+ * mono, posés EN TEXTE sur le fond de page, passent par les encres de teinte
+ * `accentInk()` (`--fig-hue-*-ink`, pastels de même hue en sombre), sinon ils
+ * deviennent illisibles sur fond sombre (blue 40 % sur noir ≈ 1,7:1).
  */
 
 const NUM_SIZE = 26
@@ -52,11 +60,11 @@ export default function LevelsNode({ data }: { data: EntityNodeData }) {
           <div className="flex shrink-0 flex-col items-center" style={{ gap: 4 }}>
             <span
               className="inline-flex items-center justify-center rounded-full font-bold"
-              style={{ width: MEDALLION, height: MEDALLION, backgroundColor: hsla(lv.color, 0.14), color: lv.color, ...px(NUM_SIZE) }}
+              style={{ width: MEDALLION, height: MEDALLION, backgroundColor: hsla(lv.color, 0.14), color: accentInk(lv.color), ...px(NUM_SIZE) }}
             >
               {lv.num}
             </span>
-            <FeatherIcon kind={lv.icon} size={28} color={lv.color} />
+            <FeatherIcon kind={lv.icon} size={28} color={accentInk(lv.color)} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col" style={{ gap: 8 }}>
             <span className="font-bold text-foreground" style={px(NAME_SIZE)}>
@@ -77,7 +85,7 @@ export default function LevelsNode({ data }: { data: EntityNodeData }) {
                     borderRadius: 9999,
                     whiteSpace: 'nowrap',
                     backgroundColor: 'hsl(var(--muted))',
-                    color: lv.color,
+                    color: accentInk(lv.color),
                   }}
                 >
                   {t}

@@ -167,7 +167,13 @@
   /* Jetons des figures mémoire (Fig. 7 « Encre » + Fig. 8 palette
      documentaire) : la couleur est la donnée (hex verbatim), le sombre la
      transpose dans la même échelle Chakra/Tailwind en nuances 300-800 — cf.
-     plans/implementations/20261017_dark_tokens_figures.md. */
+     plans/implementations/20261017_dark_tokens_figures.md.
+     Addenda 20261020 : seuls les neutres/monochromes suivent le thème. Les
+     semantics de la palette document (success/warning/danger/secondary/
+     neutral) restent verbatim dans les DEUX modes (gels) — encres dédiées
+     (`-ink`) pour l'accent en texte sur fond de page, `--fig-on-fill` pour le
+     texte posé SUR un fond de couleur (constant), encres de teinte brute
+     (`--fig-hue-*-ink`) pour les figures en `hsl()` non tokenisées. */
   --fig-navy: #1a365d;
   --fig-cost: #1a365d;
   --fig-success: #38a169;
@@ -183,6 +189,21 @@
   --fig-flow-soft: rgba(49, 130, 206, 0.1);
   --fig-flow-line: #63b3ed;
   --fig-flow-ink: #2c5282;
+  /* Encres d'accent sur fond de page : valeur saturée en clair, pastel de la
+     même échelle en sombre — même jeu que le bloc `:root.dark` ci-dessous. */
+  --fig-danger-ink: #e53e3e;
+  --fig-success-ink: #38a169;
+  --fig-warning-ink: #dd6b20;
+  --fig-secondary-ink: #2c5282;
+  --fig-neutral-ink: #4a5568;
+  --fig-tone-ink: #718096;
+  --fig-navy-ink: #1a365d;
+  /* Texte posé SUR un fond de couleur (bandes figées) : ne bascule jamais. */
+  --fig-on-fill: #f7fafc;
+  /* Encres de teinte brute (`niveaux_tests`, `hsl(H,100%,40%)`) : light identique. */
+  --fig-hue-240-ink: hsl(240, 100%, 40%);
+  --fig-hue-128-ink: hsl(128, 100%, 40%);
+  --fig-hue-30-ink: hsl(30, 100%, 40%);
 }
 
 /* React Flow overrides (light) — :root .react-flow beats .react-flow */
@@ -240,16 +261,17 @@
   --input: 214.3 31.8% 22%;
   --ring: 215 20.2% 65.1%;
 
-  /* Sombre des jetons figures — mêmes rôles, nuances claires de la même
-     échelle (Chakra : green.300 / orange.300 / red.300 / blue.300 /
-     gray.400-500-800 ; flux : blue.300/950/700/200). */
+  /* Sombre des jetons figures — addenda 20261020 : seuls les monochromes
+     (soft/line/frame/tint, flux, cost) suivent le thème. Les semantics
+     (success/warning/danger/secondary/neutral/navy) sont gelées verbatim
+     (cf. bloc `:root`), leur réadaptation passe par les encres dédiées. */
   --fig-navy: #1a365d;
   --fig-cost: #90cdf4;
-  --fig-success: #68d391;
-  --fig-warning: #f6ad55;
-  --fig-danger: #feb2b2;
-  --fig-secondary: #90cdf4;
-  --fig-neutral: #a0aec0;
+  --fig-success: #38a169;
+  --fig-warning: #dd6b20;
+  --fig-danger: #e53e3e;
+  --fig-secondary: #2c5282;
+  --fig-neutral: #4a5568;
   --fig-soft: #2d3748;
   --fig-line: #4a5568;
   --fig-frame: #718096;
@@ -258,6 +280,23 @@
   --fig-flow-soft: rgba(144, 205, 244, 0.12);
   --fig-flow-line: #2b6cb0;
   --fig-flow-ink: #bee3f8;
+  /* Encres d'accent (texte/liseré sur fond de page) : pastels Chakra 300
+     repris de l'ancien bloc (red.300 / green.300 / orange.300 / blue.300 /
+     gray.400 / blue.300 pour navy). */
+  --fig-danger-ink: #feb2b2;
+  --fig-success-ink: #68d391;
+  --fig-warning-ink: #f6ad55;
+  --fig-secondary-ink: #90cdf4;
+  --fig-neutral-ink: #a0aec0;
+  --fig-tone-ink: #a0aec0;
+  --fig-navy-ink: #90cdf4;
+  /* Texte sur fond de couleur gelé : blanc quasi-pur dans les deux modes. */
+  --fig-on-fill: #f7fafc;
+  /* Encres de teinte brute : mêmes hues que `niveaux_tests`, remontées en
+     L (pastel) pour rester lisibles sur fond sombre. */
+  --fig-hue-240-ink: #b3b9ff;
+  --fig-hue-128-ink: #68d391;
+  --fig-hue-30-ink: #f6ad55;
 }
 
 /* React Flow overrides (dark) — .dark .react-flow beats .react-flow */

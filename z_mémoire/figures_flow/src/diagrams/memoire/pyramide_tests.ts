@@ -9,7 +9,9 @@ import type { DiagramDefinition } from '../../types'
  * assumés ; le dépôt porte le sourcing fin (~30 classes backend, 2 collections
  * Postman, ~22 specs front — voir `niveaux_tests.ts`, laissée au catalogue).
  * Les gradients du source deviennent des aplats unis : jetons palette
- * documentaire `--fig-*` (danger/warning/success, cf. fig. 8/23). Le panneau
+ * documentaire `--fig-*` (danger/warning/success, cf. fig. 8/23) — addenda
+ * 20261020 : jetons de fill gelés verbatim dans les deux modes, encres
+ * d'accent et `--fig-on-fill` gérés par `TestsPyramidNode`. Le panneau
  * légende est retiré (redondant des callouts, ~180/JaCoCo/CI-CD portés par le
  * texte). Nœud composite unique, zéro arête (voir `TestsPyramidNode`).
  */

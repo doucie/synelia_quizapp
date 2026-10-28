@@ -1,4 +1,5 @@
 import type { EntityNodeData, BenchmarkValue } from '../../types'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Matrice de benchmark (figure du mémoire, Fig. 7) : comparaison des solutions
@@ -22,9 +23,12 @@ import type { EntityNodeData, BenchmarkValue } from '../../types'
  * les filets internes, `#a0aec0` (Chakra gray.400) pour le contour de carte et
  * le soulignement 2 px de l'en-tête.
  *
- * Chaque jeton porte une version sombre (`--fig-*`, `index.css`) : mêmes rôles,
- * nuances claires de la même échelle Chakra — sauf `--fig-navy` ( la bande
- * d'en-tête reste navy dans les deux thèmes, texte blanc partout).
+ * Chaque jeton porte une version sombre (`--fig-*`, `index.css`) : addenda
+ * 20261020 — seuls les monochromes (soft/line/frame/tint, cost) et les encres
+ * `-ink` suivent le thème ; les semantics de la palette document sont gelées
+ * verbatim. Ici, tout ce qui est posé EN TEXTE sur le fond de page passe par
+ * les encres (`accentInk()`, mêmes pastels Chakra que l'ancien bloc sombre) ;
+ * la bande d'en-tête reste navy dans les deux thèmes, texte blanc partout.
  */
 
 const HEADER_SIZE = 16
@@ -55,9 +59,9 @@ function px(value: number) {
 }
 
 function valueColor(tone: BenchmarkValue['tone']): string {
-  if (tone === 'yes') return GREEN
-  if (tone === 'partial') return AMBER
-  if (tone === 'no') return NEUTRAL
+  if (tone === 'yes') return accentInk(GREEN)
+  if (tone === 'partial') return accentInk(AMBER)
+  if (tone === 'no') return accentInk(NEUTRAL)
   return COST
 }
 
@@ -103,7 +107,7 @@ export default function BenchmarkNode({ data }: { data: EntityNodeData }) {
           <div className="w-full" style={{ backgroundColor: SOFT, padding: '8px 16px', borderBottom: BORDER }}>
             <span
               className="font-bold uppercase"
-              style={{ ...px(BAND_SIZE), letterSpacing: '0.08em', color: NEUTRAL }}
+              style={{ ...px(BAND_SIZE), letterSpacing: '0.08em', color: accentInk(NEUTRAL) }}
             >
               {sec.title}
             </span>

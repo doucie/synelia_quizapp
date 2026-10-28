@@ -12,8 +12,10 @@ import type { DiagramDefinition } from '../../types'
 
 const W = 1370
 
-// Couleurs de la palette documentaire (jetons --fig-*, version sombre dans
-// `index.css`), échelle de priorité red/amber/navy/neutral comme fig. 8.
+// Couleurs de la palette documentaire (jetons --fig-*), échelle de priorité
+// red/amber/navy/neutral comme fig. 8. Addenda 20261020 : jetons de fill
+// GELÉS verbatim dans les deux modes (la couleur est la donnée) — encres
+// d'accent et `--fig-on-fill` gérés par `MoscowNode`.
 const MUST = 'var(--fig-danger)'
 const SHOULD = 'var(--fig-warning)'
 const COULD = 'var(--fig-secondary)'

@@ -12,8 +12,10 @@ import type { DiagramDefinition } from '../../types'
 
 const W = 1150
 
-// Couleurs de la palette documentaire (jetons --fig-*, version sombre dans
-// index.css) : interface = danger, serveur = success, stockage = secondary.
+// Couleurs de la palette documentaire (jetons --fig-*) : interface = danger,
+// serveur = success, stockage = secondary. Addenda 20261020 : jetons de fill
+// GELÉS verbatim dans les deux modes — encres d'accent gérées par
+// `StackFlowNode` (nom/pills/logo/sqlFill).
 const FRONT = 'var(--fig-danger)'
 const BACK = 'var(--fig-success)'
 const DATA = 'var(--fig-secondary)'

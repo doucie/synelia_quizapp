@@ -1,5 +1,6 @@
 import type { EntityNodeData } from '../../types'
 import { Logo, type LogoKey } from './logos'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Pile 3-tiers avec flux (figure du mémoire, Fig. 8) : verbatim de
@@ -14,8 +15,10 @@ import { Logo, type LogoKey } from './logos'
  * Style Gouvernance (niveau `dir`) : carte `border-left 5px` + tint
  * `color-mix`, accents de la palette documentaire — interface =
  * `var(--fig-danger)` (Angular), serveur = `var(--fig-success)` (Spring Boot),
- * stockage = `var(--fig-secondary)` (MySQL). Code literal « sql » du logo
- * MySQL repeint en `var(--fig-warning)` (overlay `sqlFill`), corps
+ * stockage = `var(--fig-secondary)` (MySQL). Nom de couche, pills, logos et
+ * code literal « sql » du logo MySQL (overlay `sqlFill`) sont posés EN TEXTE
+ * sur le fond de page : encres `accentInk()` (pastels en sombre, addenda
+ * 20261020 — liseré/carte/tint restent sur les jetons gelés), corps
  * `calc(var(--org-font-scale,1)*Npx)` inline.
  * Flux : trait + pastille, repris du HTML source — jetons
  * `--fig-flow-*` avec version sombre (`index.css`).
@@ -113,17 +116,17 @@ export default function StackFlowNode({ data }: { data: EntityNodeData }) {
           >
             <span
               className="inline-flex shrink-0 items-center justify-center rounded-[9px]"
-              style={{ width: 64, height: 64, backgroundColor: tinted(layer.color, 14) }}
+              style={{ width: 64, height: 64, backgroundColor: tinted(accentInk(layer.color), 14) }}
             >
               <Logo
                 name={LAYER_LOGO[i] ?? 'mysql'}
                 size={LOGO_SIZE}
-                fill={layer.color}
-                sqlFill={i === 2 ? 'var(--fig-warning)' : undefined}
+                fill={accentInk(layer.color)}
+                sqlFill={i === 2 ? accentInk('var(--fig-warning)') : undefined}
               />
             </span>
             <span className="flex shrink-0 flex-col" style={{ minWidth: 240 }}>
-              <span className="font-bold leading-tight text-foreground" style={{ ...px(NAME_SIZE), color: layer.color }}>
+              <span className="font-bold leading-tight text-foreground" style={{ ...px(NAME_SIZE), color: accentInk(layer.color) }}>
                 {layer.name}
               </span>
               <span className="text-foreground/85" style={px(ROLE_SIZE)}>
@@ -139,9 +142,9 @@ export default function StackFlowNode({ data }: { data: EntityNodeData }) {
                     ...px(PILL_SIZE),
                     padding: '5px 11px',
                     borderRadius: 20,
-                    border: `1px solid ${tinted(layer.color, 30)}`,
-                    backgroundColor: tinted(layer.color, 10),
-                    color: layer.color,
+                    border: `1px solid ${tinted(accentInk(layer.color), 30)}`,
+                    backgroundColor: tinted(accentInk(layer.color), 10),
+                    color: accentInk(layer.color),
                   }}
                 >
                   {p.name}

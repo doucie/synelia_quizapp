@@ -1,4 +1,5 @@
 import type { EntityNodeData } from '../../types'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Priorisation MoSCoW (figure du mémoire, Fig. 23) : pyramide des besoins du
@@ -21,9 +22,11 @@ import type { EntityNodeData } from '../../types'
  * tint `tinted()` = `color-mix` (les jetons `var()` traversent `hsla`),
  * corps en `calc(var(--org-font-scale,1)*Npx)` inline, texte petit en
  * `foreground/85`. Les gradients du source deviennent des aplats unis ; le
- * texte des bandes se lit en `--fig-soft` (presque-blanc sur les teintes
- * saturées du thème clair, ardoise sur les teintes claires du thème sombre).
- * Le liseré `border-left` porte la sémantique, le fond de la carte WON'T
+ * texte des bandes se lit en `--fig-on-fill` (blanc quasi-pur constant — les
+ * bandes sont des fonds de couleur gelés, cf. addenda 20261020 de
+ * `20261017_dark_tokens_figures.md`). Les tags, posés en texte sur le fond de
+ * page, passent par les encres `accentInk()` (pastels en sombre). Le liseré
+ * `border-left` porte la sémantique, le fond de la carte WON'T
  * reste neutre en `hsl(var(--muted))`.
  */
 
@@ -109,10 +112,10 @@ export default function MoscowNode({ data }: { data: EntityNodeData }) {
               className="absolute flex flex-col items-center"
               style={{ left: '50%', top: '58%', transform: 'translate(-50%, -35%)', gap: 1 }}
             >
-              <span className="font-bold" style={{ ...px(LEVEL_SIZE), color: 'var(--fig-soft)' }}>
+              <span className="font-bold" style={{ ...px(LEVEL_SIZE), color: 'var(--fig-on-fill)' }}>
                 {lv.name.split(' ')[0]}
               </span>
-              <span style={{ ...px(COUNT_SIZE), color: 'var(--fig-soft)', opacity: 0.8 }}>{lv.count}</span>
+              <span style={{ ...px(COUNT_SIZE), color: 'var(--fig-on-fill)', opacity: 0.8 }}>{lv.count}</span>
             </div>
           </div>
         ))}
@@ -147,9 +150,9 @@ export default function MoscowNode({ data }: { data: EntityNodeData }) {
                       ...px(TAG_SIZE),
                       padding: '4px 11px',
                       borderRadius: 12,
-                      color: lv.color,
-                      backgroundColor: tinted(lv.color, 10),
-                      border: `1px solid ${tinted(lv.color, 30)}`,
+                      color: accentInk(lv.color),
+                      backgroundColor: tinted(accentInk(lv.color), 10),
+                      border: `1px solid ${tinted(accentInk(lv.color), 30)}`,
                     }}
                   >
                     {tag}

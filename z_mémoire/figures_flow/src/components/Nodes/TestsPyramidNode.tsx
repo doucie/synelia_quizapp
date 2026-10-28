@@ -1,4 +1,5 @@
 import type { EntityNodeData } from '../../types'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Pyramide des tests (§7.1) : verbatim de `figures_html/pyramide_tests.html` —
@@ -15,14 +16,17 @@ import type { EntityNodeData } from '../../types'
  * en x=50 % / y=0, marge haute et pied mort du SVG source jetés).
  *
  * Palette documentaire (jetons `--fig-*`) : danger (E2E) / warning (Intégra-
- * tion) / success (Unitaires), texte de bande = `--fig-soft` + effectif 80 %
+ * tion) / success (Unitaires), texte de bande = `--fig-on-fill` (blanc quasi-pur,
+ * constant dans les deux modes — les bandes sont des fond de couleur gelés, cf.
+ * addenda 20261020 de `20261017_dark_tokens_figures.md`) + effectif 80 %
  * (même motif qu'`MoscowNode`). Axe CRITICITÉ en `--fig-frame`, pointant vers
  * le haut : la criticité (coût, lenteur) croît vers le sommet — le marqueur du
  * HTML source descendait, divergence corrigée. Conformément au source, les
  * liaisons pointillées rejoignent chaque callout depuis le flanc du triangle
  * (dot sur la pente, pointé sur le centre de bande — callouts aux mêmes
  * ratios, l'alignement suit l'étirement), et les annotations « Coût ↑ » /
- * « Volume ↑ » accompagnent l'axe (danger/success). Le panneau légende
+ * « Volume ↑ » accompagnent l'axe (encres `accentInk()`, lisibles sur le fond
+ * de page sombre). Le panneau légende
  * (~180 specs, JaCoCo, CI/CD) du source est retiré : redondant ou non sourcé
  * (le texte §7.1 porte le sourcing réel du dépôt).
  *
@@ -138,10 +142,10 @@ export default function TestsPyramidNode({ data }: { data: EntityNodeData }) {
           <div className="flex-1" style={{ width: 1.8, backgroundColor: 'var(--fig-frame)', margin: '3px 0' }} />
         </div>
         <div className="flex flex-1 flex-col items-start justify-between" style={{ padding: '36px 0 48px' }}>
-          <span className="font-semibold" style={{ ...px(ANN_SIZE), color: 'var(--fig-danger)' }}>
+          <span className="font-semibold" style={{ ...px(ANN_SIZE), color: accentInk('var(--fig-danger)') }}>
             Coût ↑
           </span>
-          <span className="font-semibold" style={{ ...px(ANN_SIZE), color: 'var(--fig-success)' }}>
+          <span className="font-semibold" style={{ ...px(ANN_SIZE), color: accentInk('var(--fig-success)') }}>
             Volume ↑
           </span>
         </div>
@@ -161,10 +165,10 @@ export default function TestsPyramidNode({ data }: { data: EntityNodeData }) {
               className="absolute flex flex-col items-center"
               style={{ left: '50%', top: '56%', transform: 'translate(-50%, -32%)', gap: 1 }}
             >
-              <span className="font-bold" style={{ ...px(BAND_NAME_SIZE), color: 'var(--fig-soft)' }}>
+              <span className="font-bold" style={{ ...px(BAND_NAME_SIZE), color: 'var(--fig-on-fill)' }}>
                 {lv.name}
               </span>
-              <span style={{ ...px(BAND_COUNT_SIZE), color: 'var(--fig-soft)', opacity: 0.8 }}>{lv.count}</span>
+              <span style={{ ...px(BAND_COUNT_SIZE), color: 'var(--fig-on-fill)', opacity: 0.8 }}>{lv.count}</span>
             </div>
           </div>
         ))}

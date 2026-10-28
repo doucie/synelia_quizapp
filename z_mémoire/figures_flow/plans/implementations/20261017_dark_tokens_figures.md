@@ -68,3 +68,65 @@ Portage : `exportNodeSvg` (capture unique) et `exportSvg` → wrapper sur
 toujours clair, même en navigation sombre.
 
 - [x] `withLightTheme` + wrappers (`exportSvg.ts`)
+
+## Addenda 20261020 — révision de la doctrine : « tout transposer » était trop large
+
+Retour utilisateur : « normalement, ce sont les couleurs **monochromes** qui
+doivent avoir un darkmode, à exceptions près » — les semantics de la palette
+document (fills pleins : bandes MoSCoW/pyramide des tests, couches fig. 8)
+doivent rester **verbatim dans les deux modes** (la couleur est la donnée, même
+statut que les hex de la fig. 22), et le texte posé SUR un fond de couleur doit
+rester blanc — « il doit y avoir des variables pour les textes sur fond de
+couleur ». Deux familles nouvelles :
+
+- **Jetons figés** : `--fig-success/warning/danger/secondary/neutral` perdent
+  leur entrée sombre (valeur Chakra verbatim dans les deux modes ; `--fig-navy`
+  l'était déjà).
+- **Encres d'accent** (`-ink`, texte/liseré/icône sur fond de page) :
+  `--fig-danger-ink` `#e53e3e`/`#feb2b2`, `--fig-success-ink` `#38a169`/
+  `#68d391`, `--fig-warning-ink` `#dd6b20`/`#f6ad55`, `--fig-secondary-ink`
+  `#2c5282`/`#90cdf4`, `--fig-neutral-ink` `#4a5568`/`#a0aec0`,
+  `--fig-navy-ink` `#1a365d`/`#90cdf4` — pastels repris de l'ancien bloc sombre.
+- **`--fig-on-fill`** `#f7fafc` **constant** : texte posé sur un fond de
+  couleur gelé (bandes fig. 17/23, badge de rupture fig. as-is, niveau
+  objectifs archivée).
+- **Encres de teinte brute** : `--fig-hue-240-ink`/`128`/`30` pour
+  `niveaux_tests` (`hsl(H,100%,40%)` hors jetons ; blue 40 % sur fond sombre
+  ≈ 1,7:1) — light identique, dark pastels de même hue.
+- **Util** `src/utils/figInk.ts` : `accentInk(color)` transpose
+  `var(--fig-<role>)` → `var(--fig-<role>-ink)` et les 3 `hsl()` bruts →
+  encres de teinte ; identité sinon (neutres déjà adaptés, hex, figures hors
+  périmètre). Rendu clair inchangé partout (light = valeur saturée).
+
+Rôle par spot :
+- fig. 17 `TestsPyramidNode` : texte de bande → `--fig-on-fill` ; annotations
+  `Coût ↑`/`Volume ↑` → encres ; bandes/liaisons/dots/liserés/tints figés.
+- fig. 23 `MoscowNode` : texte de bande → `--fig-on-fill` ; tags (texte +
+  tint fond/bord) → encres ; liseré gauche/tints cartes figés.
+- fig. 8 `StackFlowNode` : nom de couche, pills, fill du logo, `sqlFill`,
+  médaillon → encres ; liseré/tint carte figés ; flux intacts.
+- fig. 7 `BenchmarkNode` : Oui/`~`/Non et libellé de bandeau de section →
+  encres ; en-tête navy + blanc déjà constants ; `--fig-cost` inchangé.
+- fig. 6b `BesoinFunnelNode` : flèche d'aspiration et médaillons d'icône →
+  encres ; bordure/tint plateforme + cartes figés.
+- fig. as-is archivée `ProcessusAsIsNode` : badge `!` (texte → `--fig-on-fill`),
+  icônes receiver/eval + label de rupture → encres ; traits/dashés de rupture
+  = fills figés (donnée).
+- fig. objectifs archivée `ObjectifsPyramidNode` : textes de bandes →
+  `--fig-on-fill`.
+- fig. 7.1 `niveaux_tests` (`LevelsNode`) : numéro du médaillon, icône, chips
+  mono → encres de teinte ; liserés/tints fixes.
+
+`CAPTURE_CSS_VARS` inchangé : la capture vit sous `withLightTheme()` (le bloc
+`:root` porte les valeurs claires ; encres light = valeur saturée).
+
+- [x] `index.css` : entrées sombres semantics retirées + encres + `on-fill`
+      + encres de teinte (2 blocs)
+- [x] `src/utils/figInk.ts` (`accentInk`)
+- [x] 8 composants réaffectés (TestsPyramid, Moscow, StackFlow, Benchmark,
+      BesoinFunnel, ProcessusAsIs, ObjectifsPyramid, Levels)
+- [x] `npx vite build` OK — `tsc --noEmit` : erreurs WIP préexistantes
+      fig. 23/24 inchangées (hors périmètre, cf. plan palette)
+- [ ] vérif visuelle (`ThemeToggle`) : les 5 figures + 2 archivées, les deux
+      modes — bandes identiques en sombre (fidelité document), textes
+      d'accent lisibles, texte sur fill blanc

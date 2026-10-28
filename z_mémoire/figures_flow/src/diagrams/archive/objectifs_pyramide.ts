@@ -1,6 +1,9 @@
 import type { DiagramDefinition } from '../../types'
 
 /**
+ * Archivée : remplacée par la figure Claude `memoire-objectifs-gen`
+ * (`src/diagrams/memoire/claude.ts`).
+ *
  * Figure 4 — Vraie pyramide des objectifs du projet (§1.4.1), conception v3
  * (agrandissement : la v2 s'écroulait — la hauteur ne peut PAS venir des
  * bandes `flex:1` sans colonne de cartes ; ici hauteurs de bandes FIXES,
@@ -12,9 +15,9 @@ import type { DiagramDefinition } from '../../types'
 const W = 910
 
 export const objectifsPyramide: DiagramDefinition = {
-  id: 'memoire-objectifs-pyramide',
+  id: 'memoire-objectifs-pyramide-archive',
   title: 'Pyramide des objectifs du projet',
-  category: 'memoire',
+  category: 'archive',
   domain: '1.4.1 — Objectifs généraux',
   nodes: [
     {

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 630" width="1100" height="630" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Processus de recrutement avant SyneliaQuizApp : diffusion multicanale, candidatures reçues, suivi réparti, évaluation et décision">
+<title>Processus de recrutement avant SyneliaQuizApp</title>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#AEB8C6"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#8FB0DD"/></marker><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#C0701A"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4A5A70"/></marker></defs>
+<rect width="1100" height="630" fill="#FFFFFF"/>
+<rect x="20" y="64" width="1060" height="476" rx="16" fill="#F8FAFC" stroke="#E1E5EB" stroke-width="1.4"/>
+<text x="100" y="46" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1F2A37">Besoin</text>
+<text x="330" y="46" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1F2A37">Diffusion multicanale</text>
+<text x="550" y="46" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1F2A37">Candidatures reçues</text>
+<text x="780" y="46" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1F2A37">Suivi réparti</text>
+<text x="990" y="46" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1F2A37">Évaluation et décision</text>
+<rect x="492" y="92" width="116" height="436" rx="16" fill="#FFFFFF" stroke="#BFD0E8" stroke-width="1.6"/>
+<rect x="688" y="92" width="184" height="436" rx="16" fill="#FFFFFF" stroke="#E3D3AE" stroke-width="1.6"/>
+<path d="M126 339 C210.0 339 210.0 160 294 160" fill="none" stroke="#8FB0DD" stroke-width="1.8" marker-end="url(#ab)"/>
+<path d="M126 339 C210.0 339 210.0 295 294 295" fill="none" stroke="#8FB0DD" stroke-width="1.8" marker-end="url(#ab)"/>
+<path d="M126 339 C210.0 339 210.0 430 294 430" fill="none" stroke="#8FB0DD" stroke-width="1.8" marker-end="url(#ab)"/>
+<path d="M100 284 L100 309" fill="none" stroke="#8FB0DD" stroke-width="1.8" marker-end="url(#ab)"/>
+<path d="M368 160 L490 160" fill="none" stroke="#AEB8C6" stroke-width="1.8" marker-end="url(#ah)"/>
+<path d="M368 295 C447.0 295 447.0 302 526 302" fill="none" stroke="#C0701A" stroke-width="1.8" marker-end="url(#am)"/>
+<path d="M368 430 C447.0 430 447.0 314 526 314" fill="none" stroke="#C0701A" stroke-width="1.8" marker-end="url(#am)"/>
+<path d="M610 310 L686 310" fill="none" stroke="#4A5A70" stroke-width="1.8" marker-end="url(#as)"/>
+<path d="M874 310 C912.0 310 912.0 205 950 205" fill="none" stroke="#4A5A70" stroke-width="1.8" marker-end="url(#as)"/>
+<path d="M990 305 L990 370" fill="none" stroke="#4A5A70" stroke-width="1.8" marker-end="url(#as)"/>
+<circle cx="100" cy="200" r="34" fill="#FFFFFF" stroke="#BFD0E8" stroke-width="1.8"/>
+<g transform="translate(100 200) scale(0.95)"><g transform="translate(0 0) scale(1.0)"><circle cx="0" cy="-11" r="10" fill="#2F5D9E"/><path d="M-19 20 C-19 5 -9 1 0 1 C9 1 19 5 19 20 Z" fill="#2F5D9E"/></g></g>
+<text x="100" y="253" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Recruteur</text>
+<text x="100" y="269" text-anchor="middle" font-size="11.5" fill="#5B6675">équipe RH</text>
+<g transform="translate(100 345) scale(1.0)"><path d="M-20 -26 H8 L20 -14 V26 H-20 Z" fill="#FFFFFF" stroke="#2F5D9E" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 -26 V-14 H20" fill="#E4ECF8" stroke="#2F5D9E" stroke-width="1.8" stroke-linejoin="round"/><path d="M-13 -12 H1" stroke="#2F5D9E" stroke-width="3.2" stroke-linecap="round"/><path d="M-13 0 H13 M-13 8 H13 M-13 16 H4" stroke="#9DB6DB" stroke-width="2.2" stroke-linecap="round"/></g>
+<text x="100" y="391" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Offre de poste</text>
+<text x="100" y="407" text-anchor="middle" font-size="11.5" fill="#5B6675">rédigée puis rediffusée</text>
+<circle cx="330" cy="160" r="34" fill="#FFFFFF" stroke="#BFD0E8" stroke-width="1.8"/>
+<g transform="translate(330 160) scale(0.9)"><rect x="-22" y="-15" width="44" height="30" rx="4" fill="#FFFFFF" stroke="#2F5D9E" stroke-width="2.2"/><path d="M-21 -13 L0 5 L21 -13" fill="none" stroke="#2F5D9E" stroke-width="2.2" stroke-linejoin="round"/></g>
+<text x="330" y="212" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Email</text>
+<text x="330" y="228" text-anchor="middle" font-size="11.5" fill="#5B6675">envoi direct</text>
+<circle cx="330" cy="295" r="34" fill="#FFFFFF" stroke="#BFD0E8" stroke-width="1.8"/>
+<g transform="translate(330 295) scale(0.9)"><path d="M0 -9 L-17 12 M0 -9 L17 12 M-17 12 H17" stroke="#2F5D9E" stroke-width="2.2" fill="none"/><circle cx="0" cy="-9" r="7" fill="#2F5D9E"/><circle cx="-17" cy="12" r="7" fill="#2F5D9E"/><circle cx="17" cy="12" r="7" fill="#2F5D9E"/></g>
+<text x="330" y="347" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Réseaux professionnels</text>
+<text x="330" y="363" text-anchor="middle" font-size="11.5" fill="#5B6675">publications</text>
+<circle cx="330" cy="430" r="34" fill="#FFFFFF" stroke="#BFD0E8" stroke-width="1.8"/>
+<g transform="translate(330 430) scale(0.9)"><rect x="-22" y="-10" width="44" height="29" rx="4" fill="#FFFFFF" stroke="#2F5D9E" stroke-width="2.2"/><path d="M-9 -10 V-17 H9 V-10" fill="none" stroke="#2F5D9E" stroke-width="2.2" stroke-linejoin="round"/><path d="M-22 3 H22" stroke="#2F5D9E" stroke-width="2"/><rect x="-3.5" y="-1" width="7" height="9" rx="1.5" fill="#2F5D9E"/></g>
+<text x="330" y="482" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Plateformes d'emploi</text>
+<text x="330" y="498" text-anchor="middle" font-size="11.5" fill="#5B6675">annonces en ligne</text>
+<g transform="translate(551 150) scale(1.0) rotate(-4)"><path d="M-20 -26 H8 L20 -14 V26 H-20 Z" fill="#FFFFFF" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 -26 V-14 H20" fill="#EEF2F7" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-8" cy="-7" r="4.5" fill="#9AA6B6"/><path d="M-14 6 H14 M-14 13 H14 M-14 20 H5" stroke="#B9C2CE" stroke-width="2.2" stroke-linecap="round"/></g>
+<g transform="translate(549 228) scale(1.0) rotate(3)"><path d="M-20 -26 H8 L20 -14 V26 H-20 Z" fill="#FFFFFF" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 -26 V-14 H20" fill="#EEF2F7" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-8" cy="-7" r="4.5" fill="#9AA6B6"/><path d="M-14 6 H14 M-14 13 H14 M-14 20 H5" stroke="#B9C2CE" stroke-width="2.2" stroke-linecap="round"/></g>
+<rect x="521" y="272" width="60" height="68" rx="10" fill="#FDF3E4" stroke="#C0701A" stroke-width="1.6"/>
+<g transform="translate(551 306) scale(1.0) rotate(-2)"><path d="M-20 -26 H8 L20 -14 V26 H-20 Z" fill="#FFFFFF" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 -26 V-14 H20" fill="#EEF2F7" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-8" cy="-7" r="4.5" fill="#C0701A"/><path d="M-14 6 H14 M-14 13 H14 M-14 20 H5" stroke="#E3B988" stroke-width="2.2" stroke-linecap="round"/></g>
+<rect x="561" y="322" width="28" height="18" rx="9" fill="#C0701A"/><text x="575" y="335" text-anchor="middle" font-size="11.5" font-weight="700" fill="#FFFFFF">×2</text>
+<g transform="translate(549 384) scale(1.0) rotate(4)"><path d="M-20 -26 H8 L20 -14 V26 H-20 Z" fill="#FFFFFF" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 -26 V-14 H20" fill="#EEF2F7" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-8" cy="-7" r="4.5" fill="#9AA6B6"/><path d="M-14 6 H14 M-14 13 H14 M-14 20 H5" stroke="#B9C2CE" stroke-width="2.2" stroke-linecap="round"/></g>
+<g transform="translate(551 462) scale(1.0) rotate(-3)"><path d="M-20 -26 H8 L20 -14 V26 H-20 Z" fill="#FFFFFF" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 -26 V-14 H20" fill="#EEF2F7" stroke="#9AA6B6" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-8" cy="-7" r="4.5" fill="#9AA6B6"/><path d="M-14 6 H14 M-14 13 H14 M-14 20 H5" stroke="#B9C2CE" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="606" cy="96" r="10.5" fill="#C0701A"/><text x="606" y="100.3" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">1</text>
+<circle cx="780" cy="150" r="30" fill="#FFFFFF" stroke="#E3D3AE" stroke-width="1.8"/>
+<g transform="translate(780 150) scale(0.82)"><rect x="-22" y="-15" width="44" height="30" rx="4" fill="#FFFFFF" stroke="#9A6B16" stroke-width="2.2"/><path d="M-21 -13 L0 5 L21 -13" fill="none" stroke="#9A6B16" stroke-width="2.2" stroke-linejoin="round"/></g>
+<text x="780" y="196" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Boîtes mail</text>
+<text x="780" y="212" text-anchor="middle" font-size="11.5" fill="#5B6675">pièces jointes</text>
+<circle cx="780" cy="250" r="30" fill="#FFFFFF" stroke="#E3D3AE" stroke-width="1.8"/>
+<g transform="translate(780 250) scale(0.82)"><rect x="-22" y="-18" width="44" height="36" rx="3" fill="#FFFFFF" stroke="#9A6B16" stroke-width="2"/><rect x="-22" y="-18" width="44" height="10" rx="3" fill="#9A6B16"/><path d="M-22 1 H22 M-22 10 H22 M-7 -8 V18 M8 -8 V18" stroke="#9A6B16" stroke-width="1.4"/></g>
+<text x="780" y="296" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Tableurs de suivi</text>
+<text x="780" y="312" text-anchor="middle" font-size="11.5" fill="#5B6675">un fichier par recruteur</text>
+<circle cx="780" cy="350" r="30" fill="#FFFFFF" stroke="#E3D3AE" stroke-width="1.8"/>
+<g transform="translate(780 350) scale(0.82)"><rect x="-18" y="-23" width="36" height="46" rx="4" fill="#FFFFFF" stroke="#9A6B16" stroke-width="2"/><rect x="-11" y="-14" width="8" height="8" rx="1.5" fill="#FFFFFF" stroke="#9A6B16" stroke-width="1.6"/><path d="M1 -10 H12" stroke="#9A6B16" stroke-width="2" stroke-linecap="round"/><rect x="-11" y="-2" width="8" height="8" rx="1.5" fill="#FFFFFF" stroke="#9A6B16" stroke-width="1.6"/><path d="M1 2 H12" stroke="#9A6B16" stroke-width="2" stroke-linecap="round"/><rect x="-11" y="10" width="8" height="8" rx="1.5" fill="#FFFFFF" stroke="#9A6B16" stroke-width="1.6"/><path d="M1 14 H12" stroke="#9A6B16" stroke-width="2" stroke-linecap="round"/><path d="M-9.5 -10 L-7.5 -7.5 L-4.5 -12.5" fill="none" stroke="#9A6B16" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="780" y="396" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Formulaires externes</text>
+<text x="780" y="412" text-anchor="middle" font-size="11.5" fill="#5B6675">tests et questionnaires</text>
+<circle cx="780" cy="450" r="30" fill="#FFFFFF" stroke="#E3D3AE" stroke-width="1.8"/>
+<g transform="translate(780 450) scale(0.82)"><path d="M-24 -18 H4 Q10 -18 10 -12 V0 Q10 6 4 6 H-10 L-17 13 V6 H-24 Q-30 6 -30 0 V-12 Q-30 -18 -24 -18 Z" fill="#9A6B16" transform="translate(3 -2)"/><path d="M-2 4 H20 Q26 4 26 10 V20 Q26 26 20 26 H17 V33 L9 26 H-2 Q-8 26 -8 20 V10 Q-8 4 -2 4 Z" fill="#FFFFFF" stroke="#9A6B16" stroke-width="2" transform="translate(1 -9)"/></g>
+<text x="780" y="496" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Échanges informels</text>
+<text x="780" y="512" text-anchor="middle" font-size="11.5" fill="#5B6675">messages, appels</text>
+<circle cx="866" cy="96" r="10.5" fill="#C0701A"/><text x="866" y="100.3" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">2</text>
+<circle cx="990" cy="205" r="36" fill="#FFFFFF" stroke="#C9D1DC" stroke-width="1.8"/>
+<g transform="translate(990 205) scale(1.0)"><g transform="translate(-11 0) scale(0.82)"><circle cx="0" cy="-11" r="10" fill="#4A5A70"/><path d="M-19 20 C-19 5 -9 1 0 1 C9 1 19 5 19 20 Z" fill="#4A5A70"/></g><g transform="translate(12 5) scale(0.72)"><circle cx="0" cy="-11" r="10" fill="#7D8BA0"/><path d="M-19 20 C-19 5 -9 1 0 1 C9 1 19 5 19 20 Z" fill="#7D8BA0"/></g></g>
+<text x="990" y="263" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Plusieurs évaluateurs</text>
+<text x="990" y="279" text-anchor="middle" font-size="11.5" fill="#5B6675">entretiens, grilles</text>
+<text x="990" y="293" text-anchor="middle" font-size="11.5" fill="#5B6675">et critères propres</text>
+<circle cx="1026" cy="171" r="10.5" fill="#C0701A"/><text x="1026" y="175.3" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">3</text>
+<circle cx="990" cy="410" r="36" fill="#FFFFFF" stroke="#C9D1DC" stroke-width="1.8"/>
+<g transform="translate(990 410) scale(1.0)"><path d="M-16 -23 H6 L17 -12 V23 H-16 Z" fill="#FFFFFF" stroke="#4A5A70" stroke-width="2" stroke-linejoin="round"/><path d="M6 -23 V-12 H17" fill="#EEF2F7" stroke="#4A5A70" stroke-width="2" stroke-linejoin="round"/><path d="M-9 -4 H9 M-9 3 H4" stroke="#B9C2CE" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="14" r="10" fill="#3F7D6B" stroke="#FFFFFF" stroke-width="2"/><path d="M3 14 L7 18 L13 10" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="990" y="468" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A37">Décision</text>
+<text x="990" y="484" text-anchor="middle" font-size="11.5" fill="#5B6675">communiquée avec plus</text>
+<text x="990" y="498" text-anchor="middle" font-size="11.5" fill="#5B6675">ou moins de formalisation</text>
+<text x="40" y="568" font-size="12" font-weight="700" fill="#5B6675" letter-spacing="0.8">POINTS D'ATTENTION</text>
+<circle cx="51" cy="596" r="10.5" fill="#C0701A"/><text x="51" y="600.3" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">1</text>
+<text x="70" y="600" font-size="12.5" fill="#1F2A37">Un même candidat peut arriver par plusieurs canaux</text>
+<circle cx="411" cy="596" r="10.5" fill="#C0701A"/><text x="411" y="600.3" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">2</text>
+<text x="430" y="600" font-size="12.5" fill="#1F2A37">Informations réparties entre mails, tableurs et échanges</text>
+<circle cx="771" cy="596" r="10.5" fill="#C0701A"/><text x="771" y="600.3" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">3</text>
+<text x="790" y="600" font-size="12.5" fill="#1F2A37">Critères et formats propres à chaque intervenant</text>
+</svg>

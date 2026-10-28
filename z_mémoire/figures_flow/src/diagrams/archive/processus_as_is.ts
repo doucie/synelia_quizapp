@@ -1,6 +1,9 @@
 import type { DiagramDefinition } from '../../types'
 
 /**
+ * Archivée : remplacée par la figure Claude `memoire-processus-avant`
+ * (`src/diagrams/memoire/claude.ts`).
+ *
  * Figure 2 — Scène as-is illustrée (§1.3.1), conception v4 (retours au rendu
  * de la v3 : « Offre » placée EN HAUT et reliée aux 3 canaux ; canaux = 3
  * vraies plateformes d'emploi — LinkedIn/Indeed/Glassdoor, on ne partage pas
@@ -16,9 +19,9 @@ import type { DiagramDefinition } from '../../types'
 const W = 1240
 
 export const processusAsIs: DiagramDefinition = {
-  id: 'memoire-processus-as-is',
+  id: 'memoire-processus-as-is-archive',
   title: 'Processus de recrutement traditionnel — état des lieux',
-  category: 'memoire',
+  category: 'archive',
   domain: '1.3.1 — Processus traditionnel',
   nodes: [
     {

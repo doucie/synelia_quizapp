@@ -77,16 +77,16 @@ export default function ObjectifsPyramidNode({ data }: { data: EntityNodeData })
                 gap: 2,
               }}
             >
-              <span className="font-bold" style={{ ...px(TITLE_SIZE), color: 'var(--fig-soft)' }}>
+              <span className="font-bold" style={{ ...px(TITLE_SIZE), color: 'var(--fig-on-fill)' }}>
                 {lv.title}
               </span>
               {lv.lines.map((line) => (
-                <span key={line} style={{ ...px(LINE_SIZE), color: 'var(--fig-soft)', opacity: 0.85 }}>
+                <span key={line} style={{ ...px(LINE_SIZE), color: 'var(--fig-on-fill)', opacity: 0.85 }}>
                   {line}
                 </span>
               ))}
               {lv.note && (
-                <span className="italic" style={{ ...px(NOTE_SIZE), color: 'var(--fig-soft)', opacity: 0.8 }}>
+                <span className="italic" style={{ ...px(NOTE_SIZE), color: 'var(--fig-on-fill)', opacity: 0.8 }}>
                   {lv.note}
                 </span>
               )}

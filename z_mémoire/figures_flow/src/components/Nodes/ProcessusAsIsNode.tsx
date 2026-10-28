@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import type { EntityNodeData } from '../../types'
 import { FeatherIcon } from './icons'
 import { Logo, LOGO_BRAND } from './logos'
+import { accentInk } from '../../utils/figInk'
 
 /**
  * Figure 2 — Scène as-is illustrée (§1.3.1), conception v4 (retours au rendu :
@@ -22,6 +23,9 @@ import { Logo, LOGO_BRAND } from './logos'
  * zéro arête React Flow, aucune `<Handle>`, corps
  * `calc(var(--org-font-scale,1)*Npx)` inline, jetons `--fig-*` (navy pour la
  * structure, danger pour les ruptures, marques LOGO_BRAND pour les logos).
+ * Addenda 20261020 : semantics gelées verbatim (les deux modes) — badges et
+ * icônes posés EN TEXTE sur le fond de page passent par les encres
+ * `accentInk()`, texte sur fond de rupture en `--fig-on-fill` (constant).
  */
 
 const CHANNEL_LABEL_SIZE = 12.5
@@ -80,13 +84,13 @@ function Rupture({ label }: { label: string }) {
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: '50%',
-          color: 'var(--fig-soft)',
+          color: 'var(--fig-on-fill)',
           backgroundColor: 'var(--fig-danger)',
         }}
       >
         !
       </span>
-      <span className="font-semibold" style={{ ...px(BREAK_LABEL_SIZE), color: 'var(--fig-danger)' }}>
+      <span className="font-semibold" style={{ ...px(BREAK_LABEL_SIZE), color: accentInk('var(--fig-danger)') }}>
         {label}
       </span>
     </div>
@@ -111,7 +115,7 @@ export default function ProcessusAsIsNode({ data }: { data: EntityNodeData }) {
           backgroundColor: tinted('var(--fig-navy)', 8),
         }}
       >
-        <span className="flex" style={{ color: 'var(--fig-navy)' }}>
+        <span className="flex" style={{ color: accentInk('var(--fig-navy)') }}>
           <FeatherIcon kind="briefcase" size={OFFER_ICON_SIZE} />
         </span>
         <span className="font-bold text-foreground text-center" style={px(OFFER_SIZE)}>
@@ -178,7 +182,7 @@ export default function ProcessusAsIsNode({ data }: { data: EntityNodeData }) {
                 backgroundColor: 'hsl(var(--muted))',
               }}
             >
-              <span className="flex" style={{ color: 'var(--fig-warning)' }}>
+              <span className="flex" style={{ color: accentInk('var(--fig-warning)') }}>
                 <FeatherIcon kind={ch.receiver.icon} size={20} />
               </span>
               <span className="font-semibold text-foreground text-center" style={px(RECEIVER_LABEL_SIZE)}>
@@ -218,7 +222,10 @@ export default function ProcessusAsIsNode({ data }: { data: EntityNodeData }) {
                 borderColor: i === lastIdx ? tinted('var(--fig-danger)', 30) : 'hsl(var(--border))',
               }}
             >
-              <span className="flex" style={{ color: i === lastIdx ? 'var(--fig-danger)' : 'var(--fig-navy)' }}>
+              <span
+                className="flex"
+                style={{ color: accentInk(i === lastIdx ? 'var(--fig-danger)' : 'var(--fig-navy)') }}
+              >
                 <FeatherIcon kind={ev.icon} size={20} />
               </span>
               <span className="font-semibold text-foreground text-center" style={px(EVAL_TITLE_SIZE)}>
