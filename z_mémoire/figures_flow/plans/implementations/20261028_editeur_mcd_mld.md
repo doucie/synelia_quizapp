@@ -291,6 +291,36 @@ Ordre de coupe si le temps manque (on garde toujours 0–3) : 7 → 4 → 6 → 
 - [ ] mode MLD : types, PK, FK, nullable affichés, pas de cardinalités
 - [ ] aucune régression sur les figures statiques (MCD/MLD du mémoire, UML, organigramme)
 
+## Suite v1.1 — panneau repliable et plein écran (20261029)
+
+Demande : « rendre le panneau de droite réductible/cachable » et « ajouter le
+mode plein écran aux modèles créés ».
+
+- [x] `Inspector` : replié = rail de 32 px (chevron `‹` + libellé vertical
+      « Panneau »), déplié = en-tête avec `›` à côté de « fermer ».
+- [x] `ModelEditor` tient l'état, pas le panneau : `panelPreference` persisté
+      (`figures_flow:editor:panneau`, `collapsed` / `expanded`) + `panelOverride`
+      volatile ; `useEffect` sur `fullscreen` remet l'override à `null`.
+- [x] Plein écran : chrome minimal réutilisé de l'existant (`fullscreen` de
+      `App` masque la sidebar), bandeau conservé avec `⛶` ; `Échap` sort
+      (listener d'`App`), et `ModelEditor` ne vide plus la sélection dans ce cas.
+- [x] `App` : `FullscreenOverlay` gardé par `!editorRoute` — sinon les pastilles
+      des figures se posaient sur un modèle ouvert depuis la sidebar révélée.
+- [x] `src/editor/README.md` : gestes `⟩`/`⟨`/`⛶`/`Échap` + clé de stockage.
+
+Écart assumé : en plein écran, replier/déplier est une décision de session
+(non écrite) ; sortir du plein écran rend la préférence enregistrée. Sans cela,
+un simple passage en plein écran aurait écrasé le choix durable de l'utilisateur.
+
+Recette de la suite :
+
+- [ ] replier le panneau, F5 → toujours replié ; le déplier le persiste à son tour
+- [ ] `⛶` → sidebar et panneau disparaissent, bandeau conservé ; `⛶` puis `Échap`
+      sortent ; le panneau retrouve l'état d'avant
+- [ ] déplier le panneau en plein écran puis sortir → repli enregistré intact
+- [ ] en plein écran, ouvrir un modèle depuis la sidebar (préalablement révélée)
+      → pas d'overlay de pastilles sur la figure
+
 ## Dettes assumées (à documenter dans le README de l'éditeur)
 
 - pas de dérivation MCD → MLD ;

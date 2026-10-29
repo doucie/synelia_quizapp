@@ -14,6 +14,9 @@ interface InspectorProps {
   onDelete: (kind: 'entity' | 'link', id: string) => void
   onAddEntity: () => void
   onAddLink: (from: string, to: string) => void
+  /** Replié en rail : le canevas récupère la largeur, le panneau reste atteignable. */
+  collapsed: boolean
+  onToggleCollapsed: () => void
 }
 
 const labelCls = 'text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'
@@ -39,6 +42,8 @@ export default function Inspector({
   onDelete,
   onAddEntity,
   onAddLink,
+  collapsed,
+  onToggleCollapsed,
 }: InspectorProps) {
   const entity = selection?.kind === 'entity' ? doc.entities.find((e) => e.id === selection.id) : undefined
   const link = selection?.kind === 'link' ? doc.links.find((l) => l.id === selection.id) : undefined
@@ -52,21 +57,63 @@ export default function Inspector({
   const fromId = doc.entities.some((e) => e.id === linkFrom) ? linkFrom : (doc.entities[0]?.id ?? '')
   const toId = doc.entities.some((e) => e.id === linkTo) ? linkTo : (doc.entities[1]?.id ?? '')
 
+  /* Rail replié : il garde une trace du panneau (sinon on ne saurait plus qu'il
+     existe) sans prendre la largeur d'un formulaire. Aucun état ici : le repli
+     appartient à `ModelEditor`, qui le mémorise. */
+  if (collapsed) {
+    return (
+      <aside className="flex h-full w-8 shrink-0 flex-col items-center gap-2 overflow-hidden border-l border-border bg-background py-2">
+        <button
+          type="button"
+          className="rounded px-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+          onClick={onToggleCollapsed}
+          title="Déplier le panneau"
+          aria-label="Déplier le panneau"
+          aria-expanded={false}
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          className="flex-1 rounded px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground"
+          style={{ writingMode: 'vertical-rl' }}
+          onClick={onToggleCollapsed}
+          tabIndex={-1}
+          title="Déplier le panneau"
+        >
+          Panneau
+        </button>
+      </aside>
+    )
+  }
+
   return (
     <aside className="flex h-full w-[300px] shrink-0 flex-col overflow-y-auto border-l border-border bg-background">
-      <header className="flex items-center justify-between border-b border-border px-3 py-2">
+      <header className="flex items-center justify-between gap-1 border-b border-border px-3 py-2">
         <h2 className="text-xs font-semibold text-foreground">
           {entity ? 'Entité' : link ? 'Association' : 'Modèle'}
         </h2>
-        {(entity || link) && (
+        <div className="flex items-center gap-1">
+          {(entity || link) && (
+            <button
+              type="button"
+              className="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-muted"
+              onClick={() => onSelect(null)}
+            >
+              fermer
+            </button>
+          )}
           <button
             type="button"
-            className="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-muted"
-            onClick={() => onSelect(null)}
+            className="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground"
+            onClick={onToggleCollapsed}
+            title="Replier le panneau"
+            aria-label="Replier le panneau"
+            aria-expanded
           >
-            fermer
+            ›
           </button>
-        )}
+        </div>
       </header>
 
       <div className="flex flex-col gap-4 p-3">

@@ -18,11 +18,33 @@ const HISTORY_LIMIT = 80
 /** Regroupe les frappes d'un même champ en une seule annulation. */
 const BURST_MS = 1500
 const SAVE_DEBOUNCE = 400
+/** Repli du panneau de droite : préférence d'affichage, pas une donnée du modèle. */
+const PANEL_KEY = 'figures_flow:editor:panneau'
+
+type PanelState = 'collapsed' | 'expanded'
+
+function readPanelPreference(): PanelState {
+  try {
+    return localStorage.getItem(PANEL_KEY) === 'collapsed' ? 'collapsed' : 'expanded'
+  } catch {
+    return 'expanded'
+  }
+}
+
+function writePanelPreference(state: PanelState): void {
+  try {
+    localStorage.setItem(PANEL_KEY, state)
+  } catch {
+    /* quota / mode privé : le repli reste valable pour la session */
+  }
+}
 
 interface ModelEditorProps {
   modelId: string
   onBack: () => void
   onOpenModel: (id: string) => void
+  fullscreen: boolean
+  onToggleFullscreen: () => void
 }
 
 interface ConfirmRequest {
@@ -62,15 +84,43 @@ function download(content: string, filename: string, type: string): void {
  * - l'historique annuler / rétablir, par instantanés du document ;
  * - les confirmations destructrices, via `ConfirmDialog`.
  */
-export default function ModelEditor({ modelId, onBack, onOpenModel }: ModelEditorProps) {
+export default function ModelEditor({
+  modelId,
+  onBack,
+  onOpenModel,
+  fullscreen,
+  onToggleFullscreen,
+}: ModelEditorProps) {
   const [doc, setDoc] = useState<ModelDoc | null>(() => loadModel(modelId))
   const [selection, setSelection] = useState<Selection>(null)
   const [showBackground, setShowBackground] = useState(true)
   const [saved, setSaved] = useState(true)
   const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [panelPreference, setPanelPreference] = useState<PanelState>(readPanelPreference)
+  /* Volatile : le plein écran replie le panneau sans toucher à la préférence,
+     pour qu'en sortir rende l'état d'avant. `null` = pas de choix en cours. */
+  const [panelOverride, setPanelOverride] = useState<PanelState | null>(null)
   const [, setRevision] = useState(0)
   const fileInput = useRef<HTMLInputElement>(null)
+
+  const panelCollapsed =
+    (panelOverride ?? (fullscreen ? 'collapsed' : panelPreference)) === 'collapsed'
+
+  /* Toute bascule plein écran abandonne la décision de session : on entre replié,
+     on sort avec la préférence enregistrée. */
+  useEffect(() => {
+    setPanelOverride(null)
+  }, [fullscreen])
+
+  const togglePanel = useCallback(() => {
+    const next: PanelState = panelCollapsed ? 'expanded' : 'collapsed'
+    setPanelOverride(next)
+    if (!fullscreen) {
+      setPanelPreference(next)
+      writePanelPreference(next)
+    }
+  }, [fullscreen, panelCollapsed])
 
   const docRef = useRef(doc)
   docRef.current = doc
@@ -240,11 +290,13 @@ export default function ModelEditor({ modelId, onBack, onOpenModel }: ModelEdito
         void requestDelete(selection.kind, selection.id)
         return
       }
-      if (event.key === 'Escape') setSelection(null)
+      /* En plein écran, Échap est le geste de sortie (géré par `App`) : y vider
+         aussi la sélection donnerait deux effets pour une touche. */
+      if (event.key === 'Escape' && !fullscreen) setSelection(null)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [redo, requestDelete, selection, undo])
+  }, [fullscreen, redo, requestDelete, selection, undo])
 
   const changeTitle = useCallback(
     (title: string) => update((d) => ({ ...d, title }), 'title'),
@@ -463,6 +515,26 @@ export default function ModelEditor({ modelId, onBack, onOpenModel }: ModelEdito
           </button>
           <button
             type="button"
+            className="rounded px-1.5 py-1 text-xs text-foreground hover:bg-muted"
+            onClick={togglePanel}
+            title={panelCollapsed ? 'Déplier le panneau' : 'Replier le panneau'}
+            aria-label={panelCollapsed ? 'Déplier le panneau' : 'Replier le panneau'}
+            aria-expanded={!panelCollapsed}
+          >
+            {panelCollapsed ? '⟨' : '⟩'}
+          </button>
+          <button
+            type="button"
+            className="rounded px-1.5 py-1 text-xs text-foreground hover:bg-muted"
+            onClick={onToggleFullscreen}
+            title={fullscreen ? 'Quitter le plein écran (Échap)' : 'Mode plein écran'}
+            aria-label={fullscreen ? 'Quitter le plein écran' : 'Mode plein écran'}
+            aria-pressed={fullscreen}
+          >
+            ⛶
+          </button>
+          <button
+            type="button"
             className="rounded px-1.5 py-1 text-xs text-destructive hover:bg-muted"
             onClick={() => void handleDeleteModel()}
           >
@@ -492,6 +564,8 @@ export default function ModelEditor({ modelId, onBack, onOpenModel }: ModelEdito
           onDelete={(kind, id) => void requestDelete(kind, id)}
           onAddEntity={createEntity}
           onAddLink={createLink}
+          collapsed={panelCollapsed}
+          onToggleCollapsed={togglePanel}
         />
       </div>
 

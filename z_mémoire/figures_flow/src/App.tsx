@@ -90,6 +90,13 @@ export default function App() {
     navigate(activeDiagram.id, { replace: true })
   }, [activeDiagram, routeId, navigate])
 
+  /* La liste des modèles n'a pas de chrome plein écran (ni sidebar, ni bandeau
+     de figure) : y arriver en plein écran laisserait l'écran nu. Seul `Échap`
+     en sortirait — on rend la sortie explicite en quittant l'éditeur. */
+  useEffect(() => {
+    if (fullscreen && editorRoute?.page === 'list') setFullscreen(false)
+  }, [editorRoute, fullscreen])
+
   /* Titre d'onglet : c'est lui qui distingue les onglets ouverts par clic droit. */
   useEffect(() => {
     // La page d'édition d'un modèle pose son propre titre (il suit le document) ;
@@ -149,6 +156,8 @@ export default function App() {
               modelId={editorRoute.id}
               onBack={() => navigate(MODELS_ROUTE)}
               onOpenModel={(id) => navigate(`${MODEL_ROUTE_PREFIX}${id}`, { replace: true })}
+              fullscreen={fullscreen}
+              onToggleFullscreen={() => setFullscreen((v) => !v)}
             />
           )}
           {!editorRoute && (
@@ -163,7 +172,11 @@ export default function App() {
               onNodesInitialized={() => {}}
             />
           )}
-          {fullscreen && (
+          {/* Le plein écran de l'éditeur a son propre chrome (bandeau conservé) :
+              laisser `FullscreenOverlay` se poser par-dessus empilerait les
+              pastilles des figures sur un modèle, route atteignable depuis la
+              sidebar révélée. */}
+          {fullscreen && !editorRoute && (
             <FullscreenOverlay
               activeId={activeDiagram?.id ?? ''}
               onSelect={handleSelectDiagram}

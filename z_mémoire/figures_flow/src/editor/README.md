@@ -25,8 +25,12 @@ donc une carte d'éditeur et une carte du mémoire sont la même carte.
 | `Suppr` / `Retour arrière` | supprime la sélection, avec confirmation si l'entité porte des associations |
 | `Ctrl+Z` / `Ctrl+Maj+Z` (ou `Ctrl+Y`) | annuler / rétablir |
 | `Ctrl+S` | force l'enregistrement |
-| `Échap` | désélectionne |
+| `Échap` | désélectionne (sort du plein écran quand il est actif) |
 | pan du milieu ou clic droit glissé | déplace la vue (le clic gauche glissé sélectionne) |
+
+Bandeau : `⟩` / `⟨` replie / déplie le panneau de droite (rail de 32 px), `⛶`
+passe en plein écran — la sidebar et le panneau s'effacent, le bandeau reste
+pour sortir (`⛶` ou `Échap`).
 
 Les attributs se saisissent en liste : `Entrée` ajoute la ligne suivante,
 `Retour arrière` sur une ligne vide la retire.
@@ -38,6 +42,9 @@ Les attributs se saisissent en liste : `Entrée` ajoute la ligne suivante,
 - `figures_flow:models` — l'index (titre, type, dates), pour la sidebar.
 - `figures_flow:edge_sides:modele-<id>` — côtés d'ancrage des arêtes, écrits par
   le popover de `RelationshipEdge` (mécanisme existant, réutilisé tel quel).
+- `figures_flow:editor:panneau` — `collapsed` / `expanded` : préférence de repli
+  du panneau de droite. Le plein écran n'y touche pas : il replie pour la durée
+  de la session, puis rend l'état enregistré.
 
 Autosave à 400 ms après la dernière frappe, vidage à la fermeture de l'onglet.
 Export JSON (portable, réimportable) et SVG (même `exportSvg` que les figures).
